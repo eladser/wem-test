@@ -2,292 +2,288 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Download, FileText, BarChart3, Users, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Download, 
+  FileText, 
+  Calendar, 
+  Clock, 
+  CheckCircle,
+  AlertCircle,
+  Settings
+} from 'lucide-react';
 import { theme } from '@/lib/theme';
-import { LoadingButton } from '@/components/common/LoadingButton';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
 
-interface ExportOption {
+interface ExportJob {
   id: string;
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-  formats: string[];
+  name: string;
+  type: 'pdf' | 'csv' | 'xlsx';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  createdAt: Date;
+  estimatedCompletion?: Date;
+  downloadUrl?: string;
 }
 
-const exportOptions: ExportOption[] = [
-  {
-    id: 'performance',
-    label: 'Performance Report',
-    description: 'Energy production, efficiency metrics, and KPIs',
-    icon: <BarChart3 className="w-4 h-4" />,
-    formats: ['PDF', 'Excel', 'CSV']
-  },
-  {
-    id: 'operations',
-    label: 'Operations Log',
-    description: 'System events, maintenance records, and alerts',
-    icon: <FileText className="w-4 h-4" />,
-    formats: ['PDF', 'CSV', 'JSON']
-  },
-  {
-    id: 'team',
-    label: 'Team Directory',
-    description: 'Staff information and contact details',
-    icon: <Users className="w-4 h-4" />,
-    formats: ['PDF', 'Excel', 'CSV']
-  }
-];
-
 export const ExportManager: React.FC = () => {
-  const { hasPermission } = useAuth();
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [format, setFormat] = useState('PDF');
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
-  const [customStartDate, setCustomStartDate] = useState<Date>();
-  const [customEndDate, setCustomEndDate] = useState<Date>();
+  const [jobs, setJobs] = useState<ExportJob[]>([
+    {
+      id: '1',
+      name: 'Q4 Energy Report',
+      type: 'pdf',
+      status: 'completed',
+      progress: 100,
+      createdAt: new Date(Date.now() - 1000 * 60 * 30),
+      downloadUrl: '#'
+    },
+    {
+      id: '2',
+      name: 'Site Performance Data',
+      type: 'csv',
+      status: 'processing',
+      progress: 65,
+      createdAt: new Date(Date.now() - 1000 * 60 * 10),
+      estimatedCompletion: new Date(Date.now() + 1000 * 60 * 5)
+    },
+    {
+      id: '3',
+      name: 'Maintenance Schedule',
+      type: 'xlsx',
+      status: 'pending',
+      progress: 0,
+      createdAt: new Date(Date.now() - 1000 * 60 * 2)
+    }
+  ]);
+
   const [isExporting, setIsExporting] = useState(false);
 
-  if (!hasPermission('export')) {
-    return (
-      <Card className={`${theme.colors.background.card} ${theme.colors.border.primary}`}>
-        <CardContent className="p-6 text-center space-y-4">
-          <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto" />
-          <h3 className="text-lg font-semibold text-white">Export Permission Required</h3>
-          <p className="text-slate-400">
-            You need export permissions to access this feature. Contact your administrator for access.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const startExport = (type: 'pdf' | 'csv' | 'xlsx', name: string) => {
+    const newJob: ExportJob = {
+      id: Date.now().toString(),
+      name,
+      type,
+      status: 'pending',
+      progress: 0,
+      createdAt: new Date()
+    };
 
-  const handleOptionToggle = (optionId: string) => {
-    setSelectedOptions(prev => 
-      prev.includes(optionId)
-        ? prev.filter(id => id !== optionId)
-        : [...prev, optionId]
-    );
-  };
-
-  const handleExport = async () => {
-    if (selectedOptions.length === 0) {
-      toast.error('Please select at least one report type');
-      return;
-    }
-
+    setJobs(prev => [newJob, ...prev]);
     setIsExporting(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const optionLabels = selectedOptions
-        .map(id => exportOptions.find(opt => opt.id === id)?.label)
-        .join(', ');
-      
-      toast.success(`${optionLabels} exported successfully as ${format}`);
-      console.log('Export completed:', {
-        options: selectedOptions,
-        format,
-        dateRange,
-        customStartDate: customStartDate?.toISOString(),
-        customEndDate: customEndDate?.toISOString()
-      });
-    } catch (error) {
-      toast.error('Export failed. Please try again.');
-    } finally {
-      setIsExporting(false);
+
+    // Simulate export process
+    setTimeout(() => {
+      setJobs(prev => prev.map(job => 
+        job.id === newJob.id 
+          ? { ...job, status: 'processing' as const }
+          : job
+      ));
+
+      // Simulate progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+          setJobs(prev => prev.map(job => 
+            job.id === newJob.id 
+              ? { 
+                  ...job, 
+                  status: 'completed' as const, 
+                  progress: 100,
+                  downloadUrl: '#'
+                }
+              : job
+          ));
+          setIsExporting(false);
+        } else {
+          setJobs(prev => prev.map(job => 
+            job.id === newJob.id 
+              ? { ...job, progress }
+              : job
+          ));
+        }
+      }, 1000);
+    }, 2000);
+  };
+
+  const getStatusIcon = (status: ExportJob['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-4 h-4 text-emerald-400" />;
+      case 'processing':
+        return <Clock className="w-4 h-4 text-blue-400 animate-spin" />;
+      case 'failed':
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
+      default:
+        return <Clock className="w-4 h-4 text-amber-400" />;
     }
   };
 
-  const getAvailableFormats = () => {
-    if (selectedOptions.length === 0) return [];
-    
-    const selectedOptionsData = selectedOptions.map(id => 
-      exportOptions.find(opt => opt.id === id)
-    ).filter(Boolean);
-    
-    // Get intersection of all formats
-    return selectedOptionsData.reduce((acc, option) => {
-      return acc.filter(format => option!.formats.includes(format));
-    }, selectedOptionsData[0]!.formats);
+  const getStatusColor = (status: ExportJob['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+      case 'processing':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+      case 'failed':
+        return 'bg-red-500/10 text-red-400 border-red-500/30';
+      default:
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+    }
   };
 
-  const availableFormats = getAvailableFormats();
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    return `${Math.floor(diffMins / 1440)}d ago`;
+  };
+
+  const exportOptions = [
+    {
+      type: 'pdf' as const,
+      name: 'Performance Report',
+      description: 'Comprehensive site performance analysis',
+      icon: FileText
+    },
+    {
+      type: 'csv' as const,
+      name: 'Raw Data Export',
+      description: 'All metrics in CSV format',
+      icon: Download
+    },
+    {
+      type: 'xlsx' as const,
+      name: 'Executive Summary',
+      description: 'Excel workbook with charts and analysis',
+      icon: Settings
+    }
+  ];
 
   return (
-    <Card className={`${theme.colors.background.card} ${theme.colors.border.primary}`}>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Download className="w-5 h-5 text-emerald-400" />
-          <CardTitle className={theme.colors.text.primary}>Export Data</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Report Types */}
-        <div>
-          <h4 className={`text-sm font-medium ${theme.colors.text.secondary} mb-3`}>
-            Select Report Types
-          </h4>
-          <div className="space-y-3">
-            {exportOptions.map((option) => (
+    <div className="space-y-6">
+      {/* Export Options */}
+      <Card className={`${theme.colors.background.card} ${theme.colors.border.primary}`}>
+        <CardHeader>
+          <CardTitle className={`${theme.colors.text.primary} flex items-center gap-2`}>
+            <Download className="w-5 h-5 text-emerald-400" />
+            Quick Export
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {exportOptions.map((option, index) => (
               <div
-                key={option.id}
-                className={`flex items-start gap-3 p-3 rounded-lg border ${theme.colors.border.primary} ${
-                  selectedOptions.includes(option.id) 
-                    ? 'bg-emerald-500/10 border-emerald-500/30' 
-                    : 'bg-slate-800/30'
-                } transition-all duration-200`}
+                key={option.type}
+                className={`p-4 rounded-lg border ${theme.colors.border.primary} bg-slate-800/30 hover:bg-slate-700/40 transition-all duration-200 cursor-pointer group`}
+                onClick={() => startExport(option.type, option.name)}
               >
-                <Checkbox
-                  checked={selectedOptions.includes(option.id)}
-                  onCheckedChange={() => handleOptionToggle(option.id)}
-                  className="mt-0.5"
-                />
-                <div className="flex items-center gap-2 flex-1">
-                  {option.icon}
-                  <div>
-                    <div className={`font-medium ${theme.colors.text.primary}`}>
-                      {option.label}
-                    </div>
-                    <div className={`text-sm ${theme.colors.text.muted}`}>
-                      {option.description}
-                    </div>
-                    <div className="flex gap-1 mt-1">
-                      {option.formats.map((fmt) => (
-                        <span
-                          key={fmt}
-                          className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded"
-                        >
-                          {fmt}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                <div className="flex items-center gap-3 mb-2">
+                  <option.icon className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <h3 className={`font-medium ${theme.colors.text.primary}`}>{option.name}</h3>
                 </div>
+                <p className={`text-sm ${theme.colors.text.muted}`}>{option.description}</p>
+                <Badge className="mt-2 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                  {option.type.toUpperCase()}
+                </Badge>
               </div>
             ))}
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Date Range */}
-        <div>
-          <h4 className={`text-sm font-medium ${theme.colors.text.secondary} mb-3`}>
-            Date Range
-          </h4>
-          <div className="flex gap-2 mb-3">
-            {[
-              { value: '7d', label: '7 Days' },
-              { value: '30d', label: '30 Days' },
-              { value: '90d', label: '90 Days' },
-              { value: 'custom', label: 'Custom' }
-            ].map((option) => (
-              <Button
-                key={option.value}
-                variant={dateRange === option.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateRange(option.value as any)}
+      {/* Export History */}
+      <Card className={`${theme.colors.background.card} ${theme.colors.border.primary}`}>
+        <CardHeader>
+          <CardTitle className={`${theme.colors.text.primary} flex items-center gap-2`}>
+            <Calendar className="w-5 h-5 text-emerald-400" />
+            Export History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {jobs.map((job, index) => (
+              <div
+                key={job.id}
+                className={`p-4 rounded-lg border ${theme.colors.border.primary} bg-slate-800/20 animate-fade-in`}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                {option.label}
-              </Button>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(job.status)}
+                    <div>
+                      <h3 className={`font-medium ${theme.colors.text.primary}`}>{job.name}</h3>
+                      <p className={`text-sm ${theme.colors.text.muted}`}>
+                        Created {formatTimeAgo(job.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(job.status)} variant="outline">
+                      {job.status}
+                    </Badge>
+                    <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30" variant="outline">
+                      {job.type.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+
+                {job.status === 'processing' && (
+                  <div className="mb-3">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className={theme.colors.text.muted}>Progress</span>
+                      <span className={theme.colors.text.secondary}>{Math.round(job.progress)}%</span>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-2">
+                      <div 
+                        className="bg-emerald-500 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${job.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {job.estimatedCompletion && job.status === 'processing' && (
+                  <p className={`text-xs ${theme.colors.text.muted}`}>
+                    Estimated completion: {job.estimatedCompletion.toLocaleTimeString()}
+                  </p>
+                )}
+
+                {job.status === 'completed' && job.downloadUrl && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                    onClick={() => {
+                      // In a real app, this would trigger a download
+                      console.log(`Downloading ${job.name}`);
+                    }}
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                )}
+              </div>
             ))}
+
+            {jobs.length === 0 && (
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <p className={`${theme.colors.text.muted}`}>No export history yet</p>
+                <p className={`text-sm ${theme.colors.text.muted}`}>
+                  Start your first export above
+                </p>
+              </div>
+            )}
           </div>
-
-          {dateRange === 'custom' && (
-            <div className="flex gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !customStartDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {customStartDate ? format(customStartDate, "PPP") : "Start date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={customStartDate}
-                    onSelect={setCustomStartDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !customEndDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {customEndDate ? format(customEndDate, "PPP") : "End date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={customEndDate}
-                    onSelect={setCustomEndDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-        </div>
-
-        {/* Format Selection */}
-        <div>
-          <h4 className={`text-sm font-medium ${theme.colors.text.secondary} mb-3`}>
-            Export Format
-          </h4>
-          <Select
-            value={format}
-            onValueChange={setFormat}
-            disabled={availableFormats.length === 0}
-          >
-            <SelectTrigger className="w-32 bg-slate-800 border-slate-600">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-slate-600">
-              {availableFormats.map((fmt) => (
-                <SelectItem key={fmt} value={fmt}>
-                  {fmt}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Export Button */}
-        <div className="pt-4 border-t border-slate-700">
-          <LoadingButton
-            loading={isExporting}
-            onClick={handleExport}
-            disabled={selectedOptions.length === 0}
-            className="w-full bg-emerald-600 hover:bg-emerald-700"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export Selected Reports
-          </LoadingButton>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
