@@ -4,6 +4,7 @@ import { SettingsForm } from "@/components/settings/SettingsForm";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
+import { SettingsManager } from "@/components/settings/SettingsManager";
 import { theme } from "@/lib/theme";
 
 const Settings = () => {
@@ -17,11 +18,12 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-slate-800">
+        <TabsList className="grid w-full grid-cols-5 bg-slate-800">
           <TabsTrigger value="general" className="data-[state=active]:bg-slate-700">General</TabsTrigger>
           <TabsTrigger value="notifications" className="data-[state=active]:bg-slate-700">Notifications</TabsTrigger>
           <TabsTrigger value="security" className="data-[state=active]:bg-slate-700">Security</TabsTrigger>
           <TabsTrigger value="integrations" className="data-[state=active]:bg-slate-700">Integrations</TabsTrigger>
+          <TabsTrigger value="management" className="data-[state=active]:bg-slate-700">Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -38,6 +40,10 @@ const Settings = () => {
 
         <TabsContent value="integrations" className="space-y-6">
           <IntegrationSettings />
+        </TabsContent>
+
+        <TabsContent value="management" className="space-y-6">
+          <SettingsManager />
         </TabsContent>
       </Tabs>
     </div>
