@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sun, Battery, Zap, Building, Fuel, Grid3X3, Settings, X } from "lucide-react";
+import { Sun, Battery, Zap, Building, Fuel, Grid3X3, Settings, X, Plus, Trash2 } from "lucide-react";
 
 interface GridComponent {
   id: string;
@@ -33,6 +33,7 @@ const InteractiveGrid = () => {
   const [draggedComponent, setDraggedComponent] = useState<string | null>(null);
   const [draggedPanel, setDraggedPanel] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
 
   const [components, setComponents] = useState<GridComponent[]>([
     {
@@ -82,9 +83,9 @@ const InteractiveGrid = () => {
 
   const [energyFlows, setEnergyFlows] = useState<EnergyFlow[]>([
     { id: 'flow-1', from: 'solar-1', to: 'load-1', power: 50, enabled: true },
-    { id: 'flow-2', from: 'solar-1', to: 'battery-1', power: 35, enabled: true },
+    { id: 'flow-2', from: 'solar-1', to: 'battery-1', power: -25, enabled: true },
     { id: 'flow-3', from: 'battery-1', to: 'load-1', power: 10, enabled: true },
-    { id: 'flow-4', from: 'grid-1', to: 'load-1', power: 15, enabled: true }
+    { id: 'flow-4', from: 'grid-1', to: 'load-1', power: -15, enabled: true }
   ]);
 
   const [panels, setPanels] = useState<DraggablePanel[]>([
@@ -116,6 +117,27 @@ const InteractiveGrid = () => {
       case 'offline': return 'bg-red-500/10 text-red-400 border-red-500/20';
       default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     }
+  };
+
+  const addComponent = (type: GridComponent['type']) => {
+    const newId = `${type}-${Date.now()}`;
+    const newComponent: GridComponent = {
+      id: newId,
+      type,
+      name: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      power: type === 'solar' || type === 'generator' ? 50 : -30,
+      status: 'active',
+      position: { x: 200 + Math.random() * 200, y: 200 + Math.random() * 200 },
+      ...(type === 'solar' || type === 'generator' ? { efficiency: 90 } : {}),
+      ...(type === 'battery' ? { capacity: 100 } : {})
+    };
+    setComponents(prev => [...prev, newComponent]);
+  };
+
+  const removeComponent = (componentId: string) => {
+    setComponents(prev => prev.filter(c => c.id !== componentId));
+    setEnergyFlows(prev => prev.filter(f => f.from !== componentId && f.to !== componentId));
+    setSelectedComponent(null);
   };
 
   const handleComponentMouseDown = (e: React.MouseEvent, componentId: string) => {
@@ -187,32 +209,52 @@ const InteractiveGrid = () => {
     
     if (!fromComponent || !toComponent) return null;
 
-    const fromX = fromComponent.position.x + 48;
-    const fromY = fromComponent.position.y + 48;
-    const toX = toComponent.position.x + 48;
-    const toY = toComponent.position.y + 48;
+    // Determine actual flow direction based on power value
+    const isReverse = flow.power < 0;
+    const actualFromX = isReverse ? toComponent.position.x + 48 : fromComponent.position.x + 48;
+    const actualFromY = isReverse ? toComponent.position.y + 48 : fromComponent.position.y + 48;
+    const actualToX = isReverse ? fromComponent.position.x + 48 : toComponent.position.x + 48;
+    const actualToY = isReverse ? fromComponent.position.y + 48 : toComponent.position.y + 48;
 
-    const midX = fromX + (toX - fromX) * 0.5;
-    const midY = fromY + (toY - fromY) * 0.5;
+    const midX = actualFromX + (actualToX - actualFromX) * 0.5;
+    const midY = actualFromY + (actualToY - actualFromY) * 0.5;
+
+    // Calculate animation position along the line
+    const dx = actualToX - actualFromX;
+    const dy = actualToY - actualFromY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const animationStep = 0.3; // Position along the line (0 to 1)
+    const animX = actualFromX + dx * animationStep;
+    const animY = actualFromY + dy * animationStep;
 
     return (
       <g key={flow.id}>
         <line
-          x1={fromX}
-          y1={fromY}
-          x2={toX}
-          y2={toY}
+          x1={actualFromX}
+          y1={actualFromY}
+          x2={actualToX}
+          y2={actualToY}
           stroke="url(#energyGradient)"
           strokeWidth="3"
-          className="animate-pulse"
+          opacity="0.8"
         />
+        
+        {/* Animated flowing circle */}
         <circle
-          cx={midX}
-          cy={midY}
-          r="8"
-          fill="rgba(16, 185, 129, 0.8)"
-          className="animate-ping"
-        />
+          cx={animX}
+          cy={animY}
+          r="6"
+          fill="#10b981"
+          className="animate-pulse"
+        >
+          <animateMotion
+            dur="2s"
+            repeatCount="indefinite"
+            path={`M ${actualFromX},${actualFromY} L ${actualToX},${actualToY}`}
+          />
+        </circle>
+        
+        {/* Power label */}
         <text
           x={midX}
           y={midY - 15}
@@ -221,8 +263,15 @@ const InteractiveGrid = () => {
           fontSize="12"
           className="font-medium"
         >
-          {flow.power}kW
+          {Math.abs(flow.power)}kW
         </text>
+        
+        {/* Direction arrow */}
+        <polygon
+          points={`${actualToX - 10},${actualToY - 5} ${actualToX},${actualToY} ${actualToX - 10},${actualToY + 5}`}
+          fill="#10b981"
+          opacity="0.8"
+        />
       </g>
     );
   };
@@ -243,6 +292,7 @@ const InteractiveGrid = () => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={() => setSelectedComponent(null)}
       >
         {/* Grid Pattern */}
         <svg className="absolute inset-0 w-full h-full opacity-10" style={{ zIndex: 1 }}>
@@ -260,12 +310,6 @@ const InteractiveGrid = () => {
 
         {/* Energy Flow Lines */}
         <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }}>
-          <defs>
-            <linearGradient id="energyGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#10b981" />
-              <stop offset="100%" stopColor="#06d6a0" />
-            </linearGradient>
-          </defs>
           {energyFlows.map(renderEnergyFlow)}
         </svg>
 
@@ -319,7 +363,7 @@ const InteractiveGrid = () => {
             }}
             onMouseDown={(e) => handlePanelMouseDown(e, 'controls-panel')}
           >
-            <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700/50 p-4 min-w-[200px]">
+            <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700/50 p-4 min-w-[220px]">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium text-white flex items-center space-x-2">
@@ -345,9 +389,28 @@ const InteractiveGrid = () => {
                       </button>
                     </div>
                   ))}
-                  <Button size="sm" variant="outline" className="w-full text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 mt-3">
-                    Add Component
-                  </Button>
+                  
+                  <div className="border-t border-slate-700 pt-2 mt-3">
+                    <div className="text-xs text-slate-400 mb-2">Add Components</div>
+                    <div className="grid grid-cols-2 gap-1">
+                      <Button size="sm" variant="outline" onClick={() => addComponent('solar')} className="text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                        <Sun className="w-3 h-3 mr-1" />
+                        Solar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => addComponent('battery')} className="text-xs border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                        <Battery className="w-3 h-3 mr-1" />
+                        Battery
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => addComponent('generator')} className="text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                        <Fuel className="w-3 h-3 mr-1" />
+                        Generator
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => addComponent('load')} className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
+                        <Zap className="w-3 h-3 mr-1" />
+                        Load
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -359,18 +422,23 @@ const InteractiveGrid = () => {
           const Icon = getComponentIcon(component.type);
           const isProducing = component.power > 0;
           const isConsuming = component.power < 0;
+          const isSelected = selectedComponent === component.id;
 
           return (
             <div
               key={component.id}
-              className={`absolute cursor-move transform transition-transform hover:scale-105 ${
+              className={`absolute cursor-move transform transition-all duration-200 hover:scale-105 ${
                 draggedComponent === component.id ? 'scale-110 z-30' : 'z-10'
-              }`}
+              } ${isSelected ? 'ring-2 ring-emerald-500' : ''}`}
               style={{
                 left: component.position.x,
                 top: component.position.y
               }}
               onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedComponent(component.id);
+              }}
             >
               <Card className="w-24 h-24 bg-slate-800/80 backdrop-blur-sm border-slate-600/50 hover:bg-slate-700/80 transition-all duration-300 shadow-xl hover:shadow-2xl">
                 <div className="h-full flex flex-col items-center justify-center p-2 relative">
@@ -402,6 +470,19 @@ const InteractiveGrid = () => {
                   </div>
                 </div>
               </Card>
+
+              {/* Delete button for selected component */}
+              {isSelected && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeComponent(component.id);
+                  }}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors z-40"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              )}
 
               {/* Component Info Tooltip */}
               <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
