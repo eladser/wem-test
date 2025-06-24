@@ -7,7 +7,6 @@ import { logger } from '@/utils/logging';
 
 export class DataService {
   private shouldUseMockData(): boolean {
-    // Use mock data in development or when API is unavailable
     return config.development.enableDebugLogs || 
            config.api.baseUrl.includes('localhost') ||
            config.api.baseUrl === 'mock://api';
@@ -21,10 +20,13 @@ export class DataService {
       }
 
       const response = await apiService.get<Region[]>('/regions');
-      logger.info('Successfully fetched regions from API', { count: response.data.length });
+      logger.info('Successfully fetched regions', { 
+        count: response.data.length,
+        fromCache: response.fromCache 
+      });
       return response.data;
     } catch (error) {
-      logger.warn('Failed to fetch regions from API, falling back to mock data', {
+      logger.warn('Failed to fetch regions, falling back to mock data', {
         error: error instanceof Error ? error.message : String(error)
       });
       return mockRegions;
@@ -39,10 +41,14 @@ export class DataService {
       }
 
       const response = await apiService.get<Asset[]>(`/sites/${siteId}/assets`);
-      logger.info('Successfully fetched site assets from API', { siteId, count: response.data.length });
+      logger.info('Successfully fetched site assets', { 
+        siteId, 
+        count: response.data.length,
+        fromCache: response.fromCache 
+      });
       return response.data;
     } catch (error) {
-      logger.warn('Failed to fetch site assets from API, falling back to mock data', {
+      logger.warn('Failed to fetch site assets, falling back to mock data', {
         siteId,
         error: error instanceof Error ? error.message : String(error)
       });
@@ -58,10 +64,14 @@ export class DataService {
       }
 
       const response = await apiService.get<PowerData[]>(`/sites/${siteId}/power-data`);
-      logger.info('Successfully fetched power data from API', { siteId, count: response.data.length });
+      logger.info('Successfully fetched power data', { 
+        siteId, 
+        count: response.data.length,
+        fromCache: response.fromCache 
+      });
       return response.data;
     } catch (error) {
-      logger.warn('Failed to fetch power data from API, falling back to mock data', {
+      logger.warn('Failed to fetch power data, falling back to mock data', {
         siteId,
         error: error instanceof Error ? error.message : String(error)
       });
@@ -77,10 +87,14 @@ export class DataService {
       }
 
       const response = await apiService.get<Metric[]>(`/sites/${siteId}/metrics`);
-      logger.info('Successfully fetched metrics from API', { siteId, count: response.data.length });
+      logger.info('Successfully fetched metrics', { 
+        siteId, 
+        count: response.data.length,
+        fromCache: response.fromCache 
+      });
       return response.data;
     } catch (error) {
-      logger.warn('Failed to fetch metrics from API, falling back to mock data', {
+      logger.warn('Failed to fetch metrics, falling back to mock data', {
         siteId,
         error: error instanceof Error ? error.message : String(error)
       });
@@ -96,14 +110,52 @@ export class DataService {
       }
 
       const response = await apiService.get<EnergyMix[]>('/energy-mix');
-      logger.info('Successfully fetched energy mix from API', { count: response.data.length });
+      logger.info('Successfully fetched energy mix', { 
+        count: response.data.length,
+        fromCache: response.fromCache 
+      });
       return response.data;
     } catch (error) {
-      logger.warn('Failed to fetch energy mix from API, falling back to mock data', {
+      logger.warn('Failed to fetch energy mix, falling back to mock data', {
         error: error instanceof Error ? error.message : String(error)
       });
       return getMockEnergyMix();
     }
+  }
+
+  // Authentication methods
+  async login(email: string, password: string): Promise<{ token: string; user: any }> {
+    try {
+      const response = await apiService.post<{ token: string; user: any }>('/auth/login', {
+        email,
+        password
+      });
+      
+      // Set the auth token for future requests
+      apiService.setAuthToken(response.data.token);
+      
+      return response.data;
+    } catch (error) {
+      logger.error('Login failed', error as Error);
+      throw error;
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await apiService.post('/auth/logout', {});
+    } catch (error) {
+      logger.warn('Logout request failed', { error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      // Always clear the token, even if the request failed
+      apiService.clearAuthToken();
+    }
+  }
+
+  // Cache management
+  clearCache(): void {
+    apiService.clearCache();
+    logger.info('Data service cache cleared');
   }
 }
 

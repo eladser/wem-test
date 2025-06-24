@@ -1,12 +1,12 @@
 
-import { config } from '@/config/environment';
-import { apiConfiguration } from '@/config/api';
+import { apiGateway, type GatewayRequest } from './apiGateway';
 import { logger } from '@/utils/logging';
 
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
   message?: string;
+  fromCache?: boolean;
 }
 
 export class ApiError extends Error {
@@ -17,121 +17,137 @@ export class ApiError extends Error {
 }
 
 class ApiService {
-  private async fetchWithRetry<T>(
-    endpoint: string,
-    options: RequestInit = {},
-    attempt: number = 1
-  ): Promise<ApiResponse<T>> {
-    const apiEndpoint = await apiConfiguration.findHealthyEndpoint();
-    
-    // Handle mock endpoint
-    if (apiEndpoint.url === 'mock://api') {
-      return this.handleMockRequest<T>(endpoint, options);
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), apiEndpoint.timeout);
-
+  private async makeRequest<T>(request: GatewayRequest): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${apiEndpoint.url}${endpoint}`, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new ApiError(`HTTP ${response.status}: ${response.statusText}`, response.status);
+      const response = await apiGateway.request<T>(request);
+      
+      if (!response.success) {
+        throw new ApiError(
+          response.message || 'Request failed',
+          response.statusCode
+        );
       }
 
-      const data = await response.json();
-      return { data, success: true };
+      return {
+        data: response.data,
+        success: response.success,
+        fromCache: response.fromCache
+      };
     } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (attempt < apiEndpoint.retryAttempts && error instanceof Error && error.name !== 'AbortError') {
-        logger.warn(`API call failed, retrying... (${attempt}/${apiEndpoint.retryAttempts})`, {
-          endpoint,
-          attempt,
-          error: error.message
-        });
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        return this.fetchWithRetry<T>(endpoint, options, attempt + 1);
+      if (error instanceof ApiError) {
+        throw error;
       }
-
-      // If all retries failed, try rotating to next endpoint
-      if (attempt >= apiEndpoint.retryAttempts) {
-        await apiConfiguration.rotateEndpoint();
-      }
-
-      throw error;
+      
+      logger.error('API Service: Request failed', error as Error);
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        500
+      );
     }
   }
 
-  private async handleMockRequest<T>(endpoint: string, options: RequestInit): Promise<ApiResponse<T>> {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, config.development.mockApiDelay));
-
-    logger.info('Mock API request', { endpoint, method: options.method || 'GET' });
-
-    // Return mock data based on endpoint
-    const mockData = this.generateMockData(endpoint);
-    return { data: mockData as T, success: true };
+  async get<T>(
+    endpoint: string, 
+    options: { 
+      requiresAuth?: boolean; 
+      skipCache?: boolean; 
+      timeout?: number;
+    } = {}
+  ): Promise<ApiResponse<T>> {
+    return this.makeRequest<T>({
+      endpoint,
+      method: 'GET',
+      ...options
+    });
   }
 
-  private generateMockData(endpoint: string): any {
-    // Basic mock data generation
-    if (endpoint.includes('/health')) {
-      return { status: 'healthy', timestamp: new Date().toISOString() };
-    }
-    
-    if (endpoint.includes('/regions')) {
-      return [];
-    }
-
-    if (endpoint.includes('/assets')) {
-      return [];
-    }
-
-    if (endpoint.includes('/power-data')) {
-      return [];
-    }
-
-    if (endpoint.includes('/metrics')) {
-      return [];
-    }
-
-    if (endpoint.includes('/energy-mix')) {
-      return [];
-    }
-
-    return { message: 'Mock response', timestamp: new Date().toISOString() };
-  }
-
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.fetchWithRetry<T>(endpoint, { method: 'GET' });
-  }
-
-  async post<T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
-    return this.fetchWithRetry<T>(endpoint, {
+  async post<T>(
+    endpoint: string, 
+    data: unknown,
+    options: { 
+      requiresAuth?: boolean;
+      timeout?: number;
+    } = {}
+  ): Promise<ApiResponse<T>> {
+    return this.makeRequest<T>({
+      endpoint,
       method: 'POST',
-      body: JSON.stringify(data),
+      data,
+      skipCache: true, // Always skip cache for mutations
+      ...options
     });
   }
 
-  async put<T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
-    return this.fetchWithRetry<T>(endpoint, {
+  async put<T>(
+    endpoint: string, 
+    data: unknown,
+    options: { 
+      requiresAuth?: boolean;
+      timeout?: number;
+    } = {}
+  ): Promise<ApiResponse<T>> {
+    return this.makeRequest<T>({
+      endpoint,
       method: 'PUT',
-      body: JSON.stringify(data),
+      data,
+      skipCache: true,
+      ...options
     });
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.fetchWithRetry<T>(endpoint, { method: 'DELETE' });
+  async patch<T>(
+    endpoint: string, 
+    data: unknown,
+    options: { 
+      requiresAuth?: boolean;
+      timeout?: number;
+    } = {}
+  ): Promise<ApiResponse<T>> {
+    return this.makeRequest<T>({
+      endpoint,
+      method: 'PATCH',
+      data,
+      skipCache: true,
+      ...options
+    });
+  }
+
+  async delete<T>(
+    endpoint: string,
+    options: { 
+      requiresAuth?: boolean;
+      timeout?: number;
+    } = {}
+  ): Promise<ApiResponse<T>> {
+    return this.makeRequest<T>({
+      endpoint,
+      method: 'DELETE',
+      skipCache: true,
+      ...options
+    });
+  }
+
+  // Authentication helpers
+  setAuthToken(token: string): void {
+    apiGateway.setAuthToken(token);
+  }
+
+  clearAuthToken(): void {
+    apiGateway.clearAuthToken();
+  }
+
+  // Cache management
+  clearCache(): void {
+    apiGateway.clearCache();
+  }
+
+  // Metrics and monitoring
+  getRequestMetrics() {
+    return apiGateway.getMetrics();
+  }
+
+  getCacheStats() {
+    return apiGateway.getCacheStats();
   }
 }
 
