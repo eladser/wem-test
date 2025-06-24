@@ -32,8 +32,8 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-slate-800 bg-slate-950">
-      <SidebarHeader className="p-6 border-b border-slate-800">
+    <Sidebar className="bg-slate-900 border-r border-slate-700">
+      <SidebarHeader className="p-4 border-b border-slate-700 bg-slate-900">
         <div className="flex items-center space-x-3">
           <div className="relative">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -41,25 +41,25 @@ export function AppSidebar() {
             </div>
           </div>
           <div>
-            <h2 className="font-bold text-white">Energy Hub</h2>
+            <h2 className="font-bold text-white text-sm">Energy Hub</h2>
             <p className="text-xs text-slate-400">Management Portal</p>
           </div>
         </div>
         
-        <div className="mt-4 relative">
+        <div className="mt-3 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
             type="text" 
             placeholder="Search sites..." 
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+            className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
           />
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-4 py-2">
+      <SidebarContent className="bg-slate-900 px-3 py-2">
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider">
+          <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider px-3">
             Main Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -79,7 +79,7 @@ export function AppSidebar() {
                       }
                     >
                       <item.icon className="w-4 h-4" />
-                      <span className="font-medium">{item.title}</span>
+                      <span className="font-medium text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -90,7 +90,7 @@ export function AppSidebar() {
 
         {/* Energy Sites */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider flex items-center">
+          <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider flex items-center px-3">
             <MapPin className="w-3 h-3 mr-2" />
             Energy Sites
           </SidebarGroupLabel>
@@ -119,7 +119,7 @@ export function AppSidebar() {
                           <span className="text-sm font-medium">{site.name}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
+                          <span className="text-xs text-slate-400">{site.capacity}MW</span>
                         </div>
                       </NavLink>
                     </SidebarMenuButton>
@@ -131,8 +131,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-slate-800">
-        <div className="flex items-center space-x-3 p-3 bg-slate-900 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors cursor-pointer">
+      <SidebarFooter className="p-4 border-t border-slate-700 bg-slate-900">
+        <div className="flex items-center space-x-3 p-3 bg-slate-800 rounded-lg border border-slate-700 hover:bg-slate-700 transition-colors cursor-pointer">
           <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
             <Users className="w-4 h-4 text-white" />
           </div>
