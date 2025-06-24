@@ -12,6 +12,9 @@ import Overview from "./pages/Overview";
 import SiteDashboard from "./components/SiteDashboard";
 import SiteAssets from "./components/SiteAssets";
 import SiteReports from "./components/SiteReports";
+import SiteFinances from "./components/SiteFinances";
+import SiteTeam from "./components/SiteTeam";
+import SiteSettings from "./components/SiteSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,7 +27,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={
+          <Route path="/*" element={
             <SidebarProvider>
               <Layout>
                 <Routes>
