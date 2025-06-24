@@ -20,6 +20,8 @@ export interface AsyncPerformanceResult<T> {
 
 export type PerformanceLogger = (metrics: PerformanceMetrics) => void;
 
-export interface LazyComponentWithPreload<T = any> extends React.ComponentType<T> {
+export interface LazyComponentWithPreload<T = any> {
+  (props: T): React.ReactElement | null;
   preload?: () => Promise<any>;
 }
+
