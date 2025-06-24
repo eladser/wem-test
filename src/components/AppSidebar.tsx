@@ -57,8 +57,8 @@ export function AppSidebar() {
             </div>
           </div>
           <div>
-            <h2 className="font-bold text-white text-sm">Energy Hub</h2>
-            <p className="text-xs text-slate-400">Management Portal</p>
+            <h2 className="font-bold text-white text-sm">WEM</h2>
+            <p className="text-xs text-slate-400">Wise Energy Management</p>
           </div>
         </div>
         
