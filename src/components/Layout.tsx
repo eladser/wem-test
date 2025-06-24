@@ -14,10 +14,10 @@ const Layout = ({ children }: LayoutProps) => {
   console.log("Layout component rendering with children:", !!children);
   
   return (
-    <>
+    <div className="flex h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
       <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-slate-900/50 backdrop-blur-xl border-b border-slate-700/50">
+      <SidebarInset className="flex-1 flex flex-col min-w-0">
+        <header className="flex h-16 shrink-0 items-center gap-2 bg-slate-900/50 backdrop-blur-xl border-b border-slate-700/50">
           <div className="flex items-center gap-2 px-4 flex-1">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -39,11 +39,13 @@ const Layout = ({ children }: LayoutProps) => {
             <NotificationPanel />
           </div>
         </header>
-        <main className="flex-1 p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 min-h-0 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto">
+          <div className="p-6 max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </SidebarInset>
-    </>
+    </div>
   );
 };
 
