@@ -80,8 +80,8 @@ export const ExportManager: React.FC = () => {
         options: selectedOptions,
         format,
         dateRange,
-        customStartDate,
-        customEndDate
+        customStartDate: customStartDate?.toISOString(),
+        customEndDate: customEndDate?.toISOString()
       });
     } catch (error) {
       toast.error('Export failed. Please try again.');
