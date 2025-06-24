@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +16,7 @@ import SiteFinances from "./components/SiteFinances";
 import SiteTeam from "./components/SiteTeam";
 import SiteSettings from "./components/SiteSettings";
 import NotFound from "./pages/NotFound";
+import SiteGrid from "./components/SiteGrid";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +35,7 @@ const App: React.FC = () => {
                   <Routes>
                     <Route index element={<Overview />} />
                     <Route path="site/:siteId" element={<SiteDashboard />} />
+                    <Route path="site/:siteId/grid" element={<SiteGrid />} />
                     <Route path="site/:siteId/assets" element={<SiteAssets />} />
                     <Route path="site/:siteId/reports" element={<SiteReports />} />
                     <Route path="site/:siteId/finances" element={<SiteFinances />} />

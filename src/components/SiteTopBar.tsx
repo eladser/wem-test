@@ -1,6 +1,6 @@
 
 import { NavLink, useParams } from "react-router-dom";
-import { BarChart3, Zap, FileText, DollarSign, Users, Settings, Bell, Download } from "lucide-react";
+import { BarChart3, Zap, FileText, DollarSign, Users, Settings, Bell, Download, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mockRegions } from "@/services/mockDataService";
@@ -11,6 +11,7 @@ const SiteTopBar = () => {
 
   const navItems = [
     { title: "Dashboard", path: `/site/${siteId}`, icon: BarChart3 },
+    { title: "Grid", path: `/site/${siteId}/grid`, icon: Grid3X3 },
     { title: "Assets", path: `/site/${siteId}/assets`, icon: Zap },
     { title: "Reports", path: `/site/${siteId}/reports`, icon: FileText },
     { title: "Finances", path: `/site/${siteId}/finances`, icon: DollarSign },
@@ -28,25 +29,30 @@ const SiteTopBar = () => {
   };
 
   return (
-    <div className="bg-slate-900/90 backdrop-blur-sm border-b border-emerald-900/20 px-6 py-4 animate-slide-in-left">
+    <div className="bg-slate-900/95 backdrop-blur-lg border-b border-slate-700/50 px-8 py-6 shadow-xl">
       {/* Site Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white">{site?.name}</h1>
-            <p className="text-emerald-400 text-sm">{site?.location}</p>
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">{site?.name}</h1>
+              <p className="text-emerald-400 text-sm font-medium">{site?.location}</p>
+            </div>
           </div>
-          <Badge className={getStatusColor(site?.status || '')}>
+          <Badge className={`${getStatusColor(site?.status || '')} font-medium`}>
             {site?.status}
           </Badge>
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/10">
+          <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 bg-emerald-500/5 backdrop-blur-sm">
             <Bell className="w-4 h-4 mr-2" />
             Alerts
           </Button>
-          <Button variant="outline" size="sm" className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/10">
+          <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 bg-emerald-500/5 backdrop-blur-sm">
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
@@ -54,17 +60,17 @@ const SiteTopBar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex space-x-1 bg-slate-800/50 rounded-lg p-1 backdrop-blur-sm">
+      <nav className="flex space-x-1 bg-slate-800/60 backdrop-blur-sm rounded-xl p-1.5 shadow-inner">
         {navItems.map((item, index) => (
           <NavLink
             key={item.title}
             to={item.path}
             end={item.path === `/site/${siteId}`}
             className={({ isActive }) =>
-              `flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-300 text-sm font-medium transform hover:scale-105 animate-fade-in ${
+              `flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-all duration-300 text-sm font-medium transform hover:scale-105 ${
                 isActive
-                  ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg shadow-emerald-600/20"
-                  : "text-slate-300 hover:text-white hover:bg-slate-700 hover:shadow-md"
+                  ? "bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25"
+                  : "text-slate-300 hover:text-white hover:bg-slate-700/60 hover:shadow-md"
               }`
             }
             style={{ animationDelay: `${index * 0.05}s` }}
