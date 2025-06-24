@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -148,7 +147,7 @@ const Overview = () => {
                   className="block animate-fade-in hover:scale-105 transition-transform duration-200"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <Card className={`${theme.colors.background.card} ${theme.colors.cardHover} ${theme.colors.border.primary} transition-all duration-200`}>
+                  <Card className={`${theme.colors.background.card} ${theme.colors.background.cardHover} ${theme.colors.border.primary} transition-all duration-200`}>
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className={`font-semibold ${theme.colors.text.primary}`}>{region.name}</h3>
