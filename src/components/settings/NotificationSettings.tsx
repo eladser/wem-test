@@ -1,24 +1,62 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { theme } from "@/lib/theme";
+import { LoadingButton } from "@/components/common/LoadingButton";
 
 interface NotificationPreferences {
   systemAlerts: boolean;
   performanceReports: boolean;
   maintenanceReminders: boolean;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
 }
+
+interface NotificationSetting {
+  key: keyof NotificationPreferences;
+  label: string;
+  description: string;
+}
+
+const notificationSettings: NotificationSetting[] = [
+  {
+    key: "systemAlerts",
+    label: "System Alerts",
+    description: "Get notified about system issues and critical events"
+  },
+  {
+    key: "performanceReports",
+    label: "Performance Reports",
+    description: "Weekly performance summaries and analytics"
+  },
+  {
+    key: "maintenanceReminders",
+    label: "Maintenance Reminders",
+    description: "Scheduled maintenance notifications and reminders"
+  },
+  {
+    key: "emailNotifications",
+    label: "Email Notifications",
+    description: "Receive notifications via email"
+  },
+  {
+    key: "smsNotifications",
+    label: "SMS Notifications",
+    description: "Receive urgent notifications via SMS"
+  }
+];
 
 export const NotificationSettings = () => {
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     systemAlerts: true,
     performanceReports: true,
-    maintenanceReminders: true
+    maintenanceReminders: true,
+    emailNotifications: true,
+    smsNotifications: false
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +78,17 @@ export const NotificationSettings = () => {
     }
   };
 
+  const handleReset = () => {
+    setPreferences({
+      systemAlerts: true,
+      performanceReports: true,
+      maintenanceReminders: true,
+      emailNotifications: true,
+      smsNotifications: false
+    });
+    toast.info("Preferences reset to defaults");
+  };
+
   return (
     <Card className={`${theme.colors.background.card} ${theme.colors.border.primary}`}>
       <CardHeader>
@@ -48,48 +97,38 @@ export const NotificationSettings = () => {
           Notification Preferences
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className={theme.colors.text.secondary}>System Alerts</Label>
-            <p className={`text-sm ${theme.colors.text.muted}`}>Get notified about system issues</p>
-          </div>
-          <Switch 
-            checked={preferences.systemAlerts} 
-            onCheckedChange={() => handleToggle('systemAlerts')} 
-          />
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className={theme.colors.text.secondary}>Performance Reports</Label>
-            <p className={`text-sm ${theme.colors.text.muted}`}>Weekly performance summaries</p>
-          </div>
-          <Switch 
-            checked={preferences.performanceReports} 
-            onCheckedChange={() => handleToggle('performanceReports')} 
-          />
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className={theme.colors.text.secondary}>Maintenance Reminders</Label>
-            <p className={`text-sm ${theme.colors.text.muted}`}>Scheduled maintenance notifications</p>
-          </div>
-          <Switch 
-            checked={preferences.maintenanceReminders} 
-            onCheckedChange={() => handleToggle('maintenanceReminders')} 
-          />
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          {notificationSettings.map((setting) => (
+            <div key={setting.key} className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className={theme.colors.text.secondary}>{setting.label}</Label>
+                <p className={`text-sm ${theme.colors.text.muted}`}>{setting.description}</p>
+              </div>
+              <Switch 
+                checked={preferences[setting.key]} 
+                onCheckedChange={() => handleToggle(setting.key)} 
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button 
-            onClick={handleSave} 
-            disabled={isLoading}
-            className={`${theme.gradients.primary} text-white`}
+        <div className="flex justify-between pt-4 border-t border-slate-700">
+          <LoadingButton
+            variant="outline"
+            onClick={handleReset}
+            className={`${theme.colors.border.accent} ${theme.colors.text.accent}`}
           >
-            {isLoading ? "Updating..." : "Update Preferences"}
-          </Button>
+            Reset to Defaults
+          </LoadingButton>
+          
+          <LoadingButton
+            loading={isLoading}
+            onClick={handleSave}
+            loadingText="Updating..."
+          >
+            Update Preferences
+          </LoadingButton>
         </div>
       </CardContent>
     </Card>

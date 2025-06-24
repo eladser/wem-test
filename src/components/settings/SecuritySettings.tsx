@@ -1,38 +1,52 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 import { toast } from "sonner";
 import { theme } from "@/lib/theme";
+import { FormField } from "@/components/common/FormField";
+import { LoadingButton } from "@/components/common/LoadingButton";
+import { validateForm, passwordValidation, ValidationRules } from "@/lib/formValidation";
+
+interface PasswordForm {
+  current: string;
+  new: string;
+  confirm: string;
+}
+
+const validationRules: ValidationRules = {
+  current: { required: true },
+  new: passwordValidation,
+  confirm: { required: true }
+};
 
 export const SecuritySettings = () => {
-  const [passwords, setPasswords] = useState({
+  const [passwords, setPasswords] = useState<PasswordForm>({
     current: "",
     new: "",
     confirm: ""
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handlePasswordChange = (field: string, value: string) => {
+  const handlePasswordChange = (field: keyof PasswordForm, value: string) => {
     setPasswords(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
 
   const handleUpdatePassword = async () => {
-    if (!passwords.current || !passwords.new || !passwords.confirm) {
-      toast.error("Please fill in all password fields");
-      return;
-    }
-
+    const formErrors = validateForm(passwords, validationRules);
+    
+    // Additional confirmation validation
     if (passwords.new !== passwords.confirm) {
-      toast.error("New passwords don't match");
-      return;
+      formErrors.confirm = "New passwords don't match";
     }
 
-    if (passwords.new.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
       return;
     }
 
@@ -41,6 +55,7 @@ export const SecuritySettings = () => {
       await new Promise(resolve => setTimeout(resolve, 1200));
       toast.success("Password updated successfully!");
       setPasswords({ current: "", new: "", confirm: "" });
+      setErrors({});
       console.log('Password updated');
     } catch (error) {
       toast.error("Failed to update password");
@@ -59,43 +74,44 @@ export const SecuritySettings = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-password" className={theme.colors.text.secondary}>Current Password</Label>
-            <Input
-              id="current-password"
-              type="password"
-              value={passwords.current}
-              onChange={(e) => handlePasswordChange('current', e.target.value)}
-              className="bg-slate-800 border-slate-600 text-white"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="new-password" className={theme.colors.text.secondary}>New Password</Label>
-            <Input
-              id="new-password"
-              type="password"
-              value={passwords.new}
-              onChange={(e) => handlePasswordChange('new', e.target.value)}
-              className="bg-slate-800 border-slate-600 text-white"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password" className={theme.colors.text.secondary}>Confirm New Password</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={passwords.confirm}
-              onChange={(e) => handlePasswordChange('confirm', e.target.value)}
-              className="bg-slate-800 border-slate-600 text-white"
-            />
-          </div>
-          <Button 
+          <FormField
+            id="current-password"
+            label="Current Password"
+            type="password"
+            value={passwords.current}
+            onChange={(value) => handlePasswordChange('current', value)}
+            error={errors.current}
+            required
+          />
+          
+          <FormField
+            id="new-password"
+            label="New Password"
+            type="password"
+            value={passwords.new}
+            onChange={(value) => handlePasswordChange('new', value)}
+            error={errors.new}
+            description="Must contain at least 8 characters with uppercase, lowercase, and number"
+            required
+          />
+          
+          <FormField
+            id="confirm-password"
+            label="Confirm New Password"
+            type="password"
+            value={passwords.confirm}
+            onChange={(value) => handlePasswordChange('confirm', value)}
+            error={errors.confirm}
+            required
+          />
+          
+          <LoadingButton
+            loading={isLoading}
             onClick={handleUpdatePassword}
-            disabled={isLoading}
-            className={`${theme.gradients.primary} text-white`}
+            loadingText="Updating..."
           >
-            {isLoading ? "Updating..." : "Update Password"}
-          </Button>
+            Update Password
+          </LoadingButton>
         </div>
       </CardContent>
     </Card>
