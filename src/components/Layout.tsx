@@ -8,51 +8,64 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 relative overflow-hidden">
+      {/* Enhanced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-500/20 to-green-600/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-500/20 to-cyan-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-radial from-violet-500/30 via-purple-500/20 to-transparent rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-radial from-cyan-500/30 via-blue-500/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/3 left-1/3 w-80 h-80 bg-gradient-radial from-emerald-500/20 via-green-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute bottom-1/3 right-1/3 w-72 h-72 bg-gradient-radial from-pink-500/20 via-rose-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '6s' }}></div>
+        
+        {/* Floating orbs */}
+        <div className="absolute top-20 left-20 w-4 h-4 bg-violet-400/60 rounded-full animate-bounce" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-40 right-32 w-3 h-3 bg-cyan-400/60 rounded-full animate-bounce" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute bottom-32 left-40 w-5 h-5 bg-emerald-400/60 rounded-full animate-bounce" style={{ animationDelay: '5s' }}></div>
       </div>
 
       <AppSidebar />
+      
       <div className="flex-1 flex flex-col relative z-10">
-        <header className="h-16 flex items-center border-b border-slate-800/50 bg-slate-900/40 backdrop-blur-xl shadow-2xl px-6 relative">
-          {/* Header gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/60 via-slate-800/40 to-slate-900/60 backdrop-blur-sm"></div>
+        <header className="h-16 flex items-center border-b border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl px-6 relative">
+          {/* Glassmorphism header with gradient border */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-white/10 backdrop-blur-xl border-b border-gradient-to-r from-violet-500/20 via-cyan-500/20 to-emerald-500/20"></div>
           
           <div className="relative z-10 flex items-center w-full">
-            <SidebarTrigger className="text-slate-300 hover:text-white mr-4 transition-all duration-300 hover:scale-110 hover:rotate-180" />
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <SidebarTrigger className="text-white/70 hover:text-white mr-4 transition-all duration-300 hover:scale-110 hover:rotate-12 p-2 rounded-xl hover:bg-white/10" />
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative group">
+                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 transition-all duration-300">
                   <span className="text-white font-bold text-sm">RE</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-xl blur opacity-50 animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-50 animate-pulse group-hover:opacity-75 transition-opacity duration-300"></div>
               </div>
+              
               <div>
-                <h1 className="text-xl font-semibold bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-                  Renewable Energy Management
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-violet-200 to-cyan-200 bg-clip-text text-transparent">
+                  Renewable Energy Hub
                 </h1>
-                <div className="h-0.5 w-full bg-gradient-to-r from-emerald-400 via-green-500 to-transparent rounded-full mt-1"></div>
+                <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-purple-500 to-cyan-500 rounded-full mt-1 animate-pulse"></div>
               </div>
             </div>
             
             <div className="ml-auto flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-400/30 rounded-full px-4 py-2 backdrop-blur-sm shadow-lg hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105">
+              <div className="flex items-center space-x-3 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-white/20 rounded-2xl px-6 py-3 backdrop-blur-xl shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 hover:scale-105 group">
                 <div className="relative">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <div className="absolute inset-0 w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
+                  <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse group-hover:animate-ping"></div>
+                  <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
                 </div>
-                <span className="text-sm text-emerald-300 font-medium">System Online</span>
+                <span className="text-emerald-300 font-semibold">System Online</span>
+              </div>
+              
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20 hover:scale-110 transition-all duration-300 cursor-pointer">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
               </div>
             </div>
           </div>
         </header>
         
         <main className="flex-1 overflow-auto relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/50 via-transparent to-slate-900/50 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/30 via-transparent to-slate-900/30 pointer-events-none"></div>
           <div className="relative z-10">
             {children}
           </div>
