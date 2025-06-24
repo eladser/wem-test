@@ -39,10 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
             <NotificationPanel />
           </div>
         </header>
-        <main className="flex-1 p-6 bg-red-500 min-h-96">
-          <div className="bg-blue-500 p-4 text-white">
-            DEBUG: Layout children content
-          </div>
+        <main className="flex-1 p-6">
           {children}
         </main>
       </SidebarInset>

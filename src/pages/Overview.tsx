@@ -58,11 +58,7 @@ const Overview = () => {
   };
 
   return (
-    <div className="space-y-6 bg-green-500 p-4">
-      <div className="bg-yellow-500 p-4 text-black">
-        DEBUG: Overview component content
-      </div>
-      
+    <div className="space-y-6">
       {/* Header */}
       <div className="animate-slide-in-left">
         <h1 className={`text-3xl font-bold ${theme.colors.text.primary}`}>
