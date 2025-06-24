@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,35 +20,37 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/*" element={
-            <SidebarProvider>
-              <Layout>
-                <Routes>
-                  <Route index element={<Overview />} />
-                  <Route path="site/:siteId" element={<SiteDashboard />} />
-                  <Route path="site/:siteId/assets" element={<SiteAssets />} />
-                  <Route path="site/:siteId/reports" element={<SiteReports />} />
-                  <Route path="site/:siteId/finances" element={<SiteFinances />} />
-                  <Route path="site/:siteId/team" element={<SiteTeam />} />
-                  <Route path="site/:siteId/settings" element={<SiteSettings />} />
-                  <Route path="settings" element={<Settings />} />
-                </Routes>
-              </Layout>
-            </SidebarProvider>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/*" element={
+              <SidebarProvider>
+                <Layout>
+                  <Routes>
+                    <Route index element={<Overview />} />
+                    <Route path="site/:siteId" element={<SiteDashboard />} />
+                    <Route path="site/:siteId/assets" element={<SiteAssets />} />
+                    <Route path="site/:siteId/reports" element={<SiteReports />} />
+                    <Route path="site/:siteId/finances" element={<SiteFinances />} />
+                    <Route path="site/:siteId/team" element={<SiteTeam />} />
+                    <Route path="site/:siteId/settings" element={<SiteSettings />} />
+                    <Route path="settings" element={<Settings />} />
+                  </Routes>
+                </Layout>
+              </SidebarProvider>
+            } />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
