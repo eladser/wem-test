@@ -1,71 +1,51 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap, Battery, Search, Filter, MoreHorizontal } from "lucide-react";
+import { Zap, Battery, Search, Filter, MoreHorizontal, Loader2 } from "lucide-react";
+import { dataService } from "@/services/dataService";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { sanitizeInput } from "@/utils/security";
+import { Asset } from "@/types/energy";
 
 const Assets = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { handleAsyncError } = useErrorHandler();
 
-  const assets = [
-    {
-      id: "INV-001",
-      name: "Solar Inverter #1",
-      type: "Inverter",
-      site: "Site A - Main Campus",
-      status: "online",
-      power: "8.5 kW",
-      efficiency: "94.2%",
-      lastUpdate: "2 min ago",
-      icon: Zap
-    },
-    {
-      id: "BAT-001",
-      name: "Battery Pack #1",
-      type: "Battery",
-      site: "Site A - Main Campus",
-      status: "charging",
-      power: "12.3 kW",
-      efficiency: "96.8%",
-      lastUpdate: "1 min ago",
-      icon: Battery
-    },
-    {
-      id: "INV-002",
-      name: "Solar Inverter #2",
-      type: "Inverter",
-      site: "Site B - Warehouse",
-      status: "maintenance",
-      power: "0 kW",
-      efficiency: "0%",
-      lastUpdate: "2 hours ago",
-      icon: Zap
-    },
-    {
-      id: "BAT-002",
-      name: "Battery Pack #2",
-      type: "Battery",
-      site: "Site B - Warehouse",
-      status: "online",
-      power: "7.8 kW",
-      efficiency: "92.1%",
-      lastUpdate: "3 min ago",
-      icon: Battery
-    },
-    {
-      id: "INV-003",
-      name: "Solar Inverter #3",
-      type: "Inverter",
-      site: "Site C - Office Complex",
-      status: "warning",
-      power: "6.2 kW",
-      efficiency: "87.5%",
-      lastUpdate: "5 min ago",
-      icon: Zap
-    }
-  ];
+  useEffect(() => {
+    const loadAssets = async () => {
+      setIsLoading(true);
+      
+      const result = await handleAsyncError(
+        async () => {
+          const regions = await dataService.getRegions();
+          const allAssets: Asset[] = [];
+          
+          for (const region of regions) {
+            for (const site of region.sites) {
+              const siteAssets = await dataService.getSiteAssets(site.id);
+              allAssets.push(...siteAssets);
+            }
+          }
+          
+          return allAssets;
+        },
+        { customMessage: "Failed to load assets" },
+        { component: "Assets", action: "loadAssets" }
+      );
+
+      if (result) {
+        setAssets(result);
+      }
+      setIsLoading(false);
+    };
+
+    loadAssets();
+  }, [handleAsyncError]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -87,11 +67,27 @@ const Assets = () => {
     }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const sanitizedValue = sanitizeInput(e.target.value);
+    setSearchTerm(sanitizedValue);
+  };
+
   const filteredAssets = assets.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    asset.siteId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+          <span className="ml-2 text-white">Loading assets...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -114,8 +110,9 @@ const Assets = () => {
               <Input
                 placeholder="Search assets, sites, or types..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-10 bg-slate-800 border-slate-600 text-white placeholder-slate-400"
+                maxLength={100}
               />
             </div>
             <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800">
@@ -134,7 +131,11 @@ const Assets = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                    <asset.icon className="w-5 h-5 text-white" />
+                    {asset.type === 'battery' ? (
+                      <Battery className="w-5 h-5 text-white" />
+                    ) : (
+                      <Zap className="w-5 h-5 text-white" />
+                    )}
                   </div>
                   <div>
                     <CardTitle className="text-white text-lg">{asset.name}</CardTitle>
@@ -161,7 +162,7 @@ const Assets = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-slate-400 text-sm">Site</span>
-                  <span className="text-white text-sm font-medium">{asset.site}</span>
+                  <span className="text-white text-sm font-medium">{asset.siteId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 text-sm">Power Output</span>
@@ -191,7 +192,7 @@ const Assets = () => {
         ))}
       </div>
 
-      {filteredAssets.length === 0 && (
+      {filteredAssets.length === 0 && !isLoading && (
         <Card className="bg-slate-900/50 border-slate-700">
           <CardContent className="text-center py-12">
             <div className="w-16 h-16 mx-auto mb-4 bg-slate-800 rounded-full flex items-center justify-center">

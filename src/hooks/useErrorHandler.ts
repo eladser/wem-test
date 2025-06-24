@@ -1,6 +1,7 @@
 
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { config } from '@/config/environment';
 
 export interface ErrorHandlerOptions {
   showToast?: boolean;
@@ -36,6 +37,27 @@ const createErrorContext = (
   url: window.location.href
 });
 
+const reportErrorToService = async (error: HandledError): Promise<void> => {
+  if (!config.features.enableErrorReporting) return;
+
+  try {
+    // In production, replace this with your actual error reporting service
+    // Examples: Sentry, LogRocket, Bugsnag, etc.
+    await fetch('/api/errors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack,
+        context: error.context,
+        timestamp: error.context.timestamp
+      })
+    });
+  } catch (reportingError) {
+    console.error('Failed to report error:', reportingError);
+  }
+};
+
 export const useErrorHandler = () => {
   const handleError = useCallback((
     error: Error | unknown,
@@ -46,7 +68,7 @@ export const useErrorHandler = () => {
       showToast = true,
       logToConsole = true,
       customMessage,
-      reportToService = false
+      reportToService = config.features.enableErrorReporting
     } = options;
 
     const errorMessage = error instanceof Error 
@@ -71,10 +93,8 @@ export const useErrorHandler = () => {
       toast.error(customMessage || errorMessage);
     }
 
-    // In production, report to error tracking service
-    if (reportToService && process.env.NODE_ENV === 'production') {
-      // Example: reportError(handledError);
-      console.info('Error would be reported to service:', handledError);
+    if (reportToService && config.app.environment === 'production') {
+      reportErrorToService(handledError).catch(console.error);
     }
 
     return errorMessage;
