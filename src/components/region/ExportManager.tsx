@@ -5,13 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Download, FileText, BarChart3, Users, Calendar as CalendarIcon } from 'lucide-react';
+import { Download, FileText, BarChart3, Users, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import { theme } from '@/lib/theme';
 import { LoadingButton } from '@/components/common/LoadingButton';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ExportOption {
   id: string;
