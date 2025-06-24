@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,6 @@ import {
   Clock
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { theme } from "@/lib/theme";
 
 const Overview = () => {
   console.log("Overview component rendering");
@@ -58,63 +58,63 @@ const Overview = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="animate-slide-in-left">
-        <h1 className={`text-3xl font-bold ${theme.colors.text.primary}`}>
+        <h1 className="text-3xl font-bold text-white">
           WEM Dashboard
         </h1>
-        <p className={`${theme.colors.text.muted} text-lg`}>
+        <p className="text-slate-400 text-lg">
           Monitor and manage your energy infrastructure across all regions
         </p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
-        <Card className={`${theme.colors.background.card} ${theme.colors.border.accent}`}>
+        <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${theme.colors.text.muted}`}>Total Sites</p>
-                <p className={`text-2xl font-bold ${theme.colors.text.primary}`}>{totalSites}</p>
+                <p className="text-sm text-slate-400">Total Sites</p>
+                <p className="text-2xl font-bold text-white">{totalSites}</p>
               </div>
-              <Building className={`w-8 h-8 ${theme.colors.text.accent}`} />
+              <Building className="w-8 h-8 text-emerald-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`${theme.colors.background.card} ${theme.colors.border.accent}`}>
+        <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${theme.colors.text.muted}`}>Online Sites</p>
-                <p className={`text-2xl font-bold ${theme.colors.text.primary}`}>{onlineSites}</p>
+                <p className="text-sm text-slate-400">Online Sites</p>
+                <p className="text-2xl font-bold text-white">{onlineSites}</p>
               </div>
-              <CheckCircle className={`w-8 h-8 ${theme.colors.text.accent}`} />
+              <CheckCircle className="w-8 h-8 text-emerald-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`${theme.colors.background.card} ${theme.colors.border.accent}`}>
+        <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${theme.colors.text.muted}`}>Total Capacity</p>
-                <p className={`text-2xl font-bold ${theme.colors.text.primary}`}>{totalCapacity.toFixed(1)} MW</p>
+                <p className="text-sm text-slate-400">Total Capacity</p>
+                <p className="text-2xl font-bold text-white">{totalCapacity.toFixed(1)} MW</p>
               </div>
-              <Zap className={`w-8 h-8 ${theme.colors.text.accent}`} />
+              <Zap className="w-8 h-8 text-emerald-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`${theme.colors.background.card} ${theme.colors.border.accent}`}>
+        <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-sm ${theme.colors.text.muted}`}>Current Output</p>
-                <p className={`text-2xl font-bold ${theme.colors.text.primary}`}>{totalOutput.toFixed(1)} MW</p>
+                <p className="text-sm text-slate-400">Current Output</p>
+                <p className="text-2xl font-bold text-white">{totalOutput.toFixed(1)} MW</p>
               </div>
-              <TrendingUp className={`w-8 h-8 ${theme.colors.text.accent}`} />
+              <TrendingUp className="w-8 h-8 text-emerald-400" />
             </div>
           </CardContent>
         </Card>
@@ -144,9 +144,9 @@ const Overview = () => {
       </div>
 
       {/* Regions Grid */}
-      <Card className={`${theme.colors.background.card} ${theme.colors.border.primary} animate-slide-in-up`}>
+      <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50 animate-slide-in-up">
         <CardHeader>
-          <CardTitle className={`${theme.colors.text.primary} flex items-center gap-2`}>
+          <CardTitle className="text-white flex items-center gap-2">
             <MapPin className="w-5 h-5 text-emerald-400" />
             Regional Overview
           </CardTitle>
@@ -165,10 +165,10 @@ const Overview = () => {
                   className="block animate-fade-in hover:scale-105 transition-transform duration-200"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <Card className={`${theme.colors.background.card} ${theme.colors.background.cardHover} ${theme.colors.border.primary} transition-all duration-200`}>
+                  <Card className="bg-slate-900/50 backdrop-blur-xl hover:bg-slate-800/60 border-slate-700/50 transition-all duration-200">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className={`font-semibold ${theme.colors.text.primary}`}>{region.name}</h3>
+                        <h3 className="font-semibold text-white">{region.name}</h3>
                         <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
                           {region.sites.length} sites
                         </Badge>
@@ -176,23 +176,23 @@ const Overview = () => {
                       
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className={theme.colors.text.muted}>Capacity</span>
-                          <span className={theme.colors.text.secondary}>{regionCapacity.toFixed(1)} MW</span>
+                          <span className="text-slate-400">Capacity</span>
+                          <span className="text-slate-300">{regionCapacity.toFixed(1)} MW</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className={theme.colors.text.muted}>Output</span>
-                          <span className={theme.colors.text.secondary}>{regionOutput.toFixed(1)} MW</span>
+                          <span className="text-slate-400">Output</span>
+                          <span className="text-slate-300">{regionOutput.toFixed(1)} MW</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className={theme.colors.text.muted}>Efficiency</span>
-                          <span className={theme.colors.text.secondary}>{efficiency.toFixed(1)}%</span>
+                          <span className="text-slate-400">Efficiency</span>
+                          <span className="text-slate-300">{efficiency.toFixed(1)}%</span>
                         </div>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-xs">
                           <Users className="w-3 h-3" />
-                          <span className={theme.colors.text.muted}>Site Status</span>
+                          <span className="text-slate-400">Site Status</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {region.sites.map((site) => (

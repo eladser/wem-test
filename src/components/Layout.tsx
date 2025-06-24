@@ -39,7 +39,7 @@ const Layout = ({ children }: LayoutProps) => {
             <NotificationPanel />
           </div>
         </header>
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 md:p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </SidebarInset>
