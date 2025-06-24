@@ -1,12 +1,22 @@
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { AppSidebar } from "./AppSidebar";
+import { useAuth } from "@/hooks/useAuth";
+import { LogOut, User } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 relative overflow-hidden">
       {/* Enhanced animated background elements */}
@@ -57,9 +67,43 @@ const Layout = ({ children }: LayoutProps) => {
                 <span className="text-emerald-300 font-semibold">System Online</span>
               </div>
               
-              <div className="w-12 h-12 bg-gradient-to-br from-violet-500/20 to-cyan-500/20 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/20 hover:scale-110 transition-all duration-300 cursor-pointer">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-              </div>
+              {/* User Menu */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-auto h-12 bg-gradient-to-br from-violet-500/20 to-cyan-500/20 rounded-2xl flex items-center space-x-3 backdrop-blur-xl border border-white/20 hover:scale-110 transition-all duration-300 cursor-pointer px-4"
+                  >
+                    <User className="w-5 h-5 text-white" />
+                    <div className="text-left">
+                      <div className="text-white font-medium text-sm">{user?.name}</div>
+                      <div className="text-white/60 text-xs capitalize">{user?.role}</div>
+                    </div>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 bg-slate-900/95 border-slate-700 backdrop-blur-xl">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-white">Account Info</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="text-slate-300">{user?.email}</div>
+                        <div className="text-slate-400 capitalize">Role: {user?.role}</div>
+                        <div className="text-slate-400">
+                          Permissions: {user?.permissions.join(', ')}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleLogout}
+                      variant="destructive"
+                      className="w-full flex items-center space-x-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </header>

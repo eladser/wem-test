@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
@@ -30,32 +32,80 @@ const App: React.FC = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/*" element={
-              <SidebarProvider>
-                <Layout>
-                  <Routes>
-                    <Route index element={<Overview />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="assets" element={<Assets />} />
-                    <Route path="region/:regionId" element={<RegionOverview />} />
-                    <Route path="site/:siteId" element={<SiteDashboard />} />
-                    <Route path="site/:siteId/grid" element={<SiteGrid />} />
-                    <Route path="site/:siteId/assets" element={<SiteAssets />} />
-                    <Route path="site/:siteId/reports" element={<SiteReports />} />
-                    <Route path="site/:siteId/finances" element={<SiteFinances />} />
-                    <Route path="site/:siteId/team" element={<SiteTeam />} />
-                    <Route path="site/:siteId/settings" element={<SiteSettings />} />
-                    <Route path="settings" element={<Settings />} />
-                  </Routes>
-                </Layout>
-              </SidebarProvider>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Layout>
+                      <Routes>
+                        <Route index element={<Overview />} />
+                        <Route path="analytics" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Analytics />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="assets" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Assets />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="region/:regionId" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <RegionOverview />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <SiteDashboard />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId/grid" element={
+                          <ProtectedRoute requiredPermission="write">
+                            <SiteGrid />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId/assets" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <SiteAssets />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId/reports" element={
+                          <ProtectedRoute requiredPermission="export">
+                            <SiteReports />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId/finances" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <SiteFinances />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId/team" element={
+                          <ProtectedRoute requiredPermission="manage_users">
+                            <SiteTeam />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="site/:siteId/settings" element={
+                          <ProtectedRoute requiredPermission="manage_settings">
+                            <SiteSettings />
+                          </ProtectedRoute>
+                        } />
+                        <Route path="settings" element={
+                          <ProtectedRoute requiredPermission="manage_settings">
+                            <Settings />
+                          </ProtectedRoute>
+                        } />
+                      </Routes>
+                    </Layout>
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

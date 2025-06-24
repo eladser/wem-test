@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { LoadingButton } from '@/components/common/LoadingButton';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 
 interface ExportOption {
   id: string;
@@ -46,12 +46,27 @@ const exportOptions: ExportOption[] = [
 ];
 
 export const ExportManager: React.FC = () => {
+  const { hasPermission } = useAuth();
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [format, setFormat] = useState('PDF');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
   const [customStartDate, setCustomStartDate] = useState<Date>();
   const [customEndDate, setCustomEndDate] = useState<Date>();
   const [isExporting, setIsExporting] = useState(false);
+
+  if (!hasPermission('export')) {
+    return (
+      <Card className={`${theme.colors.background.card} ${theme.colors.border.primary}`}>
+        <CardContent className="p-6 text-center space-y-4">
+          <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto" />
+          <h3 className="text-lg font-semibold text-white">Export Permission Required</h3>
+          <p className="text-slate-400">
+            You need export permissions to access this feature. Contact your administrator for access.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleOptionToggle = (optionId: string) => {
     setSelectedOptions(prev => 
