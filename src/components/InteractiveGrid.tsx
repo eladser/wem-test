@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sun, Battery, Zap, Building, Fuel, Grid3X3, Settings } from "lucide-react";
+import { Sun, Battery, Zap, Building, Fuel, Grid3X3, Settings, X } from "lucide-react";
 
 interface GridComponent {
   id: string;
@@ -17,14 +17,22 @@ interface GridComponent {
 }
 
 interface EnergyFlow {
+  id: string;
   from: string;
   to: string;
   power: number;
+  enabled: boolean;
+}
+
+interface DraggablePanel {
+  id: string;
+  position: { x: number; y: number };
 }
 
 const InteractiveGrid = () => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [draggedComponent, setDraggedComponent] = useState<string | null>(null);
+  const [draggedPanel, setDraggedPanel] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const [components, setComponents] = useState<GridComponent[]>([
@@ -73,12 +81,17 @@ const InteractiveGrid = () => {
     }
   ]);
 
-  const energyFlows: EnergyFlow[] = [
-    { from: 'solar-1', to: 'load-1', power: 50 },
-    { from: 'solar-1', to: 'battery-1', power: 35 },
-    { from: 'battery-1', to: 'load-1', power: 10 },
-    { from: 'grid-1', to: 'load-1', power: 15 }
-  ];
+  const [energyFlows, setEnergyFlows] = useState<EnergyFlow[]>([
+    { id: 'flow-1', from: 'solar-1', to: 'load-1', power: 50, enabled: true },
+    { id: 'flow-2', from: 'solar-1', to: 'battery-1', power: 35, enabled: true },
+    { id: 'flow-3', from: 'battery-1', to: 'load-1', power: 10, enabled: true },
+    { id: 'flow-4', from: 'grid-1', to: 'load-1', power: 15, enabled: true }
+  ]);
+
+  const [panels, setPanels] = useState<DraggablePanel[]>([
+    { id: 'status-panel', position: { x: 20, y: 20 } },
+    { id: 'controls-panel', position: { x: 20, y: 200 } }
+  ]);
 
   const getComponentIcon = (type: string) => {
     switch (type) {
@@ -106,7 +119,8 @@ const InteractiveGrid = () => {
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent, componentId: string) => {
+  const handleComponentMouseDown = (e: React.MouseEvent, componentId: string) => {
+    e.stopPropagation();
     const component = components.find(c => c.id === componentId);
     if (!component) return;
 
@@ -118,37 +132,72 @@ const InteractiveGrid = () => {
     setDraggedComponent(componentId);
   };
 
+  const handlePanelMouseDown = (e: React.MouseEvent, panelId: string) => {
+    e.stopPropagation();
+    const panel = panels.find(p => p.id === panelId);
+    if (!panel) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setDraggedPanel(panelId);
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggedComponent || !gridRef.current) return;
+    if (!gridRef.current) return;
 
     const gridRect = gridRef.current.getBoundingClientRect();
     const newX = e.clientX - gridRect.left - dragOffset.x;
     const newY = e.clientY - gridRect.top - dragOffset.y;
 
-    setComponents(prev => prev.map(comp =>
-      comp.id === draggedComponent
-        ? { ...comp, position: { x: Math.max(0, newX), y: Math.max(0, newY) } }
-        : comp
-    ));
+    if (draggedComponent) {
+      setComponents(prev => prev.map(comp =>
+        comp.id === draggedComponent
+          ? { ...comp, position: { x: Math.max(0, newX), y: Math.max(0, newY) } }
+          : comp
+      ));
+    }
+
+    if (draggedPanel) {
+      setPanels(prev => prev.map(panel =>
+        panel.id === draggedPanel
+          ? { ...panel, position: { x: Math.max(0, newX), y: Math.max(0, newY) } }
+          : panel
+      ));
+    }
   };
 
   const handleMouseUp = () => {
     setDraggedComponent(null);
+    setDraggedPanel(null);
+  };
+
+  const toggleEnergyFlow = (flowId: string) => {
+    setEnergyFlows(prev => prev.map(flow =>
+      flow.id === flowId ? { ...flow, enabled: !flow.enabled } : flow
+    ));
   };
 
   const renderEnergyFlow = (flow: EnergyFlow) => {
+    if (!flow.enabled) return null;
+
     const fromComponent = components.find(c => c.id === flow.from);
     const toComponent = components.find(c => c.id === flow.to);
     
     if (!fromComponent || !toComponent) return null;
 
-    const fromX = fromComponent.position.x + 50;
-    const fromY = fromComponent.position.y + 50;
-    const toX = toComponent.position.x + 50;
-    const toY = toComponent.position.y + 50;
+    const fromX = fromComponent.position.x + 48;
+    const fromY = fromComponent.position.y + 48;
+    const toX = toComponent.position.x + 48;
+    const toY = toComponent.position.y + 48;
+
+    const midX = fromX + (toX - fromX) * 0.5;
+    const midY = fromY + (toY - fromY) * 0.5;
 
     return (
-      <g key={`${flow.from}-${flow.to}`}>
+      <g key={flow.id}>
         <line
           x1={fromX}
           y1={fromY}
@@ -159,15 +208,15 @@ const InteractiveGrid = () => {
           className="animate-pulse"
         />
         <circle
-          cx={fromX + (toX - fromX) * 0.5}
-          cy={fromY + (toY - fromY) * 0.5}
+          cx={midX}
+          cy={midY}
           r="8"
           fill="rgba(16, 185, 129, 0.8)"
           className="animate-ping"
         />
         <text
-          x={fromX + (toX - fromX) * 0.5}
-          y={fromY + (toY - fromY) * 0.5 - 15}
+          x={midX}
+          y={midY - 15}
           textAnchor="middle"
           fill="white"
           fontSize="12"
@@ -183,53 +232,11 @@ const InteractiveGrid = () => {
   const totalConsumption = Math.abs(components.filter(c => c.power < 0).reduce((sum, c) => sum + c.power, 0));
   const netBalance = totalProduction - totalConsumption;
 
+  const statusPanel = panels.find(p => p.id === 'status-panel');
+  const controlsPanel = panels.find(p => p.id === 'controls-panel');
+
   return (
     <div className="h-full bg-slate-950 text-white overflow-hidden">
-      {/* Control Panel */}
-      <div className="absolute top-4 left-4 z-20 space-y-4">
-        <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700/50 p-4">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-emerald-400 font-medium">System Active</span>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-slate-400">Net Balance</div>
-              <div className={`text-xl font-bold ${netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {netBalance > 0 ? '+' : ''}{netBalance} kW
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <div className="text-slate-400">Production</div>
-                <div className="text-emerald-400 font-semibold">{totalProduction} kW</div>
-              </div>
-              <div>
-                <div className="text-slate-400">Consumption</div>
-                <div className="text-blue-400 font-semibold">{totalConsumption} kW</div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700/50 p-4">
-          <div className="space-y-3">
-            <div className="text-sm font-medium text-white flex items-center space-x-2">
-              <Settings className="w-4 h-4" />
-              <span>Grid Controls</span>
-            </div>
-            <div className="space-y-2">
-              <Button size="sm" variant="outline" className="w-full text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
-                Add Component
-              </Button>
-              <Button size="sm" variant="outline" className="w-full text-xs border-slate-500/30 text-slate-400 hover:bg-slate-500/10">
-                Reset Layout
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-
       {/* Grid Canvas */}
       <div
         ref={gridRef}
@@ -258,10 +265,95 @@ const InteractiveGrid = () => {
             <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#10b981" />
               <stop offset="100%" stopColor="#06d6a0" />
-            </linearGradient>
+            </linearGradiente>
           </defs>
           {energyFlows.map(renderEnergyFlow)}
         </svg>
+
+        {/* Draggable Status Panel */}
+        {statusPanel && (
+          <div
+            className="absolute z-20 cursor-move"
+            style={{
+              left: statusPanel.position.x,
+              top: statusPanel.position.y
+            }}
+            onMouseDown={(e) => handlePanelMouseDown(e, 'status-panel')}
+          >
+            <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700/50 p-4 min-w-[200px]">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-emerald-400 font-medium">System Active</span>
+                  </div>
+                  <div className="w-2 h-2 bg-slate-600 rounded-full cursor-grab"></div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-slate-400">Net Balance</div>
+                  <div className={`text-xl font-bold ${netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {netBalance > 0 ? '+' : ''}{netBalance} kW
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <div className="text-slate-400">Production</div>
+                    <div className="text-emerald-400 font-semibold">{totalProduction} kW</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400">Consumption</div>
+                    <div className="text-blue-400 font-semibold">{totalConsumption} kW</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Draggable Controls Panel */}
+        {controlsPanel && (
+          <div
+            className="absolute z-20 cursor-move"
+            style={{
+              left: controlsPanel.position.x,
+              top: controlsPanel.position.y
+            }}
+            onMouseDown={(e) => handlePanelMouseDown(e, 'controls-panel')}
+          >
+            <Card className="bg-slate-900/90 backdrop-blur-sm border-slate-700/50 p-4 min-w-[200px]">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-white flex items-center space-x-2">
+                    <Settings className="w-4 h-4" />
+                    <span>Grid Controls</span>
+                  </div>
+                  <div className="w-2 h-2 bg-slate-600 rounded-full cursor-grab"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-xs text-slate-400 mb-2">Energy Flows</div>
+                  {energyFlows.map(flow => (
+                    <div key={flow.id} className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300">{flow.from} → {flow.to}</span>
+                      <button
+                        onClick={() => toggleEnergyFlow(flow.id)}
+                        className={`w-8 h-4 rounded-full transition-colors ${
+                          flow.enabled ? 'bg-emerald-500' : 'bg-slate-600'
+                        }`}
+                      >
+                        <div className={`w-3 h-3 bg-white rounded-full transition-transform ${
+                          flow.enabled ? 'translate-x-4' : 'translate-x-0'
+                        }`}></div>
+                      </button>
+                    </div>
+                  ))}
+                  <Button size="sm" variant="outline" className="w-full text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 mt-3">
+                    Add Component
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Components */}
         {components.map((component) => {
@@ -273,14 +365,13 @@ const InteractiveGrid = () => {
             <div
               key={component.id}
               className={`absolute cursor-move transform transition-transform hover:scale-105 ${
-                draggedComponent === component.id ? 'scale-110 z-20' : 'z-10'
+                draggedComponent === component.id ? 'scale-110 z-30' : 'z-10'
               }`}
               style={{
                 left: component.position.x,
-                top: component.position.y,
-                zIndex: draggedComponent === component.id ? 20 : 10
+                top: component.position.y
               }}
-              onMouseDown={(e) => handleMouseDown(e, component.id)}
+              onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
             >
               <Card className="w-24 h-24 bg-slate-800/80 backdrop-blur-sm border-slate-600/50 hover:bg-slate-700/80 transition-all duration-300 shadow-xl hover:shadow-2xl">
                 <div className="h-full flex flex-col items-center justify-center p-2 relative">
