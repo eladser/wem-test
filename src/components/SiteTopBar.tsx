@@ -59,7 +59,7 @@ const SiteTopBar = () => {
                   <p className="text-cyan-300 text-sm font-medium flex items-center space-x-2">
                     <span>{site?.location}</span>
                     <div className="w-1 h-1 bg-cyan-400 rounded-full animate-pulse"></div>
-                    <span className="text-white/60">Capacity: {site?.capacity}MW</span>
+                    <span className="text-white/60">Capacity: {site?.totalCapacity}MW</span>
                   </p>
                 </div>
               </div>
