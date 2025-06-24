@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -262,10 +261,10 @@ const InteractiveGrid = () => {
         {/* Energy Flow Lines */}
         <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }}>
           <defs>
-            <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="energyGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#10b981" />
               <stop offset="100%" stopColor="#06d6a0" />
-            </linearGradiente>
+            </linearGradient>
           </defs>
           {energyFlows.map(renderEnergyFlow)}
         </svg>
