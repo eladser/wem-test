@@ -160,7 +160,7 @@ export const NotificationPanel: React.FC = () => {
       </Button>
 
       {isOpen && (
-        <div className="fixed right-4 top-16 w-96 z-[99999]">
+        <div className="fixed right-4 top-16 w-96" style={{ zIndex: 999999 }}>
           <Card className="bg-slate-900 border-slate-700 shadow-2xl">
             <CardHeader className="pb-3 border-b border-slate-700">
               <div className="flex items-center justify-between">
