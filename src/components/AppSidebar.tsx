@@ -32,24 +32,31 @@ export function AppSidebar() {
   };
 
   const getNavClass = (isActive: boolean) =>
-    `transition-all duration-200 ${
+    `transition-all duration-300 group relative overflow-hidden ${
       isActive 
-        ? "bg-gradient-to-r from-green-600/20 to-emerald-600/20 text-green-400 border-r-2 border-green-500" 
-        : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+        ? "bg-gradient-to-r from-emerald-500/20 via-green-500/10 to-transparent text-emerald-300 border-r-2 border-emerald-400 shadow-lg shadow-emerald-500/10" 
+        : "text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-slate-800/50 hover:to-slate-700/30 hover:shadow-md"
     }`;
 
   return (
-    <Sidebar className={`transition-all duration-300 ${isCollapsed ? "w-14" : "w-64"} border-r border-slate-800`}>
-      <SidebarContent className="bg-slate-900">
+    <Sidebar className={`transition-all duration-500 ${isCollapsed ? "w-14" : "w-64"} border-r border-slate-800/50 relative`}>
+      {/* Sidebar background with blur */}
+      <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-800/20 via-slate-900/40 to-slate-950/60"></div>
+      
+      <SidebarContent className="relative z-10">
         {/* Header */}
-        <div className={`p-4 border-b border-slate-800 transition-all duration-300 ${isCollapsed ? "px-2" : ""}`}>
+        <div className={`p-4 border-b border-slate-800/50 transition-all duration-300 ${isCollapsed ? "px-2" : ""} relative`}>
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center animate-pulse">
-              <Zap className="w-5 h-5 text-white" />
+            <div className="relative">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-xl blur opacity-40 animate-pulse"></div>
             </div>
             {!isCollapsed && (
               <div className="animate-fade-in">
-                <h2 className="font-semibold text-white">Energy Hub</h2>
+                <h2 className="font-semibold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Energy Hub</h2>
                 <p className="text-xs text-slate-400">Management Portal</p>
               </div>
             )}
@@ -69,8 +76,10 @@ export function AppSidebar() {
                     to="/"
                     className={({ isActive }) => getNavClass(isActive)}
                   >
-                    <Home className="w-4 h-4 transition-transform hover:scale-110" />
+                    <Home className="w-4 h-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" />
                     {!isCollapsed && <span className="animate-fade-in">Overview</span>}
+                    {/* Hover effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -90,14 +99,14 @@ export function AppSidebar() {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={() => !isCollapsed && toggleRegion(region.id)}
-                      className="w-full justify-between text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200"
+                      className="w-full justify-between text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-slate-800/50 hover:to-slate-700/30 transition-all duration-300 group relative overflow-hidden"
                     >
                       <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-blue-400 transition-transform hover:scale-110" />
+                        <MapPin className="w-4 h-4 text-blue-400 transition-all duration-300 group-hover:scale-110 group-hover:text-blue-300" />
                         {!isCollapsed && <span>{region.name}</span>}
                       </div>
                       {!isCollapsed && (
-                        <div className="transition-transform duration-200">
+                        <div className="transition-transform duration-300">
                           {expandedRegions.includes(region.id) ? (
                             <ChevronDown className="w-4 h-4" />
                           ) : (
@@ -105,6 +114,8 @@ export function AppSidebar() {
                           )}
                         </div>
                       )}
+                      {/* Hover effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
@@ -117,22 +128,25 @@ export function AppSidebar() {
                             <NavLink
                               to={`/site/${site.id}`}
                               className={({ isActive }) => 
-                                `${getNavClass(isActive)} pl-6 group hover:pl-8 transition-all duration-200`
+                                `${getNavClass(isActive)} pl-6 group hover:pl-8 transition-all duration-300 relative overflow-hidden`
                               }
                             >
-                              <div className="flex items-center space-x-2 w-full">
-                                <div className={`w-2 h-2 rounded-full transition-all ${
-                                  site.status === 'online' ? 'bg-green-500 animate-pulse' :
-                                  site.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
+                              <div className="flex items-center space-x-2 w-full relative z-10">
+                                <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                  site.status === 'online' ? 'bg-emerald-400 animate-pulse shadow-lg shadow-emerald-400/50' :
+                                  site.status === 'maintenance' ? 'bg-amber-400 animate-pulse shadow-lg shadow-amber-400/50' : 
+                                  'bg-red-400 shadow-lg shadow-red-400/50'
                                 }`} />
                                 <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium truncate">{site.name}</div>
                                   <div className="text-xs text-slate-400 truncate">{site.location}</div>
                                 </div>
-                                <div className="text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-800/50 rounded px-1">
                                   {site.currentOutput}kW
                                 </div>
                               </div>
+                              {/* Animated background */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             </NavLink>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -155,8 +169,10 @@ export function AppSidebar() {
                     to="/settings"
                     className={({ isActive }) => getNavClass(isActive)}
                   >
-                    <Settings className="w-4 h-4 transition-transform hover:rotate-90 duration-300" />
+                    <Settings className="w-4 h-4 transition-all duration-500 group-hover:rotate-180" />
                     {!isCollapsed && <span className="animate-fade-in">Settings</span>}
+                    {/* Hover effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
