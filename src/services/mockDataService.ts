@@ -67,6 +67,16 @@ export const mockRegions: Region[] = [
   }
 ];
 
+export const generatePowerData = (): PowerData[] => {
+  return [
+    { time: "00:00", solar: 0, battery: 85, grid: 12 },
+    { time: "06:00", solar: 45, battery: 80, grid: 8 },
+    { time: "12:00", solar: 95, battery: 75, grid: 0 },
+    { time: "18:00", solar: 25, battery: 70, grid: 15 },
+    { time: "24:00", solar: 0, battery: 65, grid: 20 },
+  ];
+};
+
 export const getMockAssets = (siteId: string): Asset[] => {
   const assetMap: Record<string, Asset[]> = {
     'site-a': [

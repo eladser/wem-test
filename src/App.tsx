@@ -3,11 +3,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
+import Overview from "./pages/Overview";
 import SiteDashboard from "./components/SiteDashboard";
 import SiteAssets from "./components/SiteAssets";
 import SiteReports from "./components/SiteReports";
@@ -27,7 +28,7 @@ const App = () => (
             <SidebarProvider>
               <Layout>
                 <Routes>
-                  <Route index element={<Navigate to="/site/site-a" replace />} />
+                  <Route index element={<Overview />} />
                   <Route path="site/:siteId" element={<SiteDashboard />} />
                   <Route path="site/:siteId/assets" element={<SiteAssets />} />
                   <Route path="site/:siteId/reports" element={<SiteReports />} />
