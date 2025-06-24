@@ -3,13 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Assets from "./pages/Assets";
-import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import SiteDashboard from "./components/SiteDashboard";
+import SiteAssets from "./components/SiteAssets";
+import SiteReports from "./components/SiteReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,9 +27,11 @@ const App = () => (
             <SidebarProvider>
               <Layout>
                 <Routes>
-                  <Route index element={<Dashboard />} />
-                  <Route path="assets" element={<Assets />} />
-                  <Route path="reports" element={<Reports />} />
+                  <Route index element={<Navigate to="/site/site-a" replace />} />
+                  <Route path="site/:siteId" element={<SiteDashboard />} />
+                  <Route path="site/:siteId/assets" element={<SiteAssets />} />
+                  <Route path="site/:siteId/reports" element={<SiteReports />} />
+                  <Route path="settings" element={<Settings />} />
                 </Routes>
               </Layout>
             </SidebarProvider>
