@@ -1,5 +1,6 @@
 
 import { config } from '@/config/environment';
+import React from 'react';
 
 // Code splitting utilities
 export const createAsyncComponent = <T extends React.ComponentType<any>>(

@@ -1,5 +1,6 @@
 
 import { config } from '@/config/environment';
+import React from 'react';
 
 // Performance monitoring utilities
 export class PerformanceMonitor {
@@ -71,7 +72,7 @@ export class PerformanceMonitor {
 export const withPerformanceTracking = <T extends object>(
   Component: React.ComponentType<T>,
   componentName: string
-) => {
+): React.ComponentType<T> => {
   return React.memo((props: T) => {
     const monitor = PerformanceMonitor.getInstance();
     
@@ -82,7 +83,7 @@ export const withPerformanceTracking = <T extends object>(
       };
     });
 
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   });
 };
 
