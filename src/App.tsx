@@ -36,7 +36,7 @@ const App: React.FC = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/*" element={
+              <Route path="/" element={
                 <ProtectedRoute>
                   <SidebarProvider>
                     <Layout>
@@ -97,12 +97,12 @@ const App: React.FC = () => {
                             <Settings />
                           </ProtectedRoute>
                         } />
+                        <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Layout>
                   </SidebarProvider>
                 </ProtectedRoute>
               } />
-              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
