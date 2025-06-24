@@ -36,63 +36,63 @@ const App: React.FC = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={
+              <Route path="/*" element={
                 <ProtectedRoute>
                   <SidebarProvider>
                     <Layout>
                       <Routes>
-                        <Route index element={<Overview />} />
-                        <Route path="analytics" element={
+                        <Route path="/" element={<Overview />} />
+                        <Route path="/analytics" element={
                           <ProtectedRoute requiredPermission="read">
                             <Analytics />
                           </ProtectedRoute>
                         } />
-                        <Route path="assets" element={
+                        <Route path="/assets" element={
                           <ProtectedRoute requiredPermission="read">
                             <Assets />
                           </ProtectedRoute>
                         } />
-                        <Route path="region/:regionId" element={
+                        <Route path="/region/:regionId" element={
                           <ProtectedRoute requiredPermission="read">
                             <RegionOverview />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId" element={
+                        <Route path="/site/:siteId" element={
                           <ProtectedRoute requiredPermission="read">
                             <SiteDashboard />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId/grid" element={
+                        <Route path="/site/:siteId/grid" element={
                           <ProtectedRoute requiredPermission="write">
                             <SiteGrid />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId/assets" element={
+                        <Route path="/site/:siteId/assets" element={
                           <ProtectedRoute requiredPermission="read">
                             <SiteAssets />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId/reports" element={
+                        <Route path="/site/:siteId/reports" element={
                           <ProtectedRoute requiredPermission="export">
                             <SiteReports />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId/finances" element={
+                        <Route path="/site/:siteId/finances" element={
                           <ProtectedRoute requiredPermission="read">
                             <SiteFinances />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId/team" element={
+                        <Route path="/site/:siteId/team" element={
                           <ProtectedRoute requiredPermission="manage_users">
                             <SiteTeam />
                           </ProtectedRoute>
                         } />
-                        <Route path="site/:siteId/settings" element={
+                        <Route path="/site/:siteId/settings" element={
                           <ProtectedRoute requiredPermission="manage_settings">
                             <SiteSettings />
                           </ProtectedRoute>
                         } />
-                        <Route path="settings" element={
+                        <Route path="/settings" element={
                           <ProtectedRoute requiredPermission="manage_settings">
                             <Settings />
                           </ProtectedRoute>
