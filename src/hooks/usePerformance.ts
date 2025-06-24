@@ -1,33 +1,58 @@
 
 import { useEffect, useRef } from 'react';
+import { PerformanceMetrics, PerformanceConfig } from '@/types/performance';
 
-interface PerformanceMetrics {
-  componentName: string;
-  renderTime: number;
-  mountTime?: number;
-}
+const defaultConfig: PerformanceConfig = {
+  enableLogging: true,
+  threshold: 100,
+  logLevel: 'info'
+};
 
-export const usePerformance = (componentName: string) => {
+export const usePerformance = (
+  componentName: string, 
+  config: PerformanceConfig = defaultConfig
+) => {
   const startTime = useRef<number>(Date.now());
   const mountTime = useRef<number | null>(null);
 
   useEffect(() => {
     // Component mounted
     mountTime.current = Date.now() - startTime.current;
-    console.log(`[Performance] ${componentName} mounted in ${mountTime.current}ms`);
+    
+    if (config.enableLogging) {
+      const logLevel = mountTime.current > (config.threshold || 100) ? 'warn' : 'info';
+      console[logLevel](`[Performance] ${componentName} mounted in ${mountTime.current}ms`);
+    }
 
     return () => {
       // Component unmounted
       const unmountTime = Date.now() - startTime.current;
-      console.log(`[Performance] ${componentName} unmounted after ${unmountTime}ms`);
+      if (config.enableLogging) {
+        console.log(`[Performance] ${componentName} unmounted after ${unmountTime}ms`);
+      }
     };
-  }, [componentName]);
+  }, [componentName, config]);
 
-  const logRenderTime = () => {
+  const logRenderTime = (): number => {
     const renderTime = Date.now() - startTime.current;
-    console.log(`[Performance] ${componentName} rendered in ${renderTime}ms`);
+    
+    if (config.enableLogging) {
+      const logLevel = renderTime > (config.threshold || 100) ? 'warn' : 'info';
+      console[logLevel](`[Performance] ${componentName} rendered in ${renderTime}ms`);
+    }
+    
     return renderTime;
   };
 
-  return { logRenderTime, mountTime: mountTime.current };
+  const getMetrics = (): PerformanceMetrics => ({
+    componentName,
+    renderTime: Date.now() - startTime.current,
+    mountTime: mountTime.current || undefined
+  });
+
+  return { 
+    logRenderTime, 
+    mountTime: mountTime.current,
+    getMetrics
+  };
 };
