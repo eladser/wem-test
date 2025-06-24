@@ -1,103 +1,100 @@
 
-import { ComponentType, lazy } from 'react';
-import { LazyComponentWithPreload, AsyncPerformanceResult } from '@/types/performance';
-
-export const lazyWithPreload = <T extends ComponentType<any>>(
-  importFunc: () => Promise<{ default: T }>
-): LazyComponentWithPreload<React.ComponentProps<T>> => {
-  const LazyComponent = lazy(importFunc) as LazyComponentWithPreload<React.ComponentProps<T>>;
-  
-  // Add preload method to the lazy component
-  LazyComponent.preload = importFunc;
-  
-  return LazyComponent;
-};
-
-export const preloadComponent = (
-  lazyComponent: LazyComponentWithPreload
-): void => {
-  if (lazyComponent.preload) {
-    lazyComponent.preload();
-  }
-};
+import { config } from '@/config/environment';
 
 // Performance monitoring utilities
-export const measurePerformance = (name: string, fn: () => void): number => {
-  const start = performance.now();
-  fn();
-  const end = performance.now();
-  const duration = end - start;
-  console.log(`[Performance] ${name} took ${duration.toFixed(2)}ms`);
-  return duration;
-};
+export class PerformanceMonitor {
+  private static instance: PerformanceMonitor;
+  private metrics: Map<string, number> = new Map();
 
-export const measureAsyncPerformance = async <T>(
-  name: string, 
-  fn: () => Promise<T>
-): Promise<AsyncPerformanceResult<T>> => {
-  const start = performance.now();
-  const timestamp = Date.now();
-  
-  try {
-    const result = await fn();
-    const end = performance.now();
-    const duration = end - start;
-    
-    console.log(`[Performance] ${name} took ${duration.toFixed(2)}ms`);
-    
-    return {
-      result,
-      duration,
-      timestamp
-    };
-  } catch (error) {
-    const end = performance.now();
-    const duration = end - start;
-    console.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
-    throw error;
-  }
-};
-
-// Debounce utility with better typing
-export const debounce = <T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout;
-  
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
-
-// Throttle utility with better typing
-export const throttle = <T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): ((...args: Parameters<T>) => void) => {
-  let inThrottle: boolean;
-  
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+  static getInstance(): PerformanceMonitor {
+    if (!PerformanceMonitor.instance) {
+      PerformanceMonitor.instance = new PerformanceMonitor();
     }
-  };
+    return PerformanceMonitor.instance;
+  }
+
+  startTiming(label: string): void {
+    this.metrics.set(label, performance.now());
+  }
+
+  endTiming(label: string): number {
+    const startTime = this.metrics.get(label);
+    if (!startTime) {
+      console.warn(`No start time found for ${label}`);
+      return 0;
+    }
+
+    const duration = performance.now() - startTime;
+    this.metrics.delete(label);
+
+    if (config.development.enableDebugLogs) {
+      console.log(`Performance: ${label} took ${duration.toFixed(2)}ms`);
+    }
+
+    // Report to analytics if enabled
+    if (config.features.enableAnalytics) {
+      this.reportMetric(label, duration);
+    }
+
+    return duration;
+  }
+
+  private reportMetric(label: string, duration: number): void {
+    // In production, this would send to your analytics service
+    if (config.app.environment === 'production') {
+      // Example: send to Google Analytics, Mixpanel, etc.
+      console.log(`Analytics: ${label} - ${duration}ms`);
+    }
+  }
+
+  measureWebVitals(): void {
+    // Measure Core Web Vitals
+    if ('web-vital' in window) {
+      // This would integrate with web-vitals library in a real app
+      console.log('Web Vitals measurement would be implemented here');
+    }
+  }
+
+  measureResourceTiming(): void {
+    const resources = performance.getEntriesByType('resource');
+    const slowResources = resources.filter(
+      (resource) => resource.duration > 1000
+    );
+
+    if (slowResources.length > 0 && config.development.enableDebugLogs) {
+      console.warn('Slow resources detected:', slowResources);
+    }
+  }
+}
+
+// React performance utilities
+export const withPerformanceTracking = <T extends object>(
+  Component: React.ComponentType<T>,
+  componentName: string
+) => {
+  return React.memo((props: T) => {
+    const monitor = PerformanceMonitor.getInstance();
+    
+    React.useEffect(() => {
+      monitor.startTiming(`${componentName}-render`);
+      return () => {
+        monitor.endTiming(`${componentName}-render`);
+      };
+    });
+
+    return <Component {...props} />;
+  });
 };
 
-// Create a performance observer for more detailed metrics
-export const createPerformanceObserver = (
-  callback: (entries: PerformanceEntry[]) => void
-): PerformanceObserver | null => {
-  if (typeof PerformanceObserver !== 'undefined') {
-    const observer = new PerformanceObserver((list) => {
-      callback(list.getEntries());
+// Bundle size analyzer
+export const analyzeBundleSize = () => {
+  if (config.development.enableDebugLogs) {
+    import('webpack-bundle-analyzer').then((analyzer) => {
+      console.log('Bundle analyzer available:', analyzer);
+    }).catch(() => {
+      console.log('Bundle analyzer not available in this environment');
     });
-    
-    return observer;
   }
-  
-  return null;
 };
+
+export const performanceMonitor = PerformanceMonitor.getInstance();
