@@ -119,7 +119,7 @@ export function AppSidebar() {
                           <span className="text-sm font-medium">{site.name}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-slate-400">{site.capacity}MW</span>
+                          <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
                         </div>
                       </NavLink>
                     </SidebarMenuButton>
