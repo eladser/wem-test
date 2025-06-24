@@ -1,77 +1,98 @@
 
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { getMockPowerData, getMockMetrics, getMockEnergyMix, mockRegions } from "@/services/mockDataService";
+import { Zap, Battery, TrendingUp, AlertCircle } from "lucide-react";
+import { mockRegions, generatePowerData } from "@/services/mockDataService";
+import { Metric } from "@/types/energy";
 import SiteNavigation from "./SiteNavigation";
 
 const SiteDashboard = () => {
   const { siteId } = useParams<{ siteId: string }>();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   if (!siteId) return <div>Site not found</div>;
 
   const site = mockRegions.flatMap(r => r.sites).find(s => s.id === siteId);
-  const powerData = getMockPowerData(siteId);
-  const metrics = getMockMetrics(siteId);
-  const energyMix = getMockEnergyMix();
 
   if (!site) return <div>Site not found</div>;
 
+  const powerData = generatePowerData();
+  const energyMix = [
+    { name: "Solar", value: 65, color: "#10b981" },
+    { name: "Battery", value: 25, color: "#3b82f6" },
+    { name: "Grid", value: 10, color: "#f59e0b" },
+  ];
+
+  const metrics: Metric[] = [
+    {
+      title: "Current Power Output",
+      value: `${site.currentOutput} kW`,
+      change: "+8.2%",
+      trend: "up",
+      icon: Zap,
+      color: "green"
+    },
+    {
+      title: "Battery Level",
+      value: "78%",
+      change: "-2.1%", 
+      trend: "down",
+      icon: Battery,
+      color: "blue"
+    },
+    {
+      title: "Energy Today",
+      value: "145.2 kWh",
+      change: "+12.5%",
+      trend: "up",
+      icon: TrendingUp,
+      color: "emerald"
+    },
+    {
+      title: "System Efficiency",
+      value: `${site.efficiency}%`,
+      change: "+0.3%",
+      trend: "up",
+      icon: TrendingUp,
+      color: "cyan"
+    }
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">{site.name}</h1>
-          <p className="text-slate-400 mt-1">
-            {site.location} - {currentTime.toLocaleDateString()} - {currentTime.toLocaleTimeString()}
-          </p>
+        <div className="animate-slide-in-left">
+          <h1 className="text-3xl font-bold text-white">{site.name} - Dashboard</h1>
+          <p className="text-slate-400 mt-1">{site.location} • {site.region}</p>
         </div>
-        <div className={`flex items-center space-x-2 border rounded-lg px-4 py-2 ${
-          site.status === 'online' ? 'bg-green-500/10 border-green-500/20' :
-          site.status === 'maintenance' ? 'bg-yellow-500/10 border-yellow-500/20' :
-          'bg-red-500/10 border-red-500/20'
-        }`}>
-          <div className={`w-2 h-2 rounded-full animate-pulse ${
-            site.status === 'online' ? 'bg-green-500' :
-            site.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
-          }`}></div>
-          <span className={`font-medium capitalize ${
-            site.status === 'online' ? 'text-green-400' :
-            site.status === 'maintenance' ? 'text-yellow-400' : 'text-red-400'
-          }`}>
-            {site.status}
-          </span>
+        <div className="flex items-center space-x-2 bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-2 animate-pulse">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-green-400 font-medium">{site.status}</span>
         </div>
       </div>
 
-      <SiteNavigation siteId={siteId} />
+      <div className="animate-slide-in-right">
+        <SiteNavigation siteId={siteId} />
+      </div>
 
-      {/* Metrics Grid */}
+      {/* Metrics Grid with staggered animation */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric, index) => (
-          <Card key={index} className="bg-slate-900/50 border-slate-700 hover:bg-slate-800/50 transition-all duration-200">
+          <Card 
+            key={index} 
+            className="bg-slate-900/50 border-slate-700 hover:bg-slate-800/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/10 animate-fade-in"
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-300">
                 {metric.title}
               </CardTitle>
-              <metric.icon className={`h-4 w-4 text-${metric.color}-400`} />
+              <metric.icon className={`h-4 w-4 text-${metric.color}-400 transition-transform hover:scale-110`} />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white mb-1">{metric.value}</div>
               <div className="flex items-center text-xs">
-                {metric.trend === "up" ? (
-                  <TrendingUp className="h-3 w-3 text-green-400 mr-1" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 text-red-400 mr-1" />
-                )}
+                <TrendingUp className={`h-3 w-3 mr-1 ${metric.trend === "up" ? "text-green-400" : "text-red-400"} transition-colors`} />
                 <span className={metric.trend === "up" ? "text-green-400" : "text-red-400"}>
                   {metric.change}
                 </span>
@@ -84,66 +105,107 @@ const SiteDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Power Generation Chart */}
-        <Card className="lg:col-span-2 bg-slate-900/50 border-slate-700">
+        <Card className="lg:col-span-2 bg-slate-900/50 border-slate-700 hover:border-slate-600 transition-all duration-300 animate-scale-in">
           <CardHeader>
-            <CardTitle className="text-white">Power Generation - {site.name}</CardTitle>
+            <CardTitle className="text-white">Power Generation</CardTitle>
             <CardDescription className="text-slate-400">
-              Real-time power output from all sources
+              Real-time power output from {site.name}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={powerData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="time" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Area type="monotone" dataKey="solar" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="battery" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="grid" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={powerData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="time" stroke="#9ca3af" />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1f2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="solar" 
+                    stackId="1" 
+                    stroke="#10b981" 
+                    fill="#10b981" 
+                    fillOpacity={0.6}
+                    className="animate-fade-in"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="battery" 
+                    stackId="1" 
+                    stroke="#3b82f6" 
+                    fill="#3b82f6" 
+                    fillOpacity={0.6}
+                    className="animate-fade-in"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="grid" 
+                    stackId="1" 
+                    stroke="#f59e0b" 
+                    fill="#f59e0b" 
+                    fillOpacity={0.6}
+                    className="animate-fade-in"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* Energy Mix */}
-        <Card className="bg-slate-900/50 border-slate-700">
+        <Card className="bg-slate-900/50 border-slate-700 hover:border-slate-600 transition-all duration-300 animate-scale-in">
           <CardHeader>
             <CardTitle className="text-white">Energy Mix</CardTitle>
             <CardDescription className="text-slate-400">
-              Current energy source distribution
+              Current distribution for {site.name}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={energyMix}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
-                >
-                  {energyMix.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={energyMix}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}%`}
+                    className="animate-scale-in"
+                  >
+                    {energyMix.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color}
+                        className="hover:opacity-80 transition-opacity cursor-pointer"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
             <div className="mt-4 space-y-2">
               {energyMix.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
+                <div 
+                  key={index} 
+                  className="flex items-center justify-between hover:bg-slate-800/30 p-2 rounded transition-colors animate-fade-in"
+                  style={{ animationDelay: `${0.5 + index * 0.1}s` }}
+                >
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    <div 
+                      className="w-3 h-3 rounded-full transition-transform hover:scale-110" 
+                      style={{ backgroundColor: item.color }}
+                    ></div>
                     <span className="text-slate-300 text-sm">{item.name}</span>
                   </div>
                   <span className="text-white font-medium">{item.value}%</span>
@@ -153,6 +215,40 @@ const SiteDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Alerts */}
+      <Card className="bg-slate-900/50 border-slate-700 hover:border-slate-600 transition-all duration-300 animate-slide-in-up">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-yellow-400 animate-pulse" />
+            <span>Recent Alerts for {site.name}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg hover:bg-yellow-500/20 transition-all duration-200 animate-fade-in">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <div>
+                  <p className="text-white font-medium">Battery optimization recommended</p>
+                  <p className="text-slate-400 text-sm">{site.name} - Battery Pack #1</p>
+                </div>
+              </div>
+              <span className="text-slate-400 text-sm">2 min ago</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-all duration-200 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div>
+                  <p className="text-white font-medium">Peak performance achieved</p>
+                  <p className="text-slate-400 text-sm">{site.name} - Solar Array #1</p>
+                </div>
+              </div>
+              <span className="text-slate-400 text-sm">15 min ago</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
