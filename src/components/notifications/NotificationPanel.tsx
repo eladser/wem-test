@@ -140,18 +140,18 @@ export const NotificationPanel: React.FC = () => {
       </Button>
 
       {isOpen && (
-        <Card className={`absolute right-0 top-12 w-96 max-h-96 overflow-y-auto z-50 ${theme.colors.background.card} ${theme.colors.border.primary} shadow-xl`}>
+        <Card className={`absolute right-0 top-12 w-96 max-h-96 overflow-y-auto z-[9999] ${theme.colors.background.card} ${theme.colors.border.primary} shadow-2xl bg-slate-900 border border-slate-700`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Notifications</CardTitle>
+              <CardTitle className="text-lg text-white">Notifications</CardTitle>
               <div className="flex gap-2">
                 {unreadCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-slate-300 hover:text-white">
                     <Check className="w-4 h-4 mr-1" />
                     Mark all read
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-slate-300 hover:text-white">
                   <X className="w-4 h-4" />
                 </Button>
               </div>
@@ -186,7 +186,7 @@ export const NotificationPanel: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeNotification(notification.id)}
-                          className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
+                          className="h-6 w-6 p-0 opacity-60 hover:opacity-100 text-slate-400 hover:text-white"
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -201,7 +201,7 @@ export const NotificationPanel: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-6 text-xs px-2"
+                              className="h-6 text-xs px-2 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
                               onClick={notification.action.onClick}
                             >
                               {notification.action.label}
@@ -211,7 +211,7 @@ export const NotificationPanel: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 text-xs px-2"
+                              className="h-6 text-xs px-2 text-slate-400 hover:text-white"
                               onClick={() => markAsRead(notification.id)}
                             >
                               Mark read
