@@ -1,0 +1,428 @@
+
+{
+  "info": {
+    "name": "WEM Dashboard API",
+    "description": "Complete API collection for Wind Energy Management Dashboard with comprehensive site data management, analytics, and monitoring capabilities.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "API base URL"
+    },
+    {
+      "key": "site_id",
+      "value": "site-a",
+      "type": "string",
+      "description": "Default site ID for testing"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string",
+      "description": "Bearer token for authentication"
+    }
+  ],
+  "item": [
+    {
+      "name": "Sites",
+      "description": "Site management endpoints",
+      "item": [
+        {
+          "name": "Get Site Data (Full)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Include-Assets",
+                "value": "true"
+              },
+              {
+                "key": "X-Include-Power-Data",
+                "value": "true"
+              },
+              {
+                "key": "X-Include-Metrics",
+                "value": "true"
+              },
+              {
+                "key": "X-Time-Range",
+                "value": "day"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}"]
+            },
+            "description": "Get comprehensive site data including assets, power data, and metrics"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"site\": {\n    \"id\": \"site-a\",\n    \"name\": \"Wind Farm Alpha\",\n    \"location\": \"Northern California\",\n    \"region\": \"west-coast\",\n    \"status\": \"online\",\n    \"totalCapacity\": 2500,\n    \"currentOutput\": 1850,\n    \"efficiency\": 92.5,\n    \"lastUpdate\": \"2024-01-15T10:30:00Z\"\n  },\n  \"assets\": [...],\n  \"powerData\": [...],\n  \"metrics\": [...],\n  \"metadata\": {\n    \"timestamp\": \"2024-01-15T10:30:00Z\",\n    \"requestId\": \"req_123456\",\n    \"totalRecords\": 45,\n    \"format\": \"json\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Site Data (Basic)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}"]
+            },
+            "description": "Get basic site information without additional data"
+          }
+        },
+        {
+          "name": "Get Site Assets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/assets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "assets"]
+            },
+            "description": "Get all assets for a specific site"
+          }
+        },
+        {
+          "name": "Get Site Assets by Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/assets?type=inverter",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "assets"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "inverter",
+                  "description": "Asset type filter (inverter, battery, solar_panel, wind_turbine)"
+                }
+              ]
+            },
+            "description": "Get assets filtered by type"
+          }
+        },
+        {
+          "name": "Get Power Data",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/power-data?range=day",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "power-data"],
+              "query": [
+                {
+                  "key": "range",
+                  "value": "day",
+                  "description": "Time range: hour, day, week, month"
+                }
+              ]
+            },
+            "description": "Get power generation data for a specific time range"
+          }
+        },
+        {
+          "name": "Update Site Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"maintenance\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "status"]
+            },
+            "description": "Update the operational status of a site"
+          }
+        },
+        {
+          "name": "Create New Site",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Wind Farm\",\n  \"location\": \"Texas\",\n  \"region\": \"south-central\",\n  \"totalCapacity\": 3000,\n  \"status\": \"online\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sites",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites"]
+            },
+            "description": "Create a new site in the system"
+          }
+        },
+        {
+          "name": "Delete Site",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}"]
+            },
+            "description": "Delete a site from the system"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "description": "Analytics and reporting endpoints",
+      "item": [
+        {
+          "name": "Get Site Analytics (All)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "analytics"]
+            },
+            "description": "Get comprehensive analytics for a site"
+          }
+        },
+        {
+          "name": "Get Site Analytics (Specific Metrics)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/analytics?metrics=efficiency,output,uptime",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "analytics"],
+              "query": [
+                {
+                  "key": "metrics",
+                  "value": "efficiency,output,uptime",
+                  "description": "Comma-separated list of specific metrics"
+                }
+              ]
+            },
+            "description": "Get specific analytics metrics for a site"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data Export",
+      "description": "Data export endpoints in various formats",
+      "item": [
+        {
+          "name": "Export Site Data (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/export?format=json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                }
+              ]
+            },
+            "description": "Export site data in JSON format"
+          }
+        },
+        {
+          "name": "Export Site Data (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/csv"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/export?format=csv",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                }
+              ]
+            },
+            "description": "Export site data in CSV format"
+          }
+        },
+        {
+          "name": "Export Site Data (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/pdf"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/sites/{{site_id}}/export?format=pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sites", "{{site_id}}", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "pdf"
+                }
+              ]
+            },
+            "description": "Export site data in PDF format"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gateway & Monitoring",
+      "description": "API Gateway monitoring and health check endpoints",
+      "item": [
+        {
+          "name": "Gateway Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check API Gateway health status"
+          }
+        },
+        {
+          "name": "Gateway Metrics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gateway/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gateway", "metrics"]
+            },
+            "description": "Get API Gateway performance metrics"
+          }
+        },
+        {
+          "name": "Cache Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gateway/cache/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gateway", "cache", "stats"]
+            },
+            "description": "Get cache performance statistics"
+          }
+        },
+        {
+          "name": "Clear Cache",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/gateway/cache",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gateway", "cache"]
+            },
+            "description": "Clear the API Gateway cache"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set request timestamp",
+          "pm.globals.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response validation",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});",
+          "",
+          "// Response time check",
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// JSON response validation",
+          "if (pm.response.headers.get('Content-Type')?.includes('application/json')) {",
+          "    pm.test('Response is valid JSON', function () {",
+          "        pm.response.to.have.jsonBody();",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}
