@@ -47,10 +47,13 @@ export const RegionAnalytics: React.FC = () => {
                   borderRadius: '8px',
                   color: '#fff'
                 }}
-                formatter={(value, name) => [
-                  `${value} ${name === 'production' || name === 'consumption' ? 'MW' : '$'}`,
-                  name.charAt(0).toUpperCase() + name.slice(1)
-                ]}
+                formatter={(value, name) => {
+                  const nameStr = String(name);
+                  return [
+                    `${value} ${nameStr === 'production' || nameStr === 'consumption' ? 'MW' : '$'}`,
+                    nameStr.charAt(0).toUpperCase() + nameStr.slice(1)
+                  ];
+                }}
               />
               <Bar dataKey="production" fill="#10b981" radius={[4, 4, 0, 0]} />
               <Bar dataKey="consumption" fill="#3b82f6" radius={[4, 4, 0, 0]} />
