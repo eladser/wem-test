@@ -15,9 +15,9 @@ export const theme = {
       primary: 'from-slate-950 via-slate-900 to-slate-800',
       secondary: 'from-slate-900/95 via-slate-800/95 to-slate-700/95',
       card: 'bg-slate-900/50 backdrop-blur-xl border-slate-700/50',
-      glass: 'bg-white/5 backdrop-blur-xl border-white/10'
+      glass: 'bg-white/5 backdrop-blur-xl border-white/10',
+      cardHover: 'hover:bg-slate-800/60'
     },
-    cardHover: 'hover:bg-slate-800/60',
     text: {
       primary: 'text-white',
       secondary: 'text-slate-300',
