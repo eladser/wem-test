@@ -110,7 +110,7 @@ const SiteTeam = () => {
               <Calendar className="h-4 w-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">< 15min</div>
+              <div className="text-2xl font-bold text-white">&lt; 15min</div>
               <p className="text-xs text-emerald-400">Average response</p>
             </CardContent>
           </Card>
