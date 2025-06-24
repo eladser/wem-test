@@ -123,109 +123,153 @@ export const NotificationPanel: React.FC = () => {
     return `${days}d ago`;
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-notification-panel]')) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" data-notification-panel>
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative"
+        className="relative text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </Badge>
+          <div className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-medium">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          </div>
         )}
       </Button>
 
       {isOpen && (
-        <Card className={`absolute right-0 top-12 w-96 max-h-96 overflow-y-auto z-[9999] ${theme.colors.background.card} ${theme.colors.border.primary} shadow-2xl bg-slate-900 border border-slate-700`}>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg text-white">Notifications</CardTitle>
-              <div className="flex gap-2">
-                {unreadCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-slate-300 hover:text-white">
-                    <Check className="w-4 h-4 mr-1" />
-                    Mark all read
-                  </Button>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-slate-300 hover:text-white">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 p-4 pt-0">
-            {notifications.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                No notifications
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={cn(
-                    "p-3 rounded-lg border transition-all duration-200 hover:bg-slate-800/30",
-                    getNotificationBorder(notification.type),
-                    !notification.read ? "bg-slate-800/20" : "bg-slate-800/10"
+        <div className="absolute right-0 top-12 w-96 z-[100]">
+          <Card className="bg-slate-900 border-slate-700 shadow-2xl">
+            <CardHeader className="pb-3 border-b border-slate-700">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Notifications
+                  {unreadCount > 0 && (
+                    <Badge className="bg-red-500 text-white">
+                      {unreadCount}
+                    </Badge>
                   )}
-                >
-                  <div className="flex items-start gap-3">
-                    {getNotificationIcon(notification.type)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className={cn(
-                          "font-medium text-sm",
-                          !notification.read ? "text-white" : "text-slate-300"
-                        )}>
-                          {notification.title}
-                        </h4>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeNotification(notification.id)}
-                          className="h-6 w-6 p-0 opacity-60 hover:opacity-100 text-slate-400 hover:text-white"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">{notification.message}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500">
-                          {formatTime(notification.timestamp)}
-                        </span>
-                        <div className="flex gap-2">
-                          {notification.action && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-6 text-xs px-2 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-                              onClick={notification.action.onClick}
-                            >
-                              {notification.action.label}
-                            </Button>
-                          )}
-                          {!notification.read && (
+                </CardTitle>
+                <div className="flex gap-2">
+                  {unreadCount > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={markAllAsRead} 
+                      className="text-slate-300 hover:text-white h-8"
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Mark all read
+                    </Button>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setIsOpen(false)} 
+                    className="text-slate-300 hover:text-white h-8 w-8 p-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 max-h-96 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No notifications</p>
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  {notifications.map((notification, index) => (
+                    <div
+                      key={notification.id}
+                      className={cn(
+                        "p-4 border-b border-slate-700 last:border-b-0 transition-all duration-200 hover:bg-slate-800/50",
+                        !notification.read && "bg-slate-800/30"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        {getNotificationIcon(notification.type)}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className={cn(
+                              "font-medium text-sm",
+                              !notification.read ? "text-white" : "text-slate-300"
+                            )}>
+                              {notification.title}
+                            </h4>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 text-xs px-2 text-slate-400 hover:text-white"
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={() => removeNotification(notification.id)}
+                              className="h-6 w-6 p-0 opacity-60 hover:opacity-100 text-slate-400 hover:text-white"
                             >
-                              Mark read
+                              <X className="w-3 h-3" />
                             </Button>
-                          )}
+                          </div>
+                          <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+                            {notification.message}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-500">
+                              {formatTime(notification.timestamp)}
+                            </span>
+                            <div className="flex gap-2">
+                              {notification.action && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 text-xs px-2 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                                  onClick={notification.action.onClick}
+                                >
+                                  {notification.action.label}
+                                </Button>
+                              )}
+                              {!notification.read && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 text-xs px-2 text-slate-400 hover:text-white"
+                                  onClick={() => markAsRead(notification.id)}
+                                >
+                                  Mark read
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
