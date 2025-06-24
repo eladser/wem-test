@@ -12,7 +12,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+    <>
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 bg-slate-900/50 backdrop-blur-xl border-b border-slate-700/50">
@@ -43,7 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
       </SidebarInset>
-    </div>
+    </>
   );
 };
 

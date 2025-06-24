@@ -36,115 +36,73 @@ const App: React.FC = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={
+              <Route path="/*" element={
                 <ProtectedRoute>
                   <SidebarProvider>
-                    <Layout>
-                      <Overview />
-                    </Layout>
+                    <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+                      <Routes>
+                        <Route path="/" element={<Layout><Overview /></Layout>} />
+                        <Route path="/analytics" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Layout><Analytics /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/assets" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Layout><Assets /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/region/:regionId" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Layout><RegionOverview /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Layout><SiteDashboard /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId/grid" element={
+                          <ProtectedRoute requiredPermission="write">
+                            <Layout><SiteGrid /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId/assets" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Layout><SiteAssets /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId/reports" element={
+                          <ProtectedRoute requiredPermission="export">
+                            <Layout><SiteReports /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId/finances" element={
+                          <ProtectedRoute requiredPermission="read">
+                            <Layout><SiteFinances /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId/team" element={
+                          <ProtectedRoute requiredPermission="manage_users">
+                            <Layout><SiteTeam /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/site/:siteId/settings" element={
+                          <ProtectedRoute requiredPermission="manage_settings">
+                            <Layout><SiteSettings /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/settings" element={
+                          <ProtectedRoute requiredPermission="manage_settings">
+                            <Layout><Settings /></Layout>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </div>
                   </SidebarProvider>
                 </ProtectedRoute>
               } />
-              <Route path="/analytics" element={
-                <ProtectedRoute requiredPermission="read">
-                  <SidebarProvider>
-                    <Layout>
-                      <Analytics />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/assets" element={
-                <ProtectedRoute requiredPermission="read">
-                  <SidebarProvider>
-                    <Layout>
-                      <Assets />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/region/:regionId" element={
-                <ProtectedRoute requiredPermission="read">
-                  <SidebarProvider>
-                    <Layout>
-                      <RegionOverview />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId" element={
-                <ProtectedRoute requiredPermission="read">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteDashboard />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId/grid" element={
-                <ProtectedRoute requiredPermission="write">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteGrid />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId/assets" element={
-                <ProtectedRoute requiredPermission="read">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteAssets />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId/reports" element={
-                <ProtectedRoute requiredPermission="export">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteReports />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId/finances" element={
-                <ProtectedRoute requiredPermission="read">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteFinances />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId/team" element={
-                <ProtectedRoute requiredPermission="manage_users">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteTeam />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/site/:siteId/settings" element={
-                <ProtectedRoute requiredPermission="manage_settings">
-                  <SidebarProvider>
-                    <Layout>
-                      <SiteSettings />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute requiredPermission="manage_settings">
-                  <SidebarProvider>
-                    <Layout>
-                      <Settings />
-                    </Layout>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
