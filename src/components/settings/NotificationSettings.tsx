@@ -115,6 +115,7 @@ export const NotificationSettings = () => {
 
         <div className="flex justify-between pt-4 border-t border-slate-700">
           <LoadingButton
+            loading={false}
             variant="outline"
             onClick={handleReset}
             className={`${theme.colors.border.accent} ${theme.colors.text.accent}`}

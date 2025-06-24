@@ -38,7 +38,14 @@ export const SecuritySettings = () => {
   };
 
   const handleUpdatePassword = async () => {
-    const formErrors = validateForm(passwords, validationRules);
+    // Convert PasswordForm to Record<string, string> for validation
+    const passwordData: Record<string, string> = {
+      current: passwords.current,
+      new: passwords.new,
+      confirm: passwords.confirm
+    };
+    
+    const formErrors = validateForm(passwordData, validationRules);
     
     // Additional confirmation validation
     if (passwords.new !== passwords.confirm) {
