@@ -2,6 +2,7 @@
 import { deploymentManager } from './deployment';
 import { logger } from './logging';
 import { healthMonitor } from './monitoring';
+import { initializeSecurity } from './security';
 import { config } from '@/config/environment';
 
 export class ApplicationStartup {
@@ -17,6 +18,9 @@ export class ApplicationStartup {
   async initialize(): Promise<boolean> {
     try {
       logger.info('Starting application initialization');
+
+      // Initialize security first
+      initializeSecurity();
 
       // Initialize deployment
       const deploymentSuccess = await deploymentManager.initialize();
