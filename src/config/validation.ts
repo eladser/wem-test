@@ -1,6 +1,7 @@
 
 import { config } from './environment';
 import { logger } from '@/utils/logging';
+import { apiConfiguration } from './api';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -35,6 +36,10 @@ export class ConfigValidator {
       if (!config.features.enableErrorReporting) {
         warnings.push('Error reporting is disabled in production');
       }
+
+      if (config.features.enableErrorReporting && !config.services.errorReportingKey) {
+        warnings.push('Error reporting is enabled but no error reporting key is configured');
+      }
     }
 
     // API configuration validation
@@ -51,6 +56,17 @@ export class ConfigValidator {
       warnings.push('Cache timeout is very low, consider increasing for better performance');
     }
 
+    // Security validation
+    if (config.app.environment === 'production') {
+      if (!config.security.enableCSP) {
+        warnings.push('Content Security Policy is disabled in production');
+      }
+
+      if (!config.security.enableRateLimiting) {
+        warnings.push('Rate limiting is disabled in production');
+      }
+    }
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -58,32 +74,43 @@ export class ConfigValidator {
     };
   }
 
-  validateApiConnection(): Promise<ValidationResult> {
-    return new Promise((resolve) => {
-      const errors: string[] = [];
-      const warnings: string[] = [];
+  async validateApiConnection(): Promise<ValidationResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
 
-      // Simple API connectivity check
-      fetch(`${config.api.baseUrl}/health`, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(5000)
-      })
-        .then(response => {
-          if (!response.ok) {
-            errors.push(`API health check failed with status: ${response.status}`);
-          }
-        })
-        .catch(error => {
-          errors.push(`API connectivity check failed: ${error.message}`);
-        })
-        .finally(() => {
-          resolve({
-            isValid: errors.length === 0,
-            errors,
-            warnings
-          });
+    try {
+      // Find a healthy endpoint
+      const healthyEndpoint = await apiConfiguration.findHealthyEndpoint();
+      
+      if (healthyEndpoint.url === 'mock://api') {
+        warnings.push('Using mock API endpoint - no real API connectivity available');
+        return {
+          isValid: true,
+          errors,
+          warnings
+        };
+      }
+
+      // Test the healthy endpoint
+      const isHealthy = await apiConfiguration.checkEndpointHealth(healthyEndpoint);
+      
+      if (!isHealthy) {
+        errors.push('No healthy API endpoints available');
+      } else {
+        logger.info('API connectivity validated successfully', { 
+          endpoint: healthyEndpoint.url 
         });
-    });
+      }
+
+    } catch (error) {
+      errors.push(`API connectivity validation failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
   }
 
   async runAllValidations(): Promise<ValidationResult> {
@@ -109,7 +136,9 @@ export class ConfigValidator {
     }
 
     if (result.isValid) {
-      logger.info('Configuration validation passed');
+      logger.info('Configuration validation passed', { 
+        warningCount: result.warnings.length 
+      });
     }
 
     return result;

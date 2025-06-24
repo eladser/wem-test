@@ -1,5 +1,7 @@
 
 import { config } from '@/config/environment';
+import { apiConfiguration } from '@/config/api';
+import { logger } from '@/utils/logging';
 
 export interface ApiResponse<T> {
   data: T;
@@ -7,33 +9,31 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface ApiError {
-  message: string;
-  status: number;
-  code?: string;
+export class ApiError extends Error {
+  constructor(public message: string, public status: number, public code?: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
 class ApiService {
-  private baseUrl: string;
-  private timeout: number;
-  private retryAttempts: number;
-
-  constructor() {
-    this.baseUrl = config.api.baseUrl;
-    this.timeout = config.api.timeout;
-    this.retryAttempts = config.api.retryAttempts;
-  }
-
   private async fetchWithRetry<T>(
-    url: string,
+    endpoint: string,
     options: RequestInit = {},
     attempt: number = 1
   ): Promise<ApiResponse<T>> {
+    const apiEndpoint = await apiConfiguration.findHealthyEndpoint();
+    
+    // Handle mock endpoint
+    if (apiEndpoint.url === 'mock://api') {
+      return this.handleMockRequest<T>(endpoint, options);
+    }
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const timeoutId = setTimeout(() => controller.abort(), apiEndpoint.timeout);
 
     try {
-      const response = await fetch(`${this.baseUrl}${url}`, {
+      const response = await fetch(`${apiEndpoint.url}${endpoint}`, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
@@ -53,14 +53,63 @@ class ApiService {
     } catch (error) {
       clearTimeout(timeoutId);
 
-      if (attempt < this.retryAttempts && error instanceof Error && error.name !== 'AbortError') {
-        console.log(`API call failed, retrying... (${attempt}/${this.retryAttempts})`);
+      if (attempt < apiEndpoint.retryAttempts && error instanceof Error && error.name !== 'AbortError') {
+        logger.warn(`API call failed, retrying... (${attempt}/${apiEndpoint.retryAttempts})`, {
+          endpoint,
+          attempt,
+          error: error.message
+        });
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        return this.fetchWithRetry<T>(url, options, attempt + 1);
+        return this.fetchWithRetry<T>(endpoint, options, attempt + 1);
+      }
+
+      // If all retries failed, try rotating to next endpoint
+      if (attempt >= apiEndpoint.retryAttempts) {
+        await apiConfiguration.rotateEndpoint();
       }
 
       throw error;
     }
+  }
+
+  private async handleMockRequest<T>(endpoint: string, options: RequestInit): Promise<ApiResponse<T>> {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, config.development.mockApiDelay));
+
+    logger.info('Mock API request', { endpoint, method: options.method || 'GET' });
+
+    // Return mock data based on endpoint
+    const mockData = this.generateMockData(endpoint);
+    return { data: mockData as T, success: true };
+  }
+
+  private generateMockData(endpoint: string): any {
+    // Basic mock data generation
+    if (endpoint.includes('/health')) {
+      return { status: 'healthy', timestamp: new Date().toISOString() };
+    }
+    
+    if (endpoint.includes('/regions')) {
+      return [];
+    }
+
+    if (endpoint.includes('/assets')) {
+      return [];
+    }
+
+    if (endpoint.includes('/power-data')) {
+      return [];
+    }
+
+    if (endpoint.includes('/metrics')) {
+      return [];
+    }
+
+    if (endpoint.includes('/energy-mix')) {
+      return [];
+    }
+
+    return { message: 'Mock response', timestamp: new Date().toISOString() };
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
@@ -87,10 +136,3 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-
-export class ApiError extends Error {
-  constructor(public message: string, public status: number, public code?: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
