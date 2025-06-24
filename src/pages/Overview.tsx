@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { mockRegions } from "@/services/mockDataService";
 import { QuickActions } from "@/components/widgets/QuickActions";
 import { SystemStatusMonitor } from "@/components/monitoring/SystemStatusMonitor";
+import { SystemMonitor } from "@/components/monitoring/SystemMonitor";
+import { EnergyAnalytics } from "@/components/widgets/EnergyAnalytics";
+import { RealTimeMonitor } from "@/components/common/RealTimeMonitor";
 import { 
   MapPin, 
   Zap, 
@@ -57,7 +60,7 @@ const Overview = () => {
       {/* Header */}
       <div className="animate-slide-in-left">
         <h1 className={`text-3xl font-bold ${theme.colors.text.primary}`}>
-          EnergyOS Dashboard
+          WEM Dashboard
         </h1>
         <p className={`${theme.colors.text.muted} text-lg`}>
           Monitor and manage your energy infrastructure across all regions
@@ -115,14 +118,27 @@ const Overview = () => {
         </Card>
       </div>
 
-      {/* Quick Actions and System Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Analytics Section */}
+      <div className="animate-fade-in">
+        <EnergyAnalytics />
+      </div>
+
+      {/* Monitoring Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="animate-slide-in-left">
           <QuickActions />
         </div>
-        <div className="animate-slide-in-right">
+        <div className="animate-slide-in-up">
           <SystemStatusMonitor />
         </div>
+        <div className="animate-slide-in-right">
+          <SystemMonitor />
+        </div>
+      </div>
+
+      {/* Real-Time Monitoring */}
+      <div className="animate-slide-in-up">
+        <RealTimeMonitor />
       </div>
 
       {/* Regions Grid */}
