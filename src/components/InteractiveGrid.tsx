@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { GridComponent, EnergyFlow, DraggablePanel } from './grid/types';
 import { useGridDrag } from './grid/hooks/useGridDrag';
 import EnergyFlowRenderer from './grid/EnergyFlowRenderer';
-import GridComponent as GridComponentView from './grid/GridComponent';
+import GridComponentView from './grid/GridComponent';
 import StatusPanel from './grid/StatusPanel';
 import ControlsPanel from './grid/ControlsPanel';
 
