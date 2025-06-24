@@ -79,7 +79,7 @@ export function AppSidebar() {
                         }`
                       }
                     >
-                      <item.icon className="w-4 h-4" />
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
                       <span className="font-medium text-sm">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -92,7 +92,7 @@ export function AppSidebar() {
         {/* Regions */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider flex items-center px-3">
-            <MapPin className="w-3 h-3 mr-2" />
+            <MapPin className="w-3 h-3 mr-2 flex-shrink-0" />
             Regions & Sites
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -100,25 +100,27 @@ export function AppSidebar() {
               {mockRegions.map((region) => (
                 <SidebarMenuItem key={region.id}>
                   <Collapsible defaultOpen={true}>
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between w-full">
-                        <NavLink
-                          to={`/region/${region.id}`}
-                          className={({ isActive }) =>
-                            `flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1 ${
-                              isActive
-                                ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                                : "text-slate-300 hover:text-white hover:bg-slate-800"
-                            }`
-                          }
-                        >
-                          <MapPin className="w-4 h-4" />
-                          <span className="font-medium text-sm">{region.name}</span>
-                          <span className="text-xs text-slate-400">({region.sites.length})</span>
-                        </NavLink>
-                        <ChevronDown className="w-4 h-4 text-slate-400 mr-2 data-[state=open]:rotate-180 transition-transform" />
-                      </div>
-                    </CollapsibleTrigger>
+                    <div className="flex items-center w-full">
+                      <NavLink
+                        to={`/region/${region.id}`}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
+                            isActive
+                              ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                              : "text-slate-300 hover:text-white hover:bg-slate-800"
+                          }`
+                        }
+                      >
+                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium text-sm truncate">{region.name}</span>
+                        <span className="text-xs text-slate-400 flex-shrink-0">({region.sites.length})</span>
+                      </NavLink>
+                      <CollapsibleTrigger asChild>
+                        <button className="p-1 ml-1 text-slate-400 hover:text-white transition-colors">
+                          <ChevronDown className="w-4 h-4 data-[state=open]:rotate-180 transition-transform" />
+                        </button>
+                      </CollapsibleTrigger>
+                    </div>
                     <CollapsibleContent className="ml-4 mt-1 space-y-1">
                       {region.sites.map((site) => (
                         <SidebarMenuItem key={site.id}>
@@ -126,22 +128,22 @@ export function AppSidebar() {
                             <NavLink
                               to={`/site/${site.id}`}
                               className={({ isActive }) =>
-                                `flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
+                                `flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group min-w-0 ${
                                   isActive
                                     ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                     : "text-slate-300 hover:text-white hover:bg-slate-800"
                                 }`
                               }
                             >
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-2 h-2 rounded-full ${
+                              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                                   site.status === 'online' ? 'bg-emerald-400' :
                                   site.status === 'maintenance' ? 'bg-amber-400' : 
                                   'bg-red-400'
                                 }`} />
-                                <span className="text-sm font-medium">{site.name}</span>
+                                <span className="text-sm font-medium truncate">{site.name}</span>
                               </div>
-                              <div className="flex items-center space-x-1">
+                              <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
                                 <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
                               </div>
                             </NavLink>
@@ -162,11 +164,11 @@ export function AppSidebar() {
           <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
             <Users className="w-4 h-4 text-white" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-white">Admin User</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">Admin User</p>
             <p className="text-xs text-slate-400">Administrator</p>
           </div>
-          <Bell className="w-4 h-4 text-slate-400 hover:text-white cursor-pointer transition-colors" />
+          <Bell className="w-4 h-4 text-slate-400 hover:text-white cursor-pointer transition-colors flex-shrink-0" />
         </div>
       </SidebarFooter>
     </Sidebar>
