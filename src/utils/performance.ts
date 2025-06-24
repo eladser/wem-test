@@ -68,12 +68,12 @@ export class PerformanceMonitor {
   }
 }
 
-// React performance utilities
-export const withPerformanceTracking = <T extends object>(
-  Component: React.ComponentType<T>,
+// React performance utilities with proper typing
+export const withPerformanceTracking = <P extends Record<string, any>>(
+  Component: React.ComponentType<P>,
   componentName: string
-): React.ComponentType<T> => {
-  return React.memo((props: T) => {
+) => {
+  const WrappedComponent = React.memo((props: P) => {
     const monitor = PerformanceMonitor.getInstance();
     
     React.useEffect(() => {
@@ -85,15 +85,26 @@ export const withPerformanceTracking = <T extends object>(
 
     return React.createElement(Component, props);
   });
+
+  WrappedComponent.displayName = `withPerformanceTracking(${componentName})`;
+  return WrappedComponent;
 };
 
-// Bundle size analyzer
+// Bundle size analyzer without webpack dependency
 export const analyzeBundleSize = () => {
   if (config.development.enableDebugLogs) {
-    import('webpack-bundle-analyzer').then((analyzer) => {
-      console.log('Bundle analyzer available:', analyzer);
-    }).catch(() => {
-      console.log('Bundle analyzer not available in this environment');
+    // Simple bundle analysis without external dependencies
+    const scripts = Array.from(document.querySelectorAll('script[src]'));
+    const totalScripts = scripts.length;
+    
+    console.log(`Bundle analysis: ${totalScripts} script tags found`);
+    
+    // Log script sources for debugging
+    scripts.forEach((script, index) => {
+      const src = script.getAttribute('src');
+      if (src && !src.startsWith('data:')) {
+        console.log(`Script ${index + 1}: ${src}`);
+      }
     });
   }
 };
