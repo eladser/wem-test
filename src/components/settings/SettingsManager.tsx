@@ -20,6 +20,7 @@ interface SettingsBackup {
 export const SettingsManager: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -125,6 +126,8 @@ export const SettingsManager: React.FC = () => {
   };
 
   const handleResetAllSettings = async () => {
+    setIsResetting(true);
+    
     const result = await withAsyncHandler(
       () => createMockApiCall({ success: true }, 1000)
     );
@@ -135,6 +138,8 @@ export const SettingsManager: React.FC = () => {
     } else {
       toast.error("Failed to reset settings");
     }
+
+    setIsResetting(false);
   };
 
   return (
@@ -203,8 +208,10 @@ export const SettingsManager: React.FC = () => {
                 </p>
               </div>
               <LoadingButton
+                loading={isResetting}
                 variant="outline"
                 onClick={handleResetAllSettings}
+                loadingText="Resetting..."
                 className="border-red-600 text-red-400 hover:bg-red-600/10"
               >
                 Reset All
