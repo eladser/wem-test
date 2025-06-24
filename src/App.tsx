@@ -32,6 +32,9 @@ const App = () => (
                   <Route path="site/:siteId" element={<SiteDashboard />} />
                   <Route path="site/:siteId/assets" element={<SiteAssets />} />
                   <Route path="site/:siteId/reports" element={<SiteReports />} />
+                  <Route path="site/:siteId/finances" element={<SiteFinances />} />
+                  <Route path="site/:siteId/team" element={<SiteTeam />} />
+                  <Route path="site/:siteId/settings" element={<SiteSettings />} />
                   <Route path="settings" element={<Settings />} />
                 </Routes>
               </Layout>
