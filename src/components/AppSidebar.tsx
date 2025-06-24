@@ -1,5 +1,5 @@
 
-import { Home, MapPin, Users, Settings, BarChart3, Zap, FileText, DollarSign, Shield, Bell, Search } from "lucide-react";
+import { Home, MapPin, Users, Settings, BarChart3, Zap, FileText, DollarSign, Shield, Bell, Search, ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -13,6 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { mockRegions } from "@/services/mockDataService";
 
 export function AppSidebar() {
@@ -88,44 +89,69 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Energy Sites */}
+        {/* Regions */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider flex items-center px-3">
             <MapPin className="w-3 h-3 mr-2" />
-            Energy Sites
+            Regions & Sites
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {mockRegions.flatMap(region => 
-                region.sites.map((site) => (
-                  <SidebarMenuItem key={site.id}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={`/site/${site.id}`}
-                        className={({ isActive }) =>
-                          `flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
-                            isActive
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : "text-slate-300 hover:text-white hover:bg-slate-800"
-                          }`
-                        }
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-2 h-2 rounded-full ${
-                            site.status === 'online' ? 'bg-emerald-400' :
-                            site.status === 'maintenance' ? 'bg-amber-400' : 
-                            'bg-red-400'
-                          }`} />
-                          <span className="text-sm font-medium">{site.name}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
-                        </div>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              )}
+            <SidebarMenu className="space-y-2">
+              {mockRegions.map((region) => (
+                <SidebarMenuItem key={region.id}>
+                  <Collapsible defaultOpen={true}>
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between w-full">
+                        <NavLink
+                          to={`/region/${region.id}`}
+                          className={({ isActive }) =>
+                            `flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1 ${
+                              isActive
+                                ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                                : "text-slate-300 hover:text-white hover:bg-slate-800"
+                            }`
+                          }
+                        >
+                          <MapPin className="w-4 h-4" />
+                          <span className="font-medium text-sm">{region.name}</span>
+                          <span className="text-xs text-slate-400">({region.sites.length})</span>
+                        </NavLink>
+                        <ChevronDown className="w-4 h-4 text-slate-400 mr-2 data-[state=open]:rotate-180 transition-transform" />
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="ml-4 mt-1 space-y-1">
+                      {region.sites.map((site) => (
+                        <SidebarMenuItem key={site.id}>
+                          <SidebarMenuButton asChild>
+                            <NavLink
+                              to={`/site/${site.id}`}
+                              className={({ isActive }) =>
+                                `flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
+                                  isActive
+                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                    : "text-slate-300 hover:text-white hover:bg-slate-800"
+                                }`
+                              }
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  site.status === 'online' ? 'bg-emerald-400' :
+                                  site.status === 'maintenance' ? 'bg-amber-400' : 
+                                  'bg-red-400'
+                                }`} />
+                                <span className="text-sm font-medium">{site.name}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
+                              </div>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
