@@ -1,6 +1,7 @@
 
-import { Home, MapPin, Users, Settings, BarChart3, Zap, FileText, DollarSign, Shield, Bell, Search, ChevronDown } from "lucide-react";
+import { Home, MapPin, Users, Settings, BarChart3, Zap, FileText, DollarSign, Shield, Bell, Search, ChevronDown, Package } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,10 +20,12 @@ import { mockRegions } from "@/services/mockDataService";
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [searchTerm, setSearchTerm] = useState("");
 
   const mainNavItems = [
     { title: "Overview", url: "/", icon: Home },
     { title: "Analytics", url: "/analytics", icon: BarChart3 },
+    { title: "Assets", url: "/assets", icon: Package },
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 
@@ -31,6 +34,18 @@ export function AppSidebar() {
     if (path !== "/" && currentPath.startsWith(path)) return true;
     return false;
   };
+
+  // Filter regions and sites based on search term
+  const filteredRegions = mockRegions.map(region => ({
+    ...region,
+    sites: region.sites.filter(site => 
+      site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.id.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })).filter(region => 
+    region.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    region.sites.length > 0
+  );
 
   return (
     <Sidebar className="bg-slate-900 border-r border-slate-700">
@@ -52,6 +67,8 @@ export function AppSidebar() {
           <input 
             type="text" 
             placeholder="Search sites..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
           />
         </div>
@@ -94,67 +111,79 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-slate-400 font-medium mb-2 text-xs uppercase tracking-wider flex items-center px-3">
             <MapPin className="w-3 h-3 mr-2 flex-shrink-0" />
             Regions & Sites
+            {searchTerm && (
+              <span className="ml-auto text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">
+                {filteredRegions.reduce((acc, region) => acc + region.sites.length, 0)} found
+              </span>
+            )}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-2">
-              {mockRegions.map((region) => (
-                <SidebarMenuItem key={region.id}>
-                  <Collapsible defaultOpen={true}>
-                    <div className="flex items-center w-full">
-                      <NavLink
-                        to={`/region/${region.id}`}
-                        className={({ isActive }) =>
-                          `flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
-                            isActive
-                              ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                              : "text-slate-300 hover:text-white hover:bg-slate-800"
-                          }`
-                        }
-                      >
-                        <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <span className="font-medium text-sm truncate">{region.name}</span>
-                        <span className="text-xs text-slate-400 flex-shrink-0">({region.sites.length})</span>
-                      </NavLink>
-                      <CollapsibleTrigger asChild>
-                        <button className="p-1 ml-1 text-slate-400 hover:text-white transition-colors">
-                          <ChevronDown className="w-4 h-4 data-[state=open]:rotate-180 transition-transform" />
-                        </button>
-                      </CollapsibleTrigger>
-                    </div>
-                    <CollapsibleContent className="ml-4 mt-1 space-y-1">
-                      {region.sites.map((site) => (
-                        <SidebarMenuItem key={site.id}>
-                          <SidebarMenuButton asChild>
-                            <NavLink
-                              to={`/site/${site.id}`}
-                              className={({ isActive }) =>
-                                `flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group min-w-0 ${
-                                  isActive
-                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                    : "text-slate-300 hover:text-white hover:bg-slate-800"
-                                }`
-                              }
-                            >
-                              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                  site.status === 'online' ? 'bg-emerald-400' :
-                                  site.status === 'maintenance' ? 'bg-amber-400' : 
-                                  'bg-red-400'
-                                }`} />
-                                <span className="text-sm font-medium truncate">{site.name}</span>
-                              </div>
-                              <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                                <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
-                              </div>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            {filteredRegions.length === 0 && searchTerm ? (
+              <div className="px-3 py-4 text-center">
+                <p className="text-slate-400 text-sm">No sites found</p>
+                <p className="text-slate-500 text-xs mt-1">Try a different search term</p>
+              </div>
+            ) : (
+              <SidebarMenu className="space-y-2">
+                {filteredRegions.map((region) => (
+                  <SidebarMenuItem key={region.id}>
+                    <Collapsible defaultOpen={true}>
+                      <div className="flex items-center w-full">
+                        <NavLink
+                          to={`/region/${region.id}`}
+                          className={({ isActive }) =>
+                            `flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
+                              isActive
+                                ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                                : "text-slate-300 hover:text-white hover:bg-slate-800"
+                            }`
+                          }
+                        >
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-medium text-sm truncate">{region.name}</span>
+                          <span className="text-xs text-slate-400 flex-shrink-0">({region.sites.length})</span>
+                        </NavLink>
+                        <CollapsibleTrigger asChild>
+                          <button className="p-1 ml-1 text-slate-400 hover:text-white transition-colors">
+                            <ChevronDown className="w-4 h-4 data-[state=open]:rotate-180 transition-transform" />
+                          </button>
+                        </CollapsibleTrigger>
+                      </div>
+                      <CollapsibleContent className="ml-4 mt-1 space-y-1">
+                        {region.sites.map((site) => (
+                          <SidebarMenuItem key={site.id}>
+                            <SidebarMenuButton asChild>
+                              <NavLink
+                                to={`/site/${site.id}`}
+                                className={({ isActive }) =>
+                                  `flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group min-w-0 ${
+                                    isActive
+                                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                      : "text-slate-300 hover:text-white hover:bg-slate-800"
+                                  }`
+                                }
+                              >
+                                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                    site.status === 'online' ? 'bg-emerald-400' :
+                                    site.status === 'maintenance' ? 'bg-amber-400' : 
+                                    'bg-red-400'
+                                  }`} />
+                                  <span className="text-sm font-medium truncate">{site.name}</span>
+                                </div>
+                                <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+                                  <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
+                                </div>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

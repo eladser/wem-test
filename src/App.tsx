@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import Overview from "./pages/Overview";
 import Analytics from "./pages/Analytics";
+import Assets from "./pages/Assets";
 import RegionOverview from "./pages/RegionOverview";
 import SiteDashboard from "./components/SiteDashboard";
 import SiteAssets from "./components/SiteAssets";
@@ -38,6 +39,7 @@ const App: React.FC = () => {
                   <Routes>
                     <Route index element={<Overview />} />
                     <Route path="analytics" element={<Analytics />} />
+                    <Route path="assets" element={<Assets />} />
                     <Route path="region/:regionId" element={<RegionOverview />} />
                     <Route path="site/:siteId" element={<SiteDashboard />} />
                     <Route path="site/:siteId/grid" element={<SiteGrid />} />
