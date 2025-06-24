@@ -1,7 +1,6 @@
 
 import { config } from './environment';
 import { logger } from '@/utils/logging';
-import { apiConfiguration } from './api';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -19,52 +18,58 @@ export class ConfigValidator {
     return ConfigValidator.instance;
   }
 
-  validateEnvironment(): ValidationResult {
+  validateEnvironmentConfig(): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Required for production
+    // Required configurations
+    if (!config.app.name) {
+      errors.push('App name is required');
+    }
+
+    if (!config.app.version) {
+      errors.push('App version is required');
+    }
+
+    if (!config.api.baseUrl) {
+      errors.push('API base URL is required');
+    }
+
+    // Production-specific validations
     if (config.app.environment === 'production') {
-      if (!config.api.baseUrl || config.api.baseUrl.includes('localhost')) {
-        errors.push('Production API base URL is required and cannot be localhost');
-      }
-
-      if (config.development.enableDebugLogs) {
-        warnings.push('Debug logs are enabled in production');
-      }
-
-      if (!config.features.enableErrorReporting) {
-        warnings.push('Error reporting is disabled in production');
+      if (config.api.baseUrl.includes('localhost')) {
+        errors.push('Production API base URL cannot be localhost');
       }
 
       if (config.features.enableErrorReporting && !config.services.errorReportingKey) {
-        warnings.push('Error reporting is enabled but no error reporting key is configured');
+        warnings.push('Error reporting enabled but no key configured');
       }
-    }
 
-    // API configuration validation
-    if (config.api.timeout < 5000) {
-      warnings.push('API timeout is very low, consider increasing for production');
-    }
+      if (config.features.enableAnalytics && !config.services.analyticsId) {
+        warnings.push('Analytics enabled but no ID configured');
+      }
 
-    if (config.api.retryAttempts > 5) {
-      warnings.push('API retry attempts are very high, consider reducing');
-    }
+      if (config.development.enableDebugLogs) {
+        warnings.push('Debug logs enabled in production');
+      }
 
-    // Performance validation
-    if (config.performance.cacheTimeout < 60000) {
-      warnings.push('Cache timeout is very low, consider increasing for better performance');
-    }
-
-    // Security validation
-    if (config.app.environment === 'production') {
       if (!config.security.enableCSP) {
-        warnings.push('Content Security Policy is disabled in production');
+        warnings.push('CSP headers disabled in production');
       }
+    }
 
-      if (!config.security.enableRateLimiting) {
-        warnings.push('Rate limiting is disabled in production');
-      }
+    // Security validations
+    if (config.security.trustedDomains.length === 0 && config.app.environment === 'production') {
+      warnings.push('No trusted domains configured for production');
+    }
+
+    // Performance validations
+    if (config.api.timeout > 30000) {
+      warnings.push('API timeout is very high (>30s)');
+    }
+
+    if (config.performance.cacheTimeout < 60000) {
+      warnings.push('Cache timeout is very low (<1min)');
     }
 
     return {
@@ -74,36 +79,53 @@ export class ConfigValidator {
     };
   }
 
-  async validateApiConnection(): Promise<ValidationResult> {
+  validateApiConfig(): ValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
+    // API URL validation
     try {
-      // Find a healthy endpoint
-      const healthyEndpoint = await apiConfiguration.findHealthyEndpoint();
-      
-      if (healthyEndpoint.url === 'mock://api') {
-        warnings.push('Using mock API endpoint - no real API connectivity available');
-        return {
-          isValid: true,
-          errors,
-          warnings
-        };
-      }
+      new URL(config.api.baseUrl);
+    } catch {
+      errors.push('Invalid API base URL format');
+    }
 
-      // Test the healthy endpoint
-      const isHealthy = await apiConfiguration.checkEndpointHealth(healthyEndpoint);
-      
-      if (!isHealthy) {
-        errors.push('No healthy API endpoints available');
-      } else {
-        logger.info('API connectivity validated successfully', { 
-          endpoint: healthyEndpoint.url 
-        });
+    // Fallback URLs validation
+    config.api.fallbackUrls.forEach((url, index) => {
+      try {
+        new URL(url);
+      } catch {
+        errors.push(`Invalid fallback URL ${index + 1}: ${url}`);
       }
+    });
 
-    } catch (error) {
-      errors.push(`API connectivity validation failed: ${error instanceof Error ? error.message : String(error)}`);
+    // API configuration warnings
+    if (config.api.retryAttempts > 5) {
+      warnings.push('High retry attempts may cause performance issues');
+    }
+
+    if (config.api.timeout < 5000) {
+      warnings.push('Low API timeout may cause frequent failures');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  }
+
+  validateSecurityConfig(): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Security warnings
+    if (!config.security.enableRateLimiting && config.app.environment === 'production') {
+      warnings.push('Rate limiting disabled in production');
+    }
+
+    if (config.security.trustedDomains.some(domain => domain === '*')) {
+      errors.push('Wildcard (*) in trusted domains is not secure');
     }
 
     return {
@@ -114,34 +136,31 @@ export class ConfigValidator {
   }
 
   async runAllValidations(): Promise<ValidationResult> {
-    const envValidation = this.validateEnvironment();
-    const apiValidation = await this.validateApiConnection();
+    const envValidation = this.validateEnvironmentConfig();
+    const apiValidation = this.validateApiConfig();
+    const securityValidation = this.validateSecurityConfig();
 
-    const allErrors = [...envValidation.errors, ...apiValidation.errors];
-    const allWarnings = [...envValidation.warnings, ...apiValidation.warnings];
-
-    const result = {
-      isValid: allErrors.length === 0,
-      errors: allErrors,
-      warnings: allWarnings
+    const combinedResult: ValidationResult = {
+      isValid: envValidation.isValid && apiValidation.isValid && securityValidation.isValid,
+      errors: [...envValidation.errors, ...apiValidation.errors, ...securityValidation.errors],
+      warnings: [...envValidation.warnings, ...apiValidation.warnings, ...securityValidation.warnings]
     };
 
     // Log validation results
-    if (result.errors.length > 0) {
-      logger.error('Configuration validation failed', undefined, { errors: result.errors });
-    }
-
-    if (result.warnings.length > 0) {
-      logger.warn('Configuration validation warnings', { warnings: result.warnings });
-    }
-
-    if (result.isValid) {
-      logger.info('Configuration validation passed', { 
-        warningCount: result.warnings.length 
+    if (!combinedResult.isValid) {
+      logger.error('Configuration validation failed', undefined, {
+        errors: combinedResult.errors,
+        warnings: combinedResult.warnings
       });
+    } else if (combinedResult.warnings.length > 0) {
+      logger.warn('Configuration validation completed with warnings', {
+        warnings: combinedResult.warnings
+      });
+    } else {
+      logger.info('Configuration validation passed');
     }
 
-    return result;
+    return combinedResult;
   }
 }
 

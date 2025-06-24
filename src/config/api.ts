@@ -37,15 +37,9 @@ export class ApiConfiguration {
 
     // Fallback endpoints for production
     if (config.app.environment === 'production') {
-      // Add fallback endpoints here
-      const fallbackUrls = [
-        import.meta.env.VITE_API_FALLBACK_URL_1,
-        import.meta.env.VITE_API_FALLBACK_URL_2,
-      ].filter(Boolean);
-
-      fallbackUrls.forEach(url => {
+      config.api.fallbackUrls.forEach(url => {
         this.endpoints.push({
-          url: url as string,
+          url,
           timeout: config.api.timeout,
           retryAttempts: config.api.retryAttempts,
           isHealthy: true
