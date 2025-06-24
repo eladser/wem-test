@@ -4,6 +4,8 @@ import { logger } from './logging';
 import { healthMonitor } from './monitoring';
 import { initializeSecurity } from './security';
 import { config } from '@/config/environment';
+import { ProductionSetup } from '@/config/production';
+import { registerServiceWorker, manageCaches } from './buildOptimization';
 
 export class ApplicationStartup {
   private static instance: ApplicationStartup;
@@ -30,6 +32,13 @@ export class ApplicationStartup {
 
       // Log deployment and system information
       deploymentManager.logSystemInfo();
+
+      // Initialize production setup if in production
+      if (config.app.environment === 'production') {
+        await ProductionSetup.initialize();
+        registerServiceWorker();
+        manageCaches();
+      }
 
       // Start health monitoring
       if (config.app.environment === 'production') {
