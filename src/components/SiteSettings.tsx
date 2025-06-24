@@ -1,10 +1,9 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Settings, Bell, Shield, Database, AlertTriangle } from "lucide-react";
+import { Settings, Bell, Shield, Database, AlertTriangle, Zap, Thermometer } from "lucide-react";
 import { useParams } from "react-router-dom";
 import SiteTopBar from "./SiteTopBar";
 import { theme } from "@/lib/theme";
@@ -74,6 +73,15 @@ const SiteSettings = () => {
                   className="bg-slate-800 border-emerald-900/20 text-white"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="timezone" className={theme.colors.text.secondary}>Timezone</Label>
+                <select className="w-full p-2 bg-slate-800 border border-emerald-900/20 text-white rounded-md">
+                  <option value="UTC">UTC</option>
+                  <option value="PST">Pacific Standard Time</option>
+                  <option value="EST">Eastern Standard Time</option>
+                  <option value="CST">Central Standard Time</option>
+                </select>
+              </div>
             </CardContent>
           </Card>
 
@@ -94,6 +102,15 @@ const SiteSettings = () => {
                 </div>
                 <Switch defaultChecked />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="efficiencyThreshold" className={theme.colors.text.secondary}>Efficiency Threshold (%)</Label>
+                <Input
+                  id="efficiencyThreshold"
+                  type="number"
+                  defaultValue="85"
+                  className="bg-slate-800 border-emerald-900/20 text-white"
+                />
+              </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className={theme.colors.text.secondary}>Maintenance Reminders</Label>
@@ -108,11 +125,62 @@ const SiteSettings = () => {
                 </div>
                 <Switch defaultChecked />
               </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={theme.colors.text.secondary}>Weather Alerts</Label>
+                  <p className={`text-sm ${theme.colors.text.muted}`}>Severe weather notifications</p>
+                </div>
+                <Switch />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Performance Settings */}
+          <Card className={`${theme.colors.background.card} ${theme.colors.border.accent} animate-fade-in`} style={{ animationDelay: "0.2s" }}>
+            <CardHeader>
+              <CardTitle className={`${theme.colors.text.primary} flex items-center space-x-2`}>
+                <Zap className={`h-5 w-5 ${theme.colors.text.accent}`} />
+                <span>Performance Settings</span>
+              </CardTitle>
+              <CardDescription className={theme.colors.text.muted}>Optimize system performance</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="maxOutput" className={theme.colors.text.secondary}>Maximum Output (kW)</Label>
+                <Input
+                  id="maxOutput"
+                  type="number"
+                  defaultValue="30"
+                  className="bg-slate-800 border-emerald-900/20 text-white"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={theme.colors.text.secondary}>Auto Optimization</Label>
+                  <p className={`text-sm ${theme.colors.text.muted}`}>Automatically optimize performance</p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trackingMode" className={theme.colors.text.secondary}>Tracking Mode</Label>
+                <select className="w-full p-2 bg-slate-800 border border-emerald-900/20 text-white rounded-md">
+                  <option value="auto">Automatic</option>
+                  <option value="manual">Manual</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={theme.colors.text.secondary}>Load Balancing</Label>
+                  <p className={`text-sm ${theme.colors.text.muted}`}>Distribute load across systems</p>
+                </div>
+                <Switch defaultChecked />
+              </div>
             </CardContent>
           </Card>
 
           {/* Security Settings */}
-          <Card className={`${theme.colors.background.card} ${theme.colors.border.accent} animate-fade-in`} style={{ animationDelay: "0.2s" }}>
+          <Card className={`${theme.colors.background.card} ${theme.colors.border.accent} animate-fade-in`} style={{ animationDelay: "0.3s" }}>
             <CardHeader>
               <CardTitle className={`${theme.colors.text.primary} flex items-center space-x-2`}>
                 <Shield className={`h-5 w-5 ${theme.colors.text.accent}`} />
@@ -144,11 +212,19 @@ const SiteSettings = () => {
                   className="bg-slate-800 border-emerald-900/20 text-white"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiAccess" className={theme.colors.text.secondary}>API Access Level</Label>
+                <select className="w-full p-2 bg-slate-800 border border-emerald-900/20 text-white rounded-md">
+                  <option value="read">Read Only</option>
+                  <option value="write">Read/Write</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
             </CardContent>
           </Card>
 
           {/* Data Settings */}
-          <Card className={`${theme.colors.background.card} ${theme.colors.border.accent} animate-fade-in`} style={{ animationDelay: "0.3s" }}>
+          <Card className={`${theme.colors.background.card} ${theme.colors.border.accent} animate-fade-in`} style={{ animationDelay: "0.4s" }}>
             <CardHeader>
               <CardTitle className={`${theme.colors.text.primary} flex items-center space-x-2`}>
                 <Database className={`h-5 w-5 ${theme.colors.text.accent}`} />
@@ -166,6 +242,16 @@ const SiteSettings = () => {
                   className="bg-slate-800 border-emerald-900/20 text-white"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="samplingRate" className={theme.colors.text.secondary}>Sampling Rate (seconds)</Label>
+                <select className="w-full p-2 bg-slate-800 border border-emerald-900/20 text-white rounded-md">
+                  <option value="1">1 second</option>
+                  <option value="5">5 seconds</option>
+                  <option value="10">10 seconds</option>
+                  <option value="30">30 seconds</option>
+                  <option value="60">1 minute</option>
+                </select>
+              </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className={theme.colors.text.secondary}>Real-time Monitoring</Label>
@@ -177,6 +263,58 @@ const SiteSettings = () => {
                 <div className="space-y-0.5">
                   <Label className={theme.colors.text.secondary}>Data Analytics</Label>
                   <p className={`text-sm ${theme.colors.text.muted}`}>Advanced performance insights</p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={theme.colors.text.secondary}>Export to Cloud</Label>
+                  <p className={`text-sm ${theme.colors.text.muted}`}>Backup data to cloud storage</p>
+                </div>
+                <Switch />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Environmental Settings */}
+          <Card className={`${theme.colors.background.card} ${theme.colors.border.accent} animate-fade-in`} style={{ animationDelay: "0.5s" }}>
+            <CardHeader>
+              <CardTitle className={`${theme.colors.text.primary} flex items-center space-x-2`}>
+                <Thermometer className={`h-5 w-5 ${theme.colors.text.accent}`} />
+                <span>Environmental Settings</span>
+              </CardTitle>
+              <CardDescription className={theme.colors.text.muted}>Environmental monitoring and control</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="tempThreshold" className={theme.colors.text.secondary}>Temperature Threshold (°C)</Label>
+                <Input
+                  id="tempThreshold"
+                  type="number"
+                  defaultValue="45"
+                  className="bg-slate-800 border-emerald-900/20 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="humidityThreshold" className={theme.colors.text.secondary}>Humidity Threshold (%)</Label>
+                <Input
+                  id="humidityThreshold"
+                  type="number"
+                  defaultValue="80"
+                  className="bg-slate-800 border-emerald-900/20 text-white"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={theme.colors.text.secondary}>Weather Integration</Label>
+                  <p className={`text-sm ${theme.colors.text.muted}`}>Connect to weather services</p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className={theme.colors.text.secondary}>Auto Cooling</Label>
+                  <p className={`text-sm ${theme.colors.text.muted}`}>Automatic cooling activation</p>
                 </div>
                 <Switch defaultChecked />
               </div>
