@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "react-router-dom";
 import { Users, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { usePerformance } from "@/hooks/usePerformance";
 
 interface Site {
   id: string;
@@ -24,12 +25,18 @@ interface RegionCardProps {
   index: number;
 }
 
-export const RegionCard: React.FC<RegionCardProps> = ({ region, index }) => {
-  const regionCapacity = region.sites.reduce((sum, site) => sum + site.totalCapacity, 0);
-  const regionOutput = region.sites.reduce((sum, site) => sum + site.currentOutput, 0);
-  const efficiency = regionCapacity > 0 ? (regionOutput / regionCapacity) * 100 : 0;
+export const RegionCard: React.FC<RegionCardProps> = React.memo(({ region, index }) => {
+  const { logRenderTime } = usePerformance('RegionCard');
 
-  const getStatusIcon = (status: string) => {
+  const regionStats = useMemo(() => {
+    const regionCapacity = region.sites.reduce((sum, site) => sum + site.totalCapacity, 0);
+    const regionOutput = region.sites.reduce((sum, site) => sum + site.currentOutput, 0);
+    const efficiency = regionCapacity > 0 ? (regionOutput / regionCapacity) * 100 : 0;
+    
+    return { regionCapacity, regionOutput, efficiency };
+  }, [region.sites]);
+
+  const getStatusIcon = useCallback((status: string) => {
     switch (status) {
       case 'online':
         return <CheckCircle className="w-4 h-4 text-emerald-400" />;
@@ -40,9 +47,9 @@ export const RegionCard: React.FC<RegionCardProps> = ({ region, index }) => {
       default:
         return <AlertTriangle className="w-4 h-4 text-slate-400" />;
     }
-  };
+  }, []);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'online':
         return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
@@ -53,7 +60,9 @@ export const RegionCard: React.FC<RegionCardProps> = ({ region, index }) => {
       default:
         return 'bg-slate-500/10 text-slate-400 border-slate-500/30';
     }
-  };
+  }, []);
+
+  logRenderTime();
 
   return (
     <NavLink 
@@ -73,15 +82,15 @@ export const RegionCard: React.FC<RegionCardProps> = ({ region, index }) => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Capacity</span>
-              <span className="text-slate-300">{regionCapacity.toFixed(1)} MW</span>
+              <span className="text-slate-300">{regionStats.regionCapacity.toFixed(1)} MW</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Output</span>
-              <span className="text-slate-300">{regionOutput.toFixed(1)} MW</span>
+              <span className="text-slate-300">{regionStats.regionOutput.toFixed(1)} MW</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Efficiency</span>
-              <span className="text-slate-300">{efficiency.toFixed(1)}%</span>
+              <span className="text-slate-300">{regionStats.efficiency.toFixed(1)}%</span>
             </div>
           </div>
 
@@ -106,4 +115,6 @@ export const RegionCard: React.FC<RegionCardProps> = ({ region, index }) => {
       </Card>
     </NavLink>
   );
-};
+});
+
+RegionCard.displayName = 'RegionCard';

@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building, CheckCircle, Zap, TrendingUp } from "lucide-react";
+import { usePerformance } from "@/hooks/usePerformance";
 
 interface MetricsCardsProps {
   totalSites: number;
@@ -10,13 +11,15 @@ interface MetricsCardsProps {
   totalOutput: number;
 }
 
-export const MetricsCards: React.FC<MetricsCardsProps> = ({
+export const MetricsCards: React.FC<MetricsCardsProps> = React.memo(({
   totalSites,
   onlineSites,
   totalCapacity,
   totalOutput
 }) => {
-  const metrics = [
+  const { logRenderTime } = usePerformance('MetricsCards');
+
+  const metrics = useMemo(() => [
     {
       title: "Total Sites",
       value: totalSites,
@@ -41,7 +44,9 @@ export const MetricsCards: React.FC<MetricsCardsProps> = ({
       icon: TrendingUp,
       format: (val: number) => `${val.toFixed(1)} MW`
     }
-  ];
+  ], [totalSites, onlineSites, totalCapacity, totalOutput]);
+
+  logRenderTime();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
@@ -60,4 +65,6 @@ export const MetricsCards: React.FC<MetricsCardsProps> = ({
       ))}
     </div>
   );
-};
+});
+
+MetricsCards.displayName = 'MetricsCards';

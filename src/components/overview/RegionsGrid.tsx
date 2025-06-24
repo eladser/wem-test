@@ -3,6 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { RegionCard } from "./RegionCard";
+import { usePerformance } from "@/hooks/usePerformance";
 
 interface Site {
   id: string;
@@ -22,7 +23,11 @@ interface RegionsGridProps {
   regions: Region[];
 }
 
-export const RegionsGrid: React.FC<RegionsGridProps> = ({ regions }) => {
+export const RegionsGrid: React.FC<RegionsGridProps> = React.memo(({ regions }) => {
+  const { logRenderTime } = usePerformance('RegionsGrid');
+
+  logRenderTime();
+
   return (
     <Card className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50 animate-slide-in-up">
       <CardHeader>
@@ -40,4 +45,6 @@ export const RegionsGrid: React.FC<RegionsGridProps> = ({ regions }) => {
       </CardContent>
     </Card>
   );
-};
+});
+
+RegionsGrid.displayName = 'RegionsGrid';

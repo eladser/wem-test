@@ -1,24 +1,42 @@
 
-import React from "react";
+import React, { useMemo, Suspense, lazy } from "react";
 import { mockRegions } from "@/services/mockDataService";
-import { QuickActions } from "@/components/widgets/QuickActions";
-import { SystemStatusMonitor } from "@/components/monitoring/SystemStatusMonitor";
-import { SystemMonitor } from "@/components/monitoring/SystemMonitor";
-import { EnergyAnalytics } from "@/components/widgets/EnergyAnalytics";
-import { RealTimeMonitor } from "@/components/common/RealTimeMonitor";
 import { MetricsCards } from "@/components/overview/MetricsCards";
 import { RegionsGrid } from "@/components/overview/RegionsGrid";
+import { usePerformance } from "@/hooks/usePerformance";
+
+// Lazy load heavy components
+const QuickActions = lazy(() => import("@/components/widgets/QuickActions").then(module => ({ default: module.QuickActions })));
+const SystemStatusMonitor = lazy(() => import("@/components/monitoring/SystemStatusMonitor").then(module => ({ default: module.SystemStatusMonitor })));
+const SystemMonitor = lazy(() => import("@/components/monitoring/SystemMonitor").then(module => ({ default: module.SystemMonitor })));
+const EnergyAnalytics = lazy(() => import("@/components/widgets/EnergyAnalytics").then(module => ({ default: module.EnergyAnalytics })));
+const RealTimeMonitor = lazy(() => import("@/components/common/RealTimeMonitor").then(module => ({ default: module.RealTimeMonitor })));
+
+const LoadingSpinner = () => (
+  <div className="animate-pulse">
+    <div className="bg-slate-900/50 backdrop-blur-xl border-slate-700/50 rounded-lg h-48 flex items-center justify-center">
+      <div className="text-slate-400">Loading...</div>
+    </div>
+  </div>
+);
 
 const Overview = () => {
+  const { logRenderTime } = usePerformance('Overview');
   console.log("Overview component rendering");
   
-  const totalSites = mockRegions.reduce((acc, region) => acc + region.sites.length, 0);
-  const onlineSites = mockRegions.reduce((acc, region) => 
-    acc + region.sites.filter(site => site.status === 'online').length, 0);
-  const totalCapacity = mockRegions.reduce((acc, region) => 
-    acc + region.sites.reduce((siteAcc, site) => siteAcc + site.totalCapacity, 0), 0);
-  const totalOutput = mockRegions.reduce((acc, region) => 
-    acc + region.sites.reduce((siteAcc, site) => siteAcc + site.currentOutput, 0), 0);
+  const overviewStats = useMemo(() => {
+    const totalSites = mockRegions.reduce((acc, region) => acc + region.sites.length, 0);
+    const onlineSites = mockRegions.reduce((acc, region) => 
+      acc + region.sites.filter(site => site.status === 'online').length, 0);
+    const totalCapacity = mockRegions.reduce((acc, region) => 
+      acc + region.sites.reduce((siteAcc, site) => siteAcc + site.totalCapacity, 0), 0);
+    const totalOutput = mockRegions.reduce((acc, region) => 
+      acc + region.sites.reduce((siteAcc, site) => siteAcc + site.currentOutput, 0), 0);
+    
+    return { totalSites, onlineSites, totalCapacity, totalOutput };
+  }, []);
+
+  logRenderTime();
 
   return (
     <div className="space-y-6">
@@ -33,34 +51,39 @@ const Overview = () => {
       </div>
 
       {/* Key Metrics */}
-      <MetricsCards 
-        totalSites={totalSites}
-        onlineSites={onlineSites}
-        totalCapacity={totalCapacity}
-        totalOutput={totalOutput}
-      />
+      <MetricsCards {...overviewStats} />
 
       {/* Analytics Section */}
       <div className="animate-fade-in">
-        <EnergyAnalytics />
+        <Suspense fallback={<LoadingSpinner />}>
+          <EnergyAnalytics />
+        </Suspense>
       </div>
 
       {/* Monitoring Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="animate-slide-in-left">
-          <QuickActions />
+          <Suspense fallback={<LoadingSpinner />}>
+            <QuickActions />
+          </Suspense>
         </div>
         <div className="animate-slide-in-up">
-          <SystemStatusMonitor />
+          <Suspense fallback={<LoadingSpinner />}>
+            <SystemStatusMonitor />
+          </Suspense>
         </div>
         <div className="animate-slide-in-right">
-          <SystemMonitor />
+          <Suspense fallback={<LoadingSpinner />}>
+            <SystemMonitor />
+          </Suspense>
         </div>
       </div>
 
       {/* Real-Time Monitoring */}
       <div className="animate-slide-in-up">
-        <RealTimeMonitor />
+        <Suspense fallback={<LoadingSpinner />}>
+          <RealTimeMonitor />
+        </Suspense>
       </div>
 
       {/* Regions Grid */}
