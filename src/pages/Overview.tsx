@@ -21,6 +21,8 @@ import { NavLink } from "react-router-dom";
 import { theme } from "@/lib/theme";
 
 const Overview = () => {
+  console.log("Overview component rendering");
+  
   const totalSites = mockRegions.reduce((acc, region) => acc + region.sites.length, 0);
   const onlineSites = mockRegions.reduce((acc, region) => 
     acc + region.sites.filter(site => site.status === 'online').length, 0);
@@ -56,7 +58,11 @@ const Overview = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-green-500 p-4">
+      <div className="bg-yellow-500 p-4 text-black">
+        DEBUG: Overview component content
+      </div>
+      
       {/* Header */}
       <div className="animate-slide-in-left">
         <h1 className={`text-3xl font-bold ${theme.colors.text.primary}`}>
