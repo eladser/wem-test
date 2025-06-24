@@ -17,6 +17,7 @@ import { EnergyForecast } from '@/components/region/EnergyForecast';
 import { AlertsManager } from '@/components/region/AlertsManager';
 import { TeamManager } from '@/components/region/TeamManager';
 import { ExportManager } from '@/components/region/ExportManager';
+import { SiteMonitoringGrid } from '@/components/region/SiteMonitoringGrid';
 
 const performanceData = [
   { month: 'Jan', production: 120, efficiency: 85, revenue: 2100000 },
@@ -165,15 +166,18 @@ const RegionOverview: React.FC = () => {
 
         {/* Tabbed Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-slate-800/50">
+          <TabsList className="grid w-full grid-cols-7 bg-slate-800/50">
             <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-600">
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="data-[state=active]:bg-emerald-600">
+              Live Sites
             </TabsTrigger>
             <TabsTrigger value="analytics" className="data-[state=active]:bg-emerald-600">
               Analytics
             </TabsTrigger>
-            <TabsTrigger value="monitoring" className="data-[state=active]:bg-emerald-600">
-              Monitoring
+            <TabsTrigger value="realtime" className="data-[state=active]:bg-emerald-600">
+              Real-time
             </TabsTrigger>
             <TabsTrigger value="alerts" className="data-[state=active]:bg-emerald-600">
               Alerts
@@ -348,12 +352,16 @@ const RegionOverview: React.FC = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="monitoring" className="space-y-6 mt-6">
+            <SiteMonitoringGrid />
+          </TabsContent>
+
           <TabsContent value="analytics" className="space-y-6 mt-6">
             <RegionAnalytics />
             <EnergyForecast />
           </TabsContent>
 
-          <TabsContent value="monitoring" className="space-y-6 mt-6">
+          <TabsContent value="realtime" className="space-y-6 mt-6">
             <RealTimeMonitor />
           </TabsContent>
 
