@@ -73,11 +73,11 @@ export const EnhancedEnergyMix: React.FC<EnhancedEnergyMixProps> = ({ siteName, 
   };
 
   return (
-    <Card className="bg-gradient-to-br from-slate-900/50 via-slate-800/50 to-slate-900/50 backdrop-blur-xl border-slate-700/50 hover:border-cyan-500/30 transition-all duration-500 group">
+    <Card className="bg-slate-900/50 border-slate-700/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-cyan-500/10 rounded-xl group-hover:bg-cyan-500/20 transition-colors duration-300">
+            <div className="p-2 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
               <Zap className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
@@ -98,7 +98,7 @@ export const EnhancedEnergyMix: React.FC<EnhancedEnergyMixProps> = ({ siteName, 
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-slate-700/50"
+              className="h-8 w-8 p-0 hover:bg-slate-700/50 text-slate-400 hover:text-white"
             >
               <Maximize2 className="w-4 h-4" />
             </Button>
