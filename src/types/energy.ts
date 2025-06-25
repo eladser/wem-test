@@ -27,6 +27,7 @@ export interface PowerData {
   solar: number;
   battery: number;
   grid: number;
+  demand: number;
   wind?: number;
 }
 

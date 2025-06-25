@@ -1,4 +1,3 @@
-
 import { Site, Asset, PowerData, EnergyMix, Metric, Alert, Region } from '@/types/energy';
 import { Zap, Battery, Clock, TrendingUp } from 'lucide-react';
 
@@ -69,11 +68,11 @@ export const mockRegions: Region[] = [
 
 export const generatePowerData = (): PowerData[] => {
   return [
-    { time: "00:00", solar: 0, battery: 85, grid: 12 },
-    { time: "06:00", solar: 45, battery: 80, grid: 8 },
-    { time: "12:00", solar: 95, battery: 75, grid: 0 },
-    { time: "18:00", solar: 25, battery: 70, grid: 15 },
-    { time: "24:00", solar: 0, battery: 65, grid: 20 },
+    { time: "00:00", solar: 0, battery: 85, grid: 12, demand: 97 },
+    { time: "06:00", solar: 45, battery: 80, grid: 8, demand: 133 },
+    { time: "12:00", solar: 95, battery: 75, grid: 0, demand: 170 },
+    { time: "18:00", solar: 25, battery: 70, grid: 15, demand: 110 },
+    { time: "24:00", solar: 0, battery: 65, grid: 20, demand: 85 },
   ];
 };
 
@@ -155,11 +154,11 @@ export const getMockAssets = (siteId: string): Asset[] => {
 export const getMockPowerData = (siteId: string): PowerData[] => {
   // Generate different data patterns based on site
   const baseData = [
-    { time: "00:00", solar: 0, battery: 85, grid: 12 },
-    { time: "06:00", solar: 45, battery: 80, grid: 8 },
-    { time: "12:00", solar: 95, battery: 75, grid: 0 },
-    { time: "18:00", solar: 25, battery: 70, grid: 15 },
-    { time: "24:00", solar: 0, battery: 65, grid: 20 },
+    { time: "00:00", solar: 0, battery: 85, grid: 12, demand: 97 },
+    { time: "06:00", solar: 45, battery: 80, grid: 8, demand: 133 },
+    { time: "12:00", solar: 95, battery: 75, grid: 0, demand: 170 },
+    { time: "18:00", solar: 25, battery: 70, grid: 15, demand: 110 },
+    { time: "24:00", solar: 0, battery: 65, grid: 20, demand: 85 },
   ];
   
   // Modify data based on site characteristics
@@ -169,7 +168,8 @@ export const getMockPowerData = (siteId: string): PowerData[] => {
     ...point,
     solar: Math.round(point.solar * multiplier),
     battery: Math.round(point.battery * multiplier),
-    grid: Math.round(point.grid * multiplier)
+    grid: Math.round(point.grid * multiplier),
+    demand: Math.round(point.demand * multiplier)
   }));
 };
 
