@@ -17,7 +17,7 @@ import Analytics from "./pages/Analytics";
 import Assets from "./pages/Assets";
 import RegionOverview from "./pages/RegionOverview";
 import { RegionDashboard } from "./components/region/RegionDashboard";
-import SiteDashboard from "./components/SiteDashboard";
+import { SiteDashboard } from "./components/site/SiteDashboard";
 import SiteAssets from "./components/SiteAssets";
 import SiteReports from "./components/SiteReports";
 import SiteFinances from "./components/SiteFinances";

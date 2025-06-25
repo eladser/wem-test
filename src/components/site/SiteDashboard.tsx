@@ -13,7 +13,7 @@ import SiteTeam from "@/components/SiteTeam";
 import SiteFinances from "@/components/SiteFinances";
 import SiteSettings from "@/components/SiteSettings";
 
-const SiteDashboard = () => {
+export const SiteDashboard = () => {
   const { siteId } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
   
