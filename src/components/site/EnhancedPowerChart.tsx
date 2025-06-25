@@ -16,16 +16,16 @@ export const EnhancedPowerChart: React.FC<EnhancedPowerChartProps> = ({ siteName
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xl">
-          <p className="font-semibold text-slate-900 mb-2">{label}</p>
+        <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl backdrop-blur-sm">
+          <p className="font-semibold text-white mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-sm">
               <div 
                 className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="capitalize text-slate-700">{entry.dataKey}:</span>
-              <span className="font-semibold text-slate-900">{entry.value}kW</span>
+              <span className="capitalize text-slate-300">{entry.dataKey}:</span>
+              <span className="font-semibold text-white">{entry.value}kW</span>
             </div>
           ))}
         </div>
@@ -35,27 +35,27 @@ export const EnhancedPowerChart: React.FC<EnhancedPowerChartProps> = ({ siteName
   };
 
   return (
-    <Card className="bg-white border-slate-200 hover:shadow-lg transition-all duration-300">
+    <Card className="bg-slate-900/50 border-slate-700/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold text-slate-900">
+            <CardTitle className="text-xl font-bold text-white">
               Power Generation
             </CardTitle>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               Real-time power output for {siteName}
             </p>
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/40">
               Live Data
             </Badge>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-              <Download className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-slate-800 border-slate-600 hover:bg-slate-700">
+              <Download className="w-4 h-4 text-slate-300" />
             </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-              <Maximize2 className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-slate-800 border-slate-600 hover:bg-slate-700">
+              <Maximize2 className="w-4 h-4 text-slate-300" />
             </Button>
           </div>
         </div>
@@ -79,16 +79,16 @@ export const EnhancedPowerChart: React.FC<EnhancedPowerChartProps> = ({ siteName
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
               <XAxis 
                 dataKey="time" 
-                stroke="#64748b"
+                stroke="#94a3b8"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis 
-                stroke="#64748b"
+                stroke="#94a3b8"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
@@ -136,19 +136,19 @@ export const EnhancedPowerChart: React.FC<EnhancedPowerChartProps> = ({ siteName
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-            <span className="text-slate-700">Solar</span>
+            <span className="text-slate-300">Solar</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full" />
-            <span className="text-slate-700">Battery</span>
+            <span className="text-slate-300">Battery</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-amber-500 rounded-full" />
-            <span className="text-slate-700">Grid</span>
+            <span className="text-slate-300">Grid</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 bg-red-500 rounded-full" />
-            <span className="text-slate-700">Demand</span>
+            <span className="text-slate-300">Demand</span>
           </div>
         </div>
       </CardContent>

@@ -15,11 +15,11 @@ const SiteDashboard = () => {
   const { siteId } = useParams();
   const { logRenderTime } = usePerformance('SiteDashboard');
 
-  if (!siteId) return <div>Site not found</div>;
+  if (!siteId) return <div className="text-white">Site not found</div>;
 
   const site = mockRegions.flatMap(r => r.sites).find(s => s.id === siteId);
 
-  if (!site) return <div>Site not found</div>;
+  if (!site) return <div className="text-white">Site not found</div>;
 
   const powerData = generatePowerData();
   const energyMix = [
@@ -75,9 +75,9 @@ const SiteDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen">
       {/* Modern Header Bar */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-sm bg-white/80">
+      <div className="bg-slate-900/50 border-b border-slate-700/50 sticky top-0 z-50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Site Info */}
@@ -86,8 +86,8 @@ const SiteDashboard = () => {
                 <Zap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">{site.name}</h1>
-                <div className="flex items-center gap-3 text-sm text-slate-600">
+                <h1 className="text-2xl font-bold text-white">{site.name}</h1>
+                <div className="flex items-center gap-3 text-sm text-slate-400">
                   <span>{site.location}</span>
                   <Badge className={`${getStatusColor(site.status)} text-xs px-3 py-1`}>
                     {site.status}
@@ -99,11 +99,11 @@ const SiteDashboard = () => {
             
             {/* Header Actions */}
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="bg-white border-slate-200 hover:bg-slate-50">
+              <Button variant="outline" size="sm" className="bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white">
                 <Download className="w-4 h-4 mr-2" />
                 Export Data
               </Button>
-              <Button variant="outline" size="sm" className="bg-white border-slate-200 hover:bg-slate-50">
+              <Button variant="outline" size="sm" className="bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
@@ -121,27 +121,27 @@ const SiteDashboard = () => {
         {/* Key Metrics Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {metrics.map((metric, index) => (
-            <Card key={metric.title} className="bg-white border-slate-200 hover:shadow-lg transition-all duration-300">
+            <Card key={metric.title} className="bg-slate-900/50 border-slate-700/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-${metric.color}-50`}>
-                    <metric.icon className={`w-5 h-5 text-${metric.color}-600`} />
+                  <div className={`p-3 rounded-xl bg-${metric.color}-500/10 border border-${metric.color}-500/20`}>
+                    <metric.icon className={`w-5 h-5 text-${metric.color}-400`} />
                   </div>
-                  <Badge variant="outline" className="text-xs border-slate-200 text-slate-600">
+                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 bg-slate-800/50">
                     Live
                   </Badge>
                 </div>
                 
-                <h3 className="text-sm font-medium text-slate-600 mb-2">
+                <h3 className="text-sm font-medium text-slate-400 mb-2">
                   {metric.title}
                 </h3>
                 
-                <div className="text-2xl font-bold text-slate-900 mb-2">
+                <div className="text-2xl font-bold text-white mb-2">
                   {metric.value}
                 </div>
                 
                 <div className={`flex items-center text-sm ${
-                  metric.trend === 'up' ? 'text-emerald-600' : 'text-red-600'
+                  metric.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
                 }`}>
                   <TrendingUp className={`w-4 h-4 mr-1 ${
                     metric.trend === 'down' ? 'rotate-180' : ''
@@ -173,34 +173,34 @@ const SiteDashboard = () => {
           <EnhancedAlertsCard siteName={site.name} />
           
           {/* Quick Stats */}
-          <Card className="bg-white border-slate-200">
+          <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-slate-900">Performance Summary</CardTitle>
+              <CardTitle className="text-white">Performance Summary</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
+                <div className="flex justify-between items-center p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <Sun className="w-5 h-5 text-emerald-600" />
-                    <span className="font-medium text-slate-900">Today's Generation</span>
+                    <Sun className="w-5 h-5 text-emerald-400" />
+                    <span className="font-medium text-white">Today's Generation</span>
                   </div>
-                  <span className="text-xl font-bold text-emerald-600">2,847 kWh</span>
+                  <span className="text-xl font-bold text-emerald-400">2,847 kWh</span>
                 </div>
                 
-                <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                <div className="flex justify-between items-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <Grid className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-slate-900">Grid Connection</span>
+                    <Grid className="w-5 h-5 text-blue-400" />
+                    <span className="font-medium text-white">Grid Connection</span>
                   </div>
-                  <span className="text-xl font-bold text-blue-600">Stable</span>
+                  <span className="text-xl font-bold text-blue-400">Stable</span>
                 </div>
                 
-                <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
+                <div className="flex justify-between items-center p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <TrendingUp className="w-5 h-5 text-purple-600" />
-                    <span className="font-medium text-slate-900">Monthly Target</span>
+                    <TrendingUp className="w-5 h-5 text-purple-400" />
+                    <span className="font-medium text-white">Monthly Target</span>
                   </div>
-                  <span className="text-xl font-bold text-purple-600">87%</span>
+                  <span className="text-xl font-bold text-purple-400">87%</span>
                 </div>
               </div>
             </CardContent>
@@ -209,33 +209,33 @@ const SiteDashboard = () => {
 
         {/* Expandable Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 border-emerald-500/20 hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm">
             <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Grid className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Grid className="w-6 h-6 text-emerald-400" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Asset Management</h3>
-              <p className="text-sm text-slate-600">Manage and monitor all site assets</p>
+              <h3 className="font-semibold text-white mb-2">Asset Management</h3>
+              <p className="text-sm text-slate-400">Manage and monitor all site assets</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20 hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm">
             <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-6 h-6 text-blue-400" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Analytics</h3>
-              <p className="text-sm text-slate-600">Deep dive into performance data</p>
+              <h3 className="font-semibold text-white mb-2">Analytics</h3>
+              <p className="text-sm text-slate-400">Deep dive into performance data</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20 hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm">
             <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Settings className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Settings className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Configuration</h3>
-              <p className="text-sm text-slate-600">Customize site settings and alerts</p>
+              <h3 className="font-semibold text-white mb-2">Configuration</h3>
+              <p className="text-sm text-slate-400">Customize site settings and alerts</p>
             </CardContent>
           </Card>
         </div>

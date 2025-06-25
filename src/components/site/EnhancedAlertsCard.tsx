@@ -54,41 +54,41 @@ export const EnhancedAlertsCard: React.FC<EnhancedAlertsCardProps> = ({ siteName
 
   const getAlertColor = (type: string) => {
     switch (type) {
-      case 'warning': return 'text-amber-600 bg-amber-50 border-amber-200';
-      case 'info': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'success': return 'text-emerald-600 bg-emerald-50 border-emerald-200';
-      case 'error': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-slate-600 bg-slate-50 border-slate-200';
+      case 'warning': return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+      case 'info': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+      case 'success': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+      case 'error': return 'text-red-400 bg-red-500/10 border-red-500/20';
+      default: return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700 border-red-200';
-      case 'medium': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'low': return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+      case 'high': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'medium': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      case 'low': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
     }
   };
 
   return (
-    <Card className="bg-white border-slate-200 hover:shadow-lg transition-all duration-300">
+    <Card className="bg-slate-900/50 border-slate-700/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold text-slate-900">
+            <CardTitle className="text-xl font-bold text-white">
               System Alerts
             </CardTitle>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               Recent notifications for {siteName}
             </p>
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge className="bg-red-100 text-red-700 border-red-200">
+            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
               {alerts.length} Active
             </Badge>
-            <Button variant="outline" size="sm" className="text-slate-600">
+            <Button variant="outline" size="sm" className="text-slate-400 bg-slate-800 border-slate-600 hover:bg-slate-700 hover:text-white">
               View All
             </Button>
           </div>
@@ -109,10 +109,10 @@ export const EnhancedAlertsCard: React.FC<EnhancedAlertsCardProps> = ({ siteName
                   </div>
                   
                   <div className="flex-1">
-                    <p className="font-medium text-slate-900 mb-1">
+                    <p className="font-medium text-white mb-1">
                       {alert.message}
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
                       <Clock className="w-3 h-3" />
                       <span>{alert.timestamp}</span>
                     </div>
@@ -129,8 +129,8 @@ export const EnhancedAlertsCard: React.FC<EnhancedAlertsCardProps> = ({ siteName
         
         {alerts.length === 0 && (
           <div className="text-center py-8">
-            <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-            <p className="text-slate-600">No active alerts</p>
+            <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+            <p className="text-slate-300">No active alerts</p>
             <p className="text-sm text-slate-500">All systems are running normally</p>
           </div>
         )}

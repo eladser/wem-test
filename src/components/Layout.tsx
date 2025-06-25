@@ -14,21 +14,21 @@ const Layout = ({ children }: LayoutProps) => {
   console.log("Layout component rendering with children:", !!children);
   
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
       <AppSidebar />
-      <SidebarInset className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
-        <header className="flex h-16 shrink-0 items-center gap-2 bg-slate-900/50 backdrop-blur-xl border-b border-slate-700/50">
+      <SidebarInset className="flex-1 flex flex-col min-w-0">
+        <header className="flex h-16 shrink-0 items-center gap-2 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-50">
           <div className="flex items-center gap-2 px-4 flex-1">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
+            <SidebarTrigger className="-ml-1 text-slate-300 hover:text-white hover:bg-slate-800/50" />
+            <Separator orientation="vertical" className="mr-2 h-4 bg-slate-600" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/" className="text-slate-300 hover:text-white">
+                  <BreadcrumbLink href="/" className="text-slate-300 hover:text-white transition-colors">
                     WEM Dashboard
                   </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbSeparator className="hidden md:block text-slate-500" />
                 <BreadcrumbItem>
                   <BreadcrumbPage className="text-white">Overview</BreadcrumbPage>
                 </BreadcrumbItem>
@@ -39,13 +39,13 @@ const Layout = ({ children }: LayoutProps) => {
             <NotificationPanel />
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
           <div className="p-6 max-w-7xl mx-auto">
             {children}
           </div>
         </main>
       </SidebarInset>
-    </>
+    </div>
   );
 };
 
