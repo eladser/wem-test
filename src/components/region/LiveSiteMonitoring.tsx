@@ -6,17 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NavLink } from "react-router-dom";
 import { Search, ExternalLink, Zap, TrendingUp, AlertTriangle } from 'lucide-react';
-
-interface Site {
-  id: string;
-  name: string;
-  location: string;
-  totalCapacity: number;
-  currentOutput: number;
-  efficiency: number;
-  status: 'online' | 'maintenance' | 'offline';
-  type: string;
-}
+import { Site } from '@/types/energy';
 
 interface LiveSiteMonitoringProps {
   sites: Site[];
