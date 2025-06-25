@@ -163,18 +163,18 @@ export function AppSidebar() {
                                   }`
                                 }
                               >
-                                <div className="flex items-center space-x-3 flex-1">
+                                <div className="flex items-center space-x-3 w-full">
                                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                                     site.status === 'online' ? 'bg-emerald-400' :
                                     site.status === 'maintenance' ? 'bg-amber-400' : 
                                     'bg-red-400'
                                   }`} />
-                                  <span className="text-sm font-medium" title={site.name}>
-                                    {site.name}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                                  <span className="text-xs text-slate-400">{site.totalCapacity}MW</span>
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-sm font-medium whitespace-nowrap" title={site.name}>
+                                      {site.name}
+                                    </span>
+                                    <span className="text-xs text-slate-400 ml-2">{site.totalCapacity}MW</span>
+                                  </div>
                                 </div>
                               </NavLink>
                             </SidebarMenuButton>
