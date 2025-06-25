@@ -4,10 +4,11 @@ import { Zap, Battery, TrendingUp } from "lucide-react";
 import { mockRegions, generatePowerData } from "@/services/mockDataService";
 import { Metric } from "@/types/energy";
 import SiteTopBar from "./SiteTopBar";
-import { MetricsGrid } from "./site/MetricsGrid";
-import { PowerGenerationChart } from "./site/PowerGenerationChart";
-import { EnergyMixChart } from "./site/EnergyMixChart";
-import { RecentAlertsCard } from "./site/RecentAlertsCard";
+import { EnhancedSiteHeader } from "./site/EnhancedSiteHeader";
+import { EnhancedMetricsGrid } from "./site/EnhancedMetricsGrid";
+import { EnhancedPowerChart } from "./site/EnhancedPowerChart";
+import { EnhancedEnergyMix } from "./site/EnhancedEnergyMix";
+import { EnhancedAlertsCard } from "./site/EnhancedAlertsCard";
 import { usePerformance } from "@/hooks/usePerformance";
 
 const SiteDashboard = () => {
@@ -22,9 +23,9 @@ const SiteDashboard = () => {
 
   const powerData = generatePowerData();
   const energyMix = [
-    { name: "Solar", value: 65, color: "#10b981" },
+    { name: "Solar", value: 65, color: "#f59e0b" },
     { name: "Battery", value: 25, color: "#3b82f6" },
-    { name: "Grid", value: 10, color: "#f59e0b" },
+    { name: "Grid", value: 10, color: "#10b981" },
   ];
 
   const metrics: Metric[] = [
@@ -34,7 +35,7 @@ const SiteDashboard = () => {
       change: "+8.2%",
       trend: "up",
       icon: Zap,
-      color: "green"
+      color: "emerald"
     },
     {
       title: "Battery Level",
@@ -50,7 +51,7 @@ const SiteDashboard = () => {
       change: "+12.5%",
       trend: "up",
       icon: TrendingUp,
-      color: "emerald"
+      color: "cyan"
     },
     {
       title: "System Efficiency",
@@ -58,28 +59,37 @@ const SiteDashboard = () => {
       change: "+0.3%",
       trend: "up",
       icon: TrendingUp,
-      color: "cyan"
+      color: "green"
     }
   ];
 
   logRenderTime();
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <SiteTopBar />
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+      {/* Enhanced Site Header */}
+      <EnhancedSiteHeader site={site} />
       
-      <div className="p-6 space-y-6">
-        {/* Key Metrics */}
-        <MetricsGrid metrics={metrics} />
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PowerGenerationChart siteName={site.name} powerData={powerData} />
-          <EnergyMixChart siteName={site.name} energyMix={energyMix} />
+      <div className="p-8 space-y-8 max-w-7xl mx-auto">
+        {/* Enhanced Key Metrics */}
+        <div className="animate-fade-in">
+          <EnhancedMetricsGrid metrics={metrics} />
         </div>
 
-        {/* Recent Activities */}
-        <RecentAlertsCard siteName={site.name} />
+        {/* Enhanced Charts Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2 animate-slide-in-left">
+            <EnhancedPowerChart siteName={site.name} powerData={powerData} />
+          </div>
+          <div className="animate-slide-in-right">
+            <EnhancedEnergyMix siteName={site.name} energyMix={energyMix} />
+          </div>
+        </div>
+
+        {/* Enhanced Alerts Section */}
+        <div className="animate-slide-in-up">
+          <EnhancedAlertsCard siteName={site.name} />
+        </div>
       </div>
     </div>
   );
