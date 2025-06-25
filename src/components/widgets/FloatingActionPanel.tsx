@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import {
   Settings, 
   Download, 
   Upload, 
-  Refresh, 
+  RefreshCw, 
   Bell,
   Search,
   Filter,
@@ -28,7 +27,7 @@ export const FloatingActionPanel = ({ isOpen, onToggle, className }: FloatingAct
 
   const quickActions = [
     { id: 'add-site', label: 'Add Site', icon: Plus, color: 'emerald' },
-    { id: 'refresh', label: 'Refresh Data', icon: Refresh, color: 'blue' },
+    { id: 'refresh', label: 'Refresh Data', icon: RefreshCw, color: 'blue' },
     { id: 'export', label: 'Export Data', icon: Download, color: 'purple' },
     { id: 'import', label: 'Import Config', icon: Upload, color: 'amber' },
   ];

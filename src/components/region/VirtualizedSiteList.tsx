@@ -127,7 +127,6 @@ export const VirtualizedSiteList = ({ sites, height = 600 }: VirtualizedSiteList
       return matchesSearch && matchesStatus && matchesCapacity;
     });
 
-    // Sort the filtered results
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name': return a.name.localeCompare(b.name);
@@ -214,6 +213,7 @@ export const VirtualizedSiteList = ({ sites, height = 600 }: VirtualizedSiteList
         ) : (
           <List
             height={height}
+            width="100%"
             itemCount={filteredAndSortedSites.length}
             itemSize={280}
             itemData={filteredAndSortedSites}
