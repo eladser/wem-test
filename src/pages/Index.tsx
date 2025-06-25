@@ -47,7 +47,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen space-y-8">
+    <div className="w-full space-y-8">
       {/* Welcome Header */}
       <div className="text-center mb-12">
         <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
