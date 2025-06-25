@@ -1,10 +1,11 @@
 
 import { useParams } from "react-router-dom";
-import { Zap, Battery, TrendingUp } from "lucide-react";
+import { Zap, Battery, TrendingUp, Grid, Sun, AlertTriangle, Settings, Download } from "lucide-react";
 import { mockRegions, generatePowerData } from "@/services/mockDataService";
 import { Metric } from "@/types/energy";
-import { EnhancedSiteHeader } from "./site/EnhancedSiteHeader";
-import { EnhancedMetricsGrid } from "./site/EnhancedMetricsGrid";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedPowerChart } from "./site/EnhancedPowerChart";
 import { EnhancedEnergyMix } from "./site/EnhancedEnergyMix";
 import { EnhancedAlertsCard } from "./site/EnhancedAlertsCard";
@@ -22,9 +23,9 @@ const SiteDashboard = () => {
 
   const powerData = generatePowerData();
   const energyMix = [
-    { name: "Solar", value: 65, color: "#f59e0b" },
+    { name: "Solar", value: 65, color: "#10b981" },
     { name: "Battery", value: 25, color: "#3b82f6" },
-    { name: "Grid", value: 10, color: "#10b981" },
+    { name: "Grid", value: 10, color: "#f59e0b" },
   ];
 
   const metrics: Metric[] = [
@@ -64,143 +65,179 @@ const SiteDashboard = () => {
 
   logRenderTime();
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
+      case 'maintenance': return 'bg-amber-500/20 text-amber-400 border-amber-500/40';
+      case 'offline': return 'bg-red-500/20 text-red-400 border-red-500/40';
+      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/40';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-emerald-500/5 to-transparent rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-cyan-500/5 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      {/* Modern Header Bar */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-sm bg-white/80">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Site Info */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">{site.name}</h1>
+                <div className="flex items-center gap-3 text-sm text-slate-600">
+                  <span>{site.location}</span>
+                  <Badge className={`${getStatusColor(site.status)} text-xs px-3 py-1`}>
+                    {site.status}
+                  </Badge>
+                  <span>{site.totalCapacity}MW Total</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Header Actions */}
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="bg-white border-slate-200 hover:bg-slate-50">
+                <Download className="w-4 h-4 mr-2" />
+                Export Data
+              </Button>
+              <Button variant="outline" size="sm" className="bg-white border-slate-200 hover:bg-slate-50">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                View Alerts (3)
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Enhanced Site Header - Now full width with better visual impact */}
-      <EnhancedSiteHeader site={site} />
-      
-      {/* Main Content Area with New Layout */}
-      <div className="relative z-10">
-        {/* New Layout: Split into sidebar metrics and main content */}
-        <div className="flex flex-col xl:flex-row gap-8 p-8 max-w-[1600px] mx-auto">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Key Metrics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {metrics.map((metric, index) => (
+            <Card key={metric.title} className="bg-white border-slate-200 hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-xl bg-${metric.color}-50`}>
+                    <metric.icon className={`w-5 h-5 text-${metric.color}-600`} />
+                  </div>
+                  <Badge variant="outline" className="text-xs border-slate-200 text-slate-600">
+                    Live
+                  </Badge>
+                </div>
+                
+                <h3 className="text-sm font-medium text-slate-600 mb-2">
+                  {metric.title}
+                </h3>
+                
+                <div className="text-2xl font-bold text-slate-900 mb-2">
+                  {metric.value}
+                </div>
+                
+                <div className={`flex items-center text-sm ${
+                  metric.trend === 'up' ? 'text-emerald-600' : 'text-red-600'
+                }`}>
+                  <TrendingUp className={`w-4 h-4 mr-1 ${
+                    metric.trend === 'down' ? 'rotate-180' : ''
+                  }`} />
+                  <span>{metric.change}</span>
+                  <span className="text-slate-500 ml-1">vs yesterday</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Main Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Power Chart - Takes 2/3 */}
+          <div className="lg:col-span-2">
+            <EnhancedPowerChart siteName={site.name} powerData={powerData} />
+          </div>
           
-          {/* Left Sidebar - Metrics */}
-          <div className="xl:w-80 space-y-6">
-            <div className="animate-fade-in">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-white" />
-                </div>
-                Live Metrics
-              </h2>
-              
-              {/* Vertical Metrics Layout */}
+          {/* Energy Mix - Takes 1/3 */}
+          <div className="lg:col-span-1">
+            <EnhancedEnergyMix siteName={site.name} energyMix={energyMix} />
+          </div>
+        </div>
+
+        {/* Secondary Content Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Alerts */}
+          <EnhancedAlertsCard siteName={site.name} />
+          
+          {/* Quick Stats */}
+          <Card className="bg-white border-slate-200">
+            <CardHeader>
+              <CardTitle className="text-slate-900">Performance Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
-                {metrics.map((metric, index) => (
-                  <div 
-                    key={metric.title}
-                    className="bg-gradient-to-r from-slate-900/60 to-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-emerald-400/30 transition-all duration-500 group animate-fade-in hover:scale-[1.02]"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`p-3 bg-${metric.color}-500/10 rounded-xl group-hover:bg-${metric.color}-500/20 transition-colors duration-300`}>
-                        <metric.icon className={`h-6 w-6 text-${metric.color}-400 group-hover:scale-110 transition-transform duration-300`} />
-                      </div>
-                      <div className={`text-xs px-2 py-1 rounded-full bg-${metric.color}-500/20 text-${metric.color}-400 border border-${metric.color}-500/30`}>
-                        Live
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-sm font-medium text-slate-300 mb-2">
-                      {metric.title}
-                    </h3>
-                    
-                    <div className="text-3xl font-bold text-white mb-3">
-                      {metric.value}
-                    </div>
-                    
-                    <div className={`flex items-center gap-2 text-${metric.trend === 'up' ? 'emerald' : 'red'}-400`}>
-                      <TrendingUp className={`w-4 h-4 ${metric.trend === 'down' ? 'rotate-180' : ''}`} />
-                      <span className="text-sm font-medium">{metric.change}</span>
-                      <span className="text-xs text-slate-400 ml-1">vs yesterday</span>
-                    </div>
-                    
-                    {/* Progress bar */}
-                    <div className="w-full bg-slate-800/50 rounded-full h-2 mt-4 overflow-hidden">
-                      <div 
-                        className={`h-full bg-gradient-to-r from-${metric.color}-500 to-${metric.color}-400 rounded-full transition-all duration-1000`}
-                        style={{ 
-                          width: `${Math.min(100, Math.max(0, 70 + (index * 10)))}%`,
-                          animationDelay: `${index * 0.2}s`
-                        }}
-                      />
-                    </div>
+                <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Sun className="w-5 h-5 text-emerald-600" />
+                    <span className="font-medium text-slate-900">Today's Generation</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Main Content Area */}
-          <div className="flex-1 space-y-8">
-            
-            {/* Top Charts Section - Better Proportioned */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              
-              {/* Power Chart - Takes 3/5 of the width */}
-              <div className="lg:col-span-3 animate-slide-in-left">
-                <EnhancedPowerChart siteName={site.name} powerData={powerData} />
-              </div>
-              
-              {/* Energy Mix - Takes 2/5 of the width */}
-              <div className="lg:col-span-2 animate-slide-in-right">
-                <EnhancedEnergyMix siteName={site.name} energyMix={energyMix} />
-              </div>
-            </div>
-
-            {/* Bottom Section - Alerts with Better Spacing */}
-            <div className="animate-slide-in-up">
-              <EnhancedAlertsCard siteName={site.name} />
-            </div>
-
-            {/* Additional Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-              <div className="bg-gradient-to-r from-slate-900/60 to-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-violet-400/30 transition-all duration-300 group">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider">Monthly Target</p>
-                    <p className="text-2xl font-bold text-white mt-1">87.2%</p>
-                    <p className="text-emerald-400 text-xs mt-1">+12.3% vs last month</p>
+                  <span className="text-xl font-bold text-emerald-600">2,847 kWh</span>
+                </div>
+                
+                <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Grid className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-slate-900">Grid Connection</span>
                   </div>
-                  <div className="w-12 h-12 bg-violet-500/20 rounded-xl flex items-center justify-center group-hover:bg-violet-500/30 transition-colors">
-                    <TrendingUp className="w-6 h-6 text-violet-400" />
+                  <span className="text-xl font-bold text-blue-600">Stable</span>
+                </div>
+                
+                <div className="flex justify-between items-center p-4 bg-purple-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                    <span className="font-medium text-slate-900">Monthly Target</span>
                   </div>
+                  <span className="text-xl font-bold text-purple-600">87%</span>
                 </div>
               </div>
-              
-              <div className="bg-gradient-to-r from-slate-900/60 to-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-amber-400/30 transition-all duration-300 group">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider">Carbon Saved</p>
-                    <p className="text-2xl font-bold text-white mt-1">2.4T CO₂</p>
-                    <p className="text-emerald-400 text-xs mt-1">This month</p>
-                  </div>
-                  <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
-                    <Zap className="w-6 h-6 text-amber-400" />
-                  </div>
-                </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Expandable Features Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Grid className="w-6 h-6 text-white" />
               </div>
-              
-              <div className="bg-gradient-to-r from-slate-900/60 to-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 hover:border-emerald-400/30 transition-all duration-300 group">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider">Cost Savings</p>
-                    <p className="text-2xl font-bold text-white mt-1">$12,847</p>
-                    <p className="text-emerald-400 text-xs mt-1">This month</p>
-                  </div>
-                  <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-                    <Battery className="w-6 h-6 text-emerald-400" />
-                  </div>
-                </div>
+              <h3 className="font-semibold text-slate-900 mb-2">Asset Management</h3>
+              <p className="text-sm text-slate-600">Manage and monitor all site assets</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-6 h-6 text-white" />
               </div>
-            </div>
-          </div>
+              <h3 className="font-semibold text-slate-900 mb-2">Analytics</h3>
+              <p className="text-sm text-slate-600">Deep dive into performance data</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Settings className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">Configuration</h3>
+              <p className="text-sm text-slate-600">Customize site settings and alerts</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
