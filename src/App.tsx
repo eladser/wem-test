@@ -16,6 +16,7 @@ import Overview from "./pages/Overview";
 import Analytics from "./pages/Analytics";
 import Assets from "./pages/Assets";
 import RegionOverview from "./pages/RegionOverview";
+import { RegionDashboard } from "./components/region/RegionDashboard";
 import SiteDashboard from "./components/SiteDashboard";
 import SiteAssets from "./components/SiteAssets";
 import SiteReports from "./components/SiteReports";
@@ -76,7 +77,7 @@ const App: React.FC = () => {
                             } />
                             <Route path="/region/:regionId" element={
                               <ProtectedRoute requiredPermission="read">
-                                <RegionOverview />
+                                <RegionDashboard />
                               </ProtectedRoute>
                             } />
                             <Route path="/site/:siteId" element={
