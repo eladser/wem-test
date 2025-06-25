@@ -8,7 +8,7 @@ const SiteGrid = () => {
   const { siteId } = useParams();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
       <SiteTopBar />
       
       <div className="relative h-[calc(100vh-140px)]">

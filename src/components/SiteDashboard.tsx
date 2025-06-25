@@ -6,9 +6,11 @@ import { Metric } from "@/types/energy";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnhancedPowerChart } from "./site/EnhancedPowerChart";
 import { EnhancedEnergyMix } from "./site/EnhancedEnergyMix";
 import { EnhancedAlertsCard } from "./site/EnhancedAlertsCard";
+import InteractiveGrid from "./InteractiveGrid";
 import { usePerformance } from "@/hooks/usePerformance";
 
 const SiteDashboard = () => {
@@ -75,7 +77,7 @@ const SiteDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
       {/* Modern Header Bar */}
       <div className="bg-slate-900/50 border-b border-slate-700/50 sticky top-0 z-50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -116,129 +118,115 @@ const SiteDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content with Tabs */}
       <div className="max-w-7xl mx-auto p-6">
-        {/* Key Metrics Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {metrics.map((metric, index) => (
-            <Card key={metric.title} className="bg-slate-900/50 border-slate-700/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-${metric.color}-500/10 border border-${metric.color}-500/20`}>
-                    <metric.icon className={`w-5 h-5 text-${metric.color}-400`} />
-                  </div>
-                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 bg-slate-800/50">
-                    Live
-                  </Badge>
-                </div>
-                
-                <h3 className="text-sm font-medium text-slate-400 mb-2">
-                  {metric.title}
-                </h3>
-                
-                <div className="text-2xl font-bold text-white mb-2">
-                  {metric.value}
-                </div>
-                
-                <div className={`flex items-center text-sm ${
-                  metric.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
-                }`}>
-                  <TrendingUp className={`w-4 h-4 mr-1 ${
-                    metric.trend === 'down' ? 'rotate-180' : ''
-                  }`} />
-                  <span>{metric.change}</span>
-                  <span className="text-slate-500 ml-1">vs yesterday</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border-slate-700/50">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="grid" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              Interactive Grid
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-8 mt-6">
+            {/* Key Metrics Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {metrics.map((metric, index) => (
+                <Card key={metric.title} className="bg-slate-900/50 border-slate-700/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-xl bg-${metric.color}-500/10 border border-${metric.color}-500/20`}>
+                        <metric.icon className={`w-5 h-5 text-${metric.color}-400`} />
+                      </div>
+                      <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 bg-slate-800/50">
+                        Live
+                      </Badge>
+                    </div>
+                    
+                    <h3 className="text-sm font-medium text-slate-400 mb-2">
+                      {metric.title}
+                    </h3>
+                    
+                    <div className="text-2xl font-bold text-white mb-2">
+                      {metric.value}
+                    </div>
+                    
+                    <div className={`flex items-center text-sm ${
+                      metric.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                      <TrendingUp className={`w-4 h-4 mr-1 ${
+                        metric.trend === 'down' ? 'rotate-180' : ''
+                      }`} />
+                      <span>{metric.change}</span>
+                      <span className="text-slate-500 ml-1">vs yesterday</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-        {/* Main Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Power Chart - Takes 2/3 */}
-          <div className="lg:col-span-2">
-            <EnhancedPowerChart siteName={site.name} powerData={powerData} />
-          </div>
-          
-          {/* Energy Mix - Takes 1/3 */}
-          <div className="lg:col-span-1">
-            <EnhancedEnergyMix siteName={site.name} energyMix={energyMix} />
-          </div>
-        </div>
+            {/* Main Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Power Chart - Takes 2/3 */}
+              <div className="lg:col-span-2">
+                <EnhancedPowerChart siteName={site.name} powerData={powerData} />
+              </div>
+              
+              {/* Energy Mix - Takes 1/3 */}
+              <div className="lg:col-span-1">
+                <EnhancedEnergyMix siteName={site.name} energyMix={energyMix} />
+              </div>
+            </div>
 
-        {/* Secondary Content Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Alerts */}
-          <EnhancedAlertsCard siteName={site.name} />
-          
-          {/* Quick Stats */}
-          <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-white">Performance Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Sun className="w-5 h-5 text-emerald-400" />
-                    <span className="font-medium text-white">Today's Generation</span>
+            {/* Secondary Content Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Alerts */}
+              <EnhancedAlertsCard siteName={site.name} />
+              
+              {/* Quick Stats */}
+              <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-white">Performance Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <Sun className="w-5 h-5 text-emerald-400" />
+                        <span className="font-medium text-white">Today's Generation</span>
+                      </div>
+                      <span className="text-xl font-bold text-emerald-400">2,847 kWh</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <Grid className="w-5 h-5 text-blue-400" />
+                        <span className="font-medium text-white">Grid Connection</span>
+                      </div>
+                      <span className="text-xl font-bold text-blue-400">Stable</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="w-5 h-5 text-purple-400" />
+                        <span className="font-medium text-white">Monthly Target</span>
+                      </div>
+                      <span className="text-xl font-bold text-purple-400">87%</span>
+                    </div>
                   </div>
-                  <span className="text-xl font-bold text-emerald-400">2,847 kWh</span>
-                </div>
-                
-                <div className="flex justify-between items-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Grid className="w-5 h-5 text-blue-400" />
-                    <span className="font-medium text-white">Grid Connection</span>
-                  </div>
-                  <span className="text-xl font-bold text-blue-400">Stable</span>
-                </div>
-                
-                <div className="flex justify-between items-center p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <TrendingUp className="w-5 h-5 text-purple-400" />
-                    <span className="font-medium text-white">Monthly Target</span>
-                  </div>
-                  <span className="text-xl font-bold text-purple-400">87%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Expandable Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 border-emerald-500/20 hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Grid className="w-6 h-6 text-emerald-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Asset Management</h3>
-              <p className="text-sm text-slate-400">Manage and monitor all site assets</p>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
           
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20 hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-blue-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Analytics</h3>
-              <p className="text-sm text-slate-400">Deep dive into performance data</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20 hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Settings className="w-6 h-6 text-purple-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Configuration</h3>
-              <p className="text-sm text-slate-400">Customize site settings and alerts</p>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="grid" className="mt-6">
+            <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden border border-slate-700/50">
+              <InteractiveGrid />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
