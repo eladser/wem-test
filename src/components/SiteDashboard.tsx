@@ -1,6 +1,6 @@
 
 import { useParams } from "react-router-dom";
-import { Zap, Battery, TrendingUp, Grid, Sun, AlertTriangle, Settings, Download } from "lucide-react";
+import { Zap, Battery, TrendingUp, Grid, Sun, AlertTriangle, Settings, Download, Users, FileText, DollarSign } from "lucide-react";
 import { mockRegions, generatePowerData } from "@/services/mockDataService";
 import { Metric } from "@/types/energy";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,11 @@ import { EnhancedPowerChart } from "./site/EnhancedPowerChart";
 import { EnhancedEnergyMix } from "./site/EnhancedEnergyMix";
 import { EnhancedAlertsCard } from "./site/EnhancedAlertsCard";
 import InteractiveGrid from "./InteractiveGrid";
+import SiteAssets from "./SiteAssets";
+import SiteReports from "./SiteReports";
+import SiteTeam from "./SiteTeam";
+import SiteFinances from "./SiteFinances";
+import SiteSettings from "./SiteSettings";
 import { usePerformance } from "@/hooks/usePerformance";
 
 const SiteDashboard = () => {
@@ -121,12 +126,33 @@ const SiteDashboard = () => {
       {/* Main Content with Tabs */}
       <div className="max-w-7xl mx-auto p-6">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border-slate-700/50">
+          <TabsList className="grid w-full grid-cols-7 bg-slate-800/50 border-slate-700/50">
             <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
               Overview
             </TabsTrigger>
             <TabsTrigger value="grid" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-              Interactive Grid
+              <Grid className="w-4 h-4 mr-1" />
+              Grid
+            </TabsTrigger>
+            <TabsTrigger value="assets" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <Zap className="w-4 h-4 mr-1" />
+              Assets
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <FileText className="w-4 h-4 mr-1" />
+              Reports
+            </TabsTrigger>
+            <TabsTrigger value="team" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <Users className="w-4 h-4 mr-1" />
+              Team
+            </TabsTrigger>
+            <TabsTrigger value="finances" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <DollarSign className="w-4 h-4 mr-1" />
+              Finances
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              <Settings className="w-4 h-4 mr-1" />
+              Settings
             </TabsTrigger>
           </TabsList>
           
@@ -225,6 +251,26 @@ const SiteDashboard = () => {
             <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden border border-slate-700/50">
               <InteractiveGrid />
             </div>
+          </TabsContent>
+
+          <TabsContent value="assets" className="mt-6">
+            <SiteAssets />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <SiteReports />
+          </TabsContent>
+
+          <TabsContent value="team" className="mt-6">
+            <SiteTeam />
+          </TabsContent>
+
+          <TabsContent value="finances" className="mt-6">
+            <SiteFinances />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <SiteSettings />
           </TabsContent>
         </Tabs>
       </div>
