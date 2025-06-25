@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Portal } from '@/components/ui/portal';
-import { Bell, X, Check, AlertCircle, Info, CheckCircle, XCircle } from 'lucide-react';
-import { theme } from '@/lib/theme';
-import { cn } from '@/lib/utils';
+
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Bell, X, Settings, CheckCircle, AlertTriangle, Info, Zap } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Notification {
   id: string;
@@ -14,95 +18,63 @@ interface Notification {
   message: string;
   timestamp: Date;
   read: boolean;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  site?: string;
+  region?: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'warning',
-    title: 'High Energy Consumption',
-    message: 'Site Alpha is consuming 15% more energy than expected',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    read: false,
-    action: {
-      label: 'View Details',
-      onClick: () => console.log('Navigate to Site Alpha')
+export const NotificationPanel = () => {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: '1',
+      type: 'warning',
+      title: 'High Temperature Alert',
+      message: 'Panel temperature exceeding normal range at Solar Farm Alpha',
+      timestamp: new Date(Date.now() - 1000 * 60 * 2),
+      read: false,
+      site: 'Solar Farm Alpha',
+      region: 'North America'
+    },
+    {
+      id: '2',
+      type: 'success',
+      title: 'Maintenance Completed',
+      message: 'Scheduled maintenance completed successfully at Wind Farm Beta',
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      read: false,
+      site: 'Wind Farm Beta',
+      region: 'Europe'
+    },
+    {
+      id: '3',
+      type: 'info',
+      title: 'System Update',
+      message: 'New energy monitoring features are now available',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+      read: true,
+    },
+    {
+      id: '4',
+      type: 'error',
+      title: 'Grid Connection Issue',
+      message: 'Intermittent connectivity detected at Hydro Station Gamma',
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+      read: true,
+      site: 'Hydro Station Gamma',
+      region: 'Asia Pacific'
     }
-  },
-  {
-    id: '2',
-    type: 'success',
-    title: 'Maintenance Complete',
-    message: 'Scheduled maintenance on Grid B has been completed successfully',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    read: false
-  },
-  {
-    id: '3',
-    type: 'error',
-    title: 'Connection Lost',
-    message: 'Unable to connect to monitoring system for Site Charlie',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
-    read: true,
-    action: {
-      label: 'Retry Connection',
-      onClick: () => console.log('Retry connection')
-    }
-  },
-  {
-    id: '4',
-    type: 'info',
-    title: 'System Update',
-    message: 'New analytics features are now available in your dashboard',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    read: true
-  }
-];
-
-export const NotificationPanel: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [isOpen, setIsOpen] = useState(false);
+  ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return <CheckCircle className="w-4 h-4 text-emerald-400" />;
-      case 'warning':
-        return <AlertCircle className="w-4 h-4 text-amber-400" />;
-      case 'error':
-        return <XCircle className="w-4 h-4 text-red-400" />;
-      case 'info':
-        return <Info className="w-4 h-4 text-blue-400" />;
-    }
-  };
-
-  const getNotificationBorder = (type: Notification['type']) => {
-    switch (type) {
-      case 'success':
-        return 'border-emerald-500/30';
-      case 'warning':
-        return 'border-amber-500/30';
-      case 'error':
-        return 'border-red-500/30';
-      case 'info':
-        return 'border-blue-500/30';
-    }
-  };
-
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
+    setNotifications(prev => 
       prev.map(n => n.id === id ? { ...n, read: true } : n)
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
+    setNotifications(prev => 
       prev.map(n => ({ ...n, read: true }))
     );
   };
@@ -111,170 +83,172 @@ export const NotificationPanel: React.FC = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const formatTime = (date: Date) => {
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'success': return <CheckCircle className="w-4 h-4 text-emerald-400" />;
+      case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-400" />;
+      case 'error': return <AlertTriangle className="w-4 h-4 text-red-400" />;
+      case 'info': return <Info className="w-4 h-4 text-blue-400" />;
+      default: return <Info className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
+  const getTimeAgo = (timestamp: Date) => {
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
+    const diff = now.getTime() - timestamp.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('[data-notification-panel]')) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
   return (
-    <div className="relative" data-notification-panel>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors"
-      >
-        <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
-          <div className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-medium">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative h-9 w-9 p-0 text-slate-400 hover:text-white hover:bg-slate-800/50"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <Badge 
+              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs border-0"
+            >
               {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent 
+        className="w-96 p-0 bg-slate-900 border-slate-700 shadow-2xl" 
+        align="end"
+        sideOffset={5}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-400" />
+            <h3 className="font-semibold text-white">Notifications</h3>
+            {unreadCount > 0 && (
+              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                {unreadCount} new
+              </Badge>
+            )}
           </div>
-        )}
-      </Button>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="text-xs text-slate-400 hover:text-white h-6 px-2"
+              >
+                Mark all read
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-slate-400 hover:text-white"
+            >
+              <Settings className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
 
-      {isOpen && (
-        <Portal>
-          <div 
-            className="fixed right-4 top-16 w-96 z-[9999]"
-          >
-            <Card className="bg-slate-900 border-slate-700 shadow-2xl">
-              <CardHeader className="pb-3 border-b border-slate-700">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
-                    <Bell className="w-5 h-5" />
-                    Notifications
-                    {unreadCount > 0 && (
-                      <Badge className="bg-red-500 text-white">
-                        {unreadCount}
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    {unreadCount > 0 && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={markAllAsRead} 
-                        className="text-slate-300 hover:text-white h-8"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Mark all read
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setIsOpen(false)} 
-                      className="text-slate-300 hover:text-white h-8 w-8 p-0"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0 max-h-96 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No notifications</p>
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    {notifications.map((notification, index) => (
-                      <div
-                        key={notification.id}
-                        className={cn(
-                          "p-4 border-b border-slate-700 last:border-b-0 transition-all duration-200 hover:bg-slate-800/50",
-                          !notification.read && "bg-slate-800/30"
-                        )}
-                      >
-                        <div className="flex items-start gap-3">
-                          {getNotificationIcon(notification.type)}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className={cn(
-                                "font-medium text-sm",
-                                !notification.read ? "text-white" : "text-slate-300"
-                              )}>
-                                {notification.title}
-                              </h4>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeNotification(notification.id)}
-                                className="h-6 w-6 p-0 opacity-60 hover:opacity-100 text-slate-400 hover:text-white"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <p className="text-xs text-slate-400 mb-2 leading-relaxed">
-                              {notification.message}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-slate-500">
-                                {formatTime(notification.timestamp)}
-                              </span>
-                              <div className="flex gap-2">
-                                {notification.action && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-6 text-xs px-2 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-                                    onClick={notification.action.onClick}
-                                  >
-                                    {notification.action.label}
-                                  </Button>
-                                )}
-                                {!notification.read && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs px-2 text-slate-400 hover:text-white"
-                                    onClick={() => markAsRead(notification.id)}
-                                  >
-                                    Mark read
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
+        <ScrollArea className="h-96">
+          <div className="p-2">
+            {notifications.length === 0 ? (
+              <div className="text-center py-8">
+                <Bell className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400 text-sm">No notifications</p>
+                <p className="text-slate-500 text-xs mt-1">You're all caught up!</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-3 rounded-lg border transition-all hover:bg-slate-800/50 group ${
+                      notification.read 
+                        ? 'border-slate-800 bg-slate-900/30' 
+                        : 'border-slate-700 bg-slate-800/30'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className={`font-medium text-sm truncate ${
+                            notification.read ? 'text-slate-300' : 'text-white'
+                          }`}>
+                            {notification.title}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeNotification(notification.id)}
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-white"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        
+                        <p className={`text-xs mb-2 ${
+                          notification.read ? 'text-slate-500' : 'text-slate-400'
+                        }`}>
+                          {notification.message}
+                        </p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>{getTimeAgo(notification.timestamp)}</span>
+                            {notification.site && (
+                              <>
+                                <span>•</span>
+                                <span>{notification.site}</span>
+                              </>
+                            )}
                           </div>
+                          
+                          {!notification.read && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => markAsRead(notification.id)}
+                              className="text-xs text-emerald-400 hover:text-emerald-300 h-5 px-2"
+                            >
+                              Mark read
+                            </Button>
+                          )}
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                ))}
+              </div>
+            )}
           </div>
-        </Portal>
-      )}
-    </div>
+        </ScrollArea>
+
+        <Separator className="bg-slate-700" />
+        <div className="p-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+          >
+            View All Notifications
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };

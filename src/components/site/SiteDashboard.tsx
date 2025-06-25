@@ -3,15 +3,15 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockRegions } from "@/services/mockDataService";
-import { SiteTopBar } from "@/components/SiteTopBar";
+import SiteTopBar from "@/components/SiteTopBar";
 import { EnhancedSiteHeader } from "@/components/site/EnhancedSiteHeader";
 import { CustomizableSiteDashboard } from "@/components/site/CustomizableSiteDashboard";
-import { SiteGrid } from "@/components/SiteGrid";
-import { SiteAssets } from "@/components/SiteAssets";
-import { SiteReports } from "@/components/SiteReports";
-import { SiteTeam } from "@/components/SiteTeam";
-import { SiteFinances } from "@/components/SiteFinances";
-import { SiteSettings } from "@/components/SiteSettings";
+import SiteGrid from "@/components/SiteGrid";
+import SiteAssets from "@/components/SiteAssets";
+import SiteReports from "@/components/SiteReports";
+import SiteTeam from "@/components/SiteTeam";
+import SiteFinances from "@/components/SiteFinances";
+import SiteSettings from "@/components/SiteSettings";
 
 const SiteDashboard = () => {
   const { siteId } = useParams();
