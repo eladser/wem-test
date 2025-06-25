@@ -13,6 +13,8 @@ import { ExportManager } from "@/components/region/ExportManager";
 import { SiteMonitoringGrid } from "@/components/region/SiteMonitoringGrid";
 import { SitePerformanceAnalytics } from "@/components/region/SitePerformanceAnalytics";
 import { AlertManagement } from "@/components/region/AlertManagement";
+import { VirtualizedSiteList } from "@/components/region/VirtualizedSiteList";
+import { EnhancedSystemMonitor } from "@/components/monitoring/EnhancedSystemMonitor";
 import { MapPin, Zap, TrendingUp, Users, Building } from "lucide-react";
 import { theme } from "@/lib/theme";
 
@@ -103,15 +105,16 @@ const RegionOverview = () => {
 
       {/* Tabs Navigation */}
       <Tabs defaultValue="analytics" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 bg-slate-800">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 bg-slate-800">
           <TabsTrigger value="analytics" className="data-[state=active]:bg-slate-700">Analytics</TabsTrigger>
           <TabsTrigger value="sites" className="data-[state=active]:bg-slate-700">Live Sites</TabsTrigger>
+          <TabsTrigger value="virtual-sites" className="data-[state=active]:bg-slate-700">Site List</TabsTrigger>
+          <TabsTrigger value="monitoring" className="data-[state=active]:bg-slate-700">Monitor</TabsTrigger>
           <TabsTrigger value="performance" className="data-[state=active]:bg-slate-700">Performance</TabsTrigger>
           <TabsTrigger value="alert-mgmt" className="data-[state=active]:bg-slate-700">Alert Mgmt</TabsTrigger>
           <TabsTrigger value="alerts" className="data-[state=active]:bg-slate-700">Alerts</TabsTrigger>
           <TabsTrigger value="forecast" className="data-[state=active]:bg-slate-700">Forecast</TabsTrigger>
           <TabsTrigger value="team" className="data-[state=active]:bg-slate-700">Team</TabsTrigger>
-          <TabsTrigger value="export" className="data-[state=active]:bg-slate-700">Export</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
@@ -130,12 +133,16 @@ const RegionOverview = () => {
           <TeamManager />
         </TabsContent>
 
-        <TabsContent value="export" className="space-y-6">
-          <ExportManager />
-        </TabsContent>
-
         <TabsContent value="sites" className="space-y-6">
           <SiteMonitoringGrid />
+        </TabsContent>
+
+        <TabsContent value="virtual-sites" className="space-y-6">
+          <VirtualizedSiteList sites={region.sites} height={700} />
+        </TabsContent>
+
+        <TabsContent value="monitoring" className="space-y-6">
+          <EnhancedSystemMonitor />
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-6">

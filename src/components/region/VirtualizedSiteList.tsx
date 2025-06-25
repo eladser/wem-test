@@ -174,9 +174,9 @@ export const VirtualizedSiteList = ({ sites, height = 600 }: VirtualizedSiteList
             </SelectTrigger>
             <SelectContent className="glass border-slate-600">
               <SelectItem value="all">All Sizes</SelectItem>
-              <SelectItem value="small">< 50 MW</SelectItem>
+              <SelectItem value="small">&lt; 50 MW</SelectItem>
               <SelectItem value="medium">50-100 MW</SelectItem>
-              <SelectItem value="large">> 100 MW</SelectItem>
+              <SelectItem value="large">&gt; 100 MW</SelectItem>
             </SelectContent>
           </Select>
 

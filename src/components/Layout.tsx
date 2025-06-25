@@ -5,6 +5,8 @@ import { EnhancedSidebar } from "@/components/navigation/EnhancedSidebar";
 import { CommandPalette } from "@/components/navigation/CommandPalette";
 import { ModernBreadcrumb } from "@/components/navigation/ModernBreadcrumb";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
+import { FloatingActionPanel } from "@/components/widgets/FloatingActionPanel";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Separator } from "@/components/ui/separator";
 
 interface LayoutProps {
@@ -13,6 +15,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [floatingPanelOpen, setFloatingPanelOpen] = useState(false);
   
   console.log("Layout component rendering with children:", !!children);
   
@@ -27,6 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
             <ModernBreadcrumb />
           </div>
           <div className="flex items-center gap-2 px-4">
+            <ThemeToggle />
             <NotificationPanel />
           </div>
         </header>
@@ -36,6 +40,11 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </main>
       </SidebarInset>
+      
+      <FloatingActionPanel 
+        isOpen={floatingPanelOpen}
+        onToggle={() => setFloatingPanelOpen(!floatingPanelOpen)}
+      />
       
       <CommandPalette 
         open={commandPaletteOpen} 
