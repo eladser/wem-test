@@ -103,27 +103,27 @@ const SiteDashboard = () => {
           </TabsContent>
 
           <TabsContent value="grid" className="space-y-6 mt-6">
-            <SiteGrid siteId={siteId} />
+            <SiteGrid />
           </TabsContent>
 
           <TabsContent value="assets" className="space-y-6 mt-6">
-            <SiteAssets siteId={siteId} />
+            <SiteAssets />
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6 mt-6">
-            <SiteReports siteId={siteId} />
+            <SiteReports />
           </TabsContent>
 
           <TabsContent value="team" className="space-y-6 mt-6">
-            <SiteTeam siteId={siteId} />
+            <SiteTeam />
           </TabsContent>
 
           <TabsContent value="finances" className="space-y-6 mt-6">
-            <SiteFinances siteId={siteId} />
+            <SiteFinances />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6 mt-6">
-            <SiteSettings siteId={siteId} />
+            <SiteSettings />
           </TabsContent>
         </Tabs>
       </div>
