@@ -3,7 +3,6 @@ import { mockRegions } from "@/services/mockDataService";
 import { MetricsCards } from "@/components/overview/MetricsCards";
 import { RegionsGrid } from "@/components/overview/RegionsGrid";
 import { usePerformance } from "@/hooks/useAdvancedPerformance";
-import { useRealTimeData, ConnectionStatus } from "@/hooks/useWebSocket";
 import { useNotify } from "@/components/notifications/NotificationSystem";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
@@ -62,43 +61,17 @@ const Overview = () => {
   
   // Environment variables using Vite's import.meta.env
   const isDevelopment = import.meta.env.DEV;
-  const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/energy-data';
   
-  // Real-time WebSocket connection for live data
-  const {
-    data: realTimeData,
-    connectionState,
-    requestData,
-    lastUpdated
-  } = useRealTimeData<EnergyData>(
-    {
-      url: wsUrl,
-      enableLogging: isDevelopment,
-      reconnectAttempts: 5,
-      heartbeatInterval: 30000,
-    },
-    'energy-overview',
-    // Fallback to mock data
-    {
-      totalSites: mockRegions.reduce((acc, region) => acc + region.sites.length, 0),
-      onlineSites: mockRegions.reduce((acc, region) => 
-        acc + region.sites.filter(site => site.status === 'online').length, 0),
-      totalCapacity: mockRegions.reduce((acc, region) => 
-        acc + region.sites.reduce((siteAcc, site) => siteAcc + site.totalCapacity, 0), 0),
-      totalOutput: mockRegions.reduce((acc, region) => 
-        acc + region.sites.reduce((siteAcc, site) => siteAcc + site.currentOutput, 0), 0),
-      efficiency: 92.3,
-      alerts: 2,
-      lastUpdated: new Date().toISOString()
-    }
-  );
+  // TEMPORARILY DISABLED: WebSocket connection (causing connection errors)
+  // const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/energy-data';
+  
+  // Mock connection state for now
+  const connectionState = 'disconnected'; // Will show "offline" status
+  const realTimeData = null; // Use mock data
+  const lastUpdated = Date.now();
 
-  // Calculate overview stats with real-time data or fallback to mock
+  // Calculate overview stats with mock data
   const overviewStats = useMemo(() => {
-    if (realTimeData) {
-      return realTimeData;
-    }
-    
     // Fallback calculation from mock data
     const totalSites = mockRegions.reduce((acc, region) => acc + region.sites.length, 0);
     const onlineSites = mockRegions.reduce((acc, region) => 
@@ -117,13 +90,14 @@ const Overview = () => {
       alerts: Math.floor(Math.random() * 5),
       lastUpdated: new Date().toISOString()
     };
-  }, [realTimeData]);
+  }, []);
 
   // Manual refresh function
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await requestData();
+      // Simulate refresh
+      await new Promise(resolve => setTimeout(resolve, 1000));
       notify.success('Data Refreshed', 'Dashboard data has been updated');
     } catch (error) {
       notify.error('Refresh Failed', 'Unable to fetch latest data');
@@ -149,17 +123,6 @@ const Overview = () => {
     }
   }, [overviewStats.alerts, notify]);
 
-  // Auto-refresh every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (connectionState === 'connected') {
-        requestData();
-      }
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [connectionState, requestData]);
-
   // Log render performance
   useEffect(() => {
     logRenderTime();
@@ -167,7 +130,7 @@ const Overview = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with real-time status */}
+      {/* Header with status */}
       <div className="flex justify-between items-start">
         <div className="animate-slide-in-left">
           <h1 className={`text-3xl font-bold ${
@@ -181,15 +144,17 @@ const Overview = () => {
             } text-lg`}>
               Monitor and manage your energy infrastructure across all regions
             </p>
-            <ConnectionStatus connectionState={connectionState} />
+            {/* Connection Status - showing offline for now */}
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <span className="text-sm text-yellow-600">Mock Data Mode</span>
+            </div>
           </div>
-          {lastUpdated > 0 && (
-            <p className={`text-sm ${
-              resolvedTheme === 'dark' ? 'text-slate-500' : 'text-slate-500'
-            } mt-1`}>
-              Last updated: {new Date(lastUpdated).toLocaleTimeString()}
-            </p>
-          )}
+          <p className={`text-sm ${
+            resolvedTheme === 'dark' ? 'text-slate-500' : 'text-slate-500'
+          } mt-1`}>
+            Last updated: {new Date(lastUpdated).toLocaleTimeString()}
+          </p>
         </div>
         
         {/* Action buttons */}
@@ -233,11 +198,11 @@ const Overview = () => {
         </div>
       </div>
 
-      {/* Enhanced Key Metrics with real-time data */}
+      {/* Enhanced Key Metrics with mock data */}
       <div className="animate-slide-in-up">
         <MetricsCards 
           {...overviewStats} 
-          isRealTime={connectionState === 'connected'}
+          isRealTime={false}
           lastUpdated={overviewStats.lastUpdated}
         />
       </div>
@@ -283,7 +248,7 @@ const Overview = () => {
       <div className="animate-slide-in-up" style={{ animationDelay: '500ms' }}>
         <RegionsGrid 
           regions={mockRegions} 
-          realTimeUpdates={connectionState === 'connected'}
+          realTimeUpdates={false}
         />
       </div>
 
@@ -297,7 +262,7 @@ const Overview = () => {
       {/* Performance monitoring in development */}
       {isDevelopment && (
         <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs font-mono">
-          Renders: {renderCount} | Connection: {connectionState}
+          Renders: {renderCount} | Mode: Mock Data
         </div>
       )}
     </div>
