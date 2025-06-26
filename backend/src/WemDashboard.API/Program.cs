@@ -52,9 +52,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = AppConstants.ApiTitle,
-        Version = AppConstants.ApiVersion,
-        Description = AppConstants.ApiDescription,
+        Title = "WEM Dashboard API",
+        Version = "v1",
+        Description = "WEM Dashboard API for energy management",
         Contact = new OpenApiContact
         {
             Name = "WEM Dashboard Support",
@@ -123,17 +123,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Authorization policies
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(AppConstants.Policies.AdminOnly, policy => 
-        policy.RequireRole(AppConstants.Roles.Admin));
-    options.AddPolicy(AppConstants.Policies.ManagerOrAbove, policy => 
-        policy.RequireRole(AppConstants.Roles.Admin, AppConstants.Roles.Manager));
-    options.AddPolicy(AppConstants.Policies.OperatorOrAbove, policy => 
-        policy.RequireRole(AppConstants.Roles.Admin, AppConstants.Roles.Manager, AppConstants.Roles.Operator));
-    options.AddPolicy(AppConstants.Policies.AllRoles, policy => 
-        policy.RequireRole(AppConstants.Roles.Admin, AppConstants.Roles.Manager, AppConstants.Roles.Operator, AppConstants.Roles.Viewer));
-});
+builder.Services.AddAuthorization();
 
 // Rate limiting
 builder.Services.AddRateLimiter(options =>
@@ -169,25 +159,26 @@ builder.Services.AddResponseCaching();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// ALWAYS enable Swagger (not just in development)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{AppConstants.ApiTitle} {AppConstants.ApiVersion}");
-        c.RoutePrefix = string.Empty; // Serve Swagger UI at root
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WEM Dashboard API v1");
+    c.RoutePrefix = string.Empty; // Serve Swagger UI at root
+});
 
 // Enable WebSocket support
 app.UseWebSockets();
 
-// Middleware pipeline
-app.UseMiddleware<RequestLoggingMiddleware>();
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+// Basic hello endpoint for testing
+app.MapGet("/api/hello", () => new { message = "WEM Dashboard API is running!", timestamp = DateTime.UtcNow });
 
-app.UseHttpsRedirection();
+// Middleware pipeline - CORRECTED ORDER
 app.UseCors("AllowFrontend");
+
+// Remove HTTPS redirection in development to avoid issues
+// app.UseHttpsRedirection();
+
 app.UseRateLimiter();
 app.UseResponseCaching();
 
@@ -201,8 +192,8 @@ app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready");
 app.MapHealthChecks("/health/live");
 
-// Simplified WebSocket endpoint for real-time data
-app.Map("/ws/energy-data", async context =>
+// WebSocket endpoint for real-time data
+app.MapGet("/ws/energy-data", async (HttpContext context) =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
@@ -212,6 +203,7 @@ app.Map("/ws/energy-data", async context =>
     else
     {
         context.Response.StatusCode = 400;
+        await context.Response.WriteAsync("WebSocket connection required");
     }
 });
 
@@ -248,12 +240,12 @@ Log.Information("Starting WEM Dashboard API on {Environment}", app.Environment.E
 Console.WriteLine("🚀 WEM Dashboard API is running!");
 Console.WriteLine("📚 Swagger: http://localhost:5000");
 Console.WriteLine("🏥 Health: http://localhost:5000/health");
-Console.WriteLine("🔌 API: http://localhost:5000/api");
+Console.WriteLine("🧪 Test: http://localhost:5000/api/hello");
 Console.WriteLine("🔄 WebSocket: ws://localhost:5000/ws/energy-data");
 
 app.Run();
 
-// Simplified WebSocket handler that stays connected
+// Simplified WebSocket handler
 static async Task HandleWebSocketConnection(WebSocket webSocket)
 {
     Console.WriteLine("🔌 New WebSocket connection established");
@@ -268,15 +260,27 @@ static async Task HandleWebSocketConnection(WebSocket webSocket)
         // Keep connection alive and send data every 5 seconds
         while (webSocket.State == WebSocketState.Open)
         {
-            // Check for incoming messages (non-blocking)
-            var result = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), 
-                new CancellationTokenSource(100).Token);
-                
-            if (result.MessageType == WebSocketMessageType.Close)
+            try
             {
-                Console.WriteLine("🔌 Client requested close");
-                break;
+                // Check for incoming messages with short timeout
+                var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cts.Token);
+                
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    Console.WriteLine("🔌 Client requested close");
+                    break;
+                }
+                
+                if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    Console.WriteLine($"📥 Received: {message}");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout is normal - just continue
             }
             
             // Send data every 5 seconds
@@ -287,10 +291,6 @@ static async Task HandleWebSocketConnection(WebSocket webSocket)
                 await SendEnergyData(webSocket);
             }
         }
-    }
-    catch (OperationCanceledException)
-    {
-        // Timeout is normal - just continue
     }
     catch (WebSocketException ex)
     {
@@ -329,12 +329,12 @@ static async Task SendEnergyData(WebSocket webSocket)
         var energyData = new
         {
             type = "energy-overview",
-            totalSites = 6,
-            onlineSites = 5,
-            totalCapacity = 293.2,
-            currentOutput = Math.Round(200 + Random.Shared.NextDouble() * 93.2, 1),
-            efficiency = Math.Round(81.4 + Random.Shared.NextDouble() * 15, 1),
-            alerts = Random.Shared.Next(0, 4),
+            totalSites = 4,
+            onlineSites = 3,
+            totalCapacity = 85.5,
+            currentOutput = Math.Round(60 + Random.Shared.NextDouble() * 25, 1),
+            efficiency = Math.Round(85 + Random.Shared.NextDouble() * 10, 1),
+            alerts = Random.Shared.Next(0, 3),
             lastUpdated = DateTime.UtcNow.ToString("O"),
             timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
