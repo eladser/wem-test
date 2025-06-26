@@ -211,7 +211,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         Console.WriteLine("=== DATABASE INITIALIZATION DEBUG ===");
-        Console.WriteLine($"DbContext Connection String: {context.Database.GetDbConnection().ConnectionString}");
+        var connection = context.Database.GetDbConnection();
+        Console.WriteLine($"DbContext Connection String: {connection.ConnectionString}");
+        Console.WriteLine($"Connection Type: {connection.GetType().Name}");
         Console.WriteLine($"Database Provider: {context.Database.ProviderName}");
         Console.WriteLine("=====================================");
         
