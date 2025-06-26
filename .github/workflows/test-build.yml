@@ -1,0 +1,47 @@
+name: ✅ Simple Build Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  test-build:
+    name: 🧪 Test Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📚 Install Dependencies
+        run: |
+          echo "🔄 Installing dependencies with npm..."
+          npm install
+
+      - name: 🏗️ Build Project
+        run: |
+          echo "🏗️ Building project..."
+          npm run build
+
+      - name: ✅ Build Success
+        run: |
+          echo "🎉 Build completed successfully!"
+          echo "📂 Build output:"
+          ls -la dist/ || ls -la build/ || echo "No build directory found"
+          
+      - name: 📊 Build Summary
+        run: |
+          echo "📋 Build Summary"
+          echo "==============="
+          echo "✅ Dependencies installed"
+          echo "✅ Build completed"
+          echo "🎯 Ready for deployment"
