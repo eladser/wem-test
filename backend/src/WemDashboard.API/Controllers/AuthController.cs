@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WemDashboard.Application.DTOs;
+using WemDashboard.Application.DTOs.Auth;
 using WemDashboard.Application.Services;
 
 namespace WemDashboard.API.Controllers;
@@ -40,7 +40,7 @@ public class AuthController : BaseController
     /// </summary>
     [HttpPost("refresh")]
     [AllowAnonymous]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -48,7 +48,7 @@ public class AuthController : BaseController
         }
 
         var ipAddress = GetClientIpAddress();
-        var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken, ipAddress);
+        var result = await _authService.RefreshTokenAsync(request.RefreshToken, ipAddress);
         
         return HandleResult(result);
     }
@@ -58,7 +58,7 @@ public class AuthController : BaseController
     /// </summary>
     [HttpPost("revoke")]
     [Authorize]
-    public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenDto refreshTokenDto)
+    public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -66,7 +66,7 @@ public class AuthController : BaseController
         }
 
         var ipAddress = GetClientIpAddress();
-        var result = await _authService.RevokeTokenAsync(refreshTokenDto.RefreshToken, ipAddress);
+        var result = await _authService.RevokeTokenAsync(request.RefreshToken, ipAddress);
         
         return HandleResult(result);
     }
@@ -120,4 +120,9 @@ public class AuthController : BaseController
 
         return Ok(userInfo);
     }
+}
+
+public class RefreshTokenRequest
+{
+    public string RefreshToken { get; set; } = string.Empty;
 }
