@@ -1,11 +1,13 @@
-/** @type {import('tailwindcss').Config} */
-export default {
+import type { Config } from "tailwindcss"
+import { fontFamily } from "tailwindcss/defaultTheme"
+
+const config: Config = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
   ],
   prefix: "",
   theme: {
@@ -51,11 +53,32 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        chart: {
+          "1": "hsl(var(--chart-1))",
+          "2": "hsl(var(--chart-2))",
+          "3": "hsl(var(--chart-3))",
+          "4": "hsl(var(--chart-4))",
+          "5": "hsl(var(--chart-5))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ["Inter", ...fontFamily.sans],
+        mono: ["JetBrains Mono", ...fontFamily.mono],
       },
       keyframes: {
         "accordion-down": {
@@ -66,42 +89,99 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        shimmer: {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(100%)" },
-        },
-        "slide-in-left": {
-          "0%": { transform: "translateX(-100%)", opacity: "0" },
-          "100%": { transform: "translateX(0)", opacity: "1" },
-        },
-        "slide-in-right": {
-          "0%": { transform: "translateX(100%)", opacity: "0" },
-          "100%": { transform: "translateX(0)", opacity: "1" },
-        },
-        "slide-in-up": {
-          "0%": { transform: "translateY(100%)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
-        },
-        "slide-in-down": {
-          "0%": { transform: "translateY(-100%)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
-        },
         "fade-in": {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
+        },
+        "slide-in-left": {
+          "0%": { transform: "translateX(-30px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-in-right": {
+          "0%": { transform: "translateX(30px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-in-up": {
+          "0%": { transform: "translateY(30px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "slide-in-down": {
+          "0%": { transform: "translateY(-30px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "bounce-in": {
+          "0%": { transform: "scale(0.3)", opacity: "0" },
+          "50%": { transform: "scale(1.05)" },
+          "70%": { transform: "scale(0.9)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.9)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "glow": {
+          "0%": { boxShadow: "0 0 20px rgba(16, 185, 129, 0.2)" },
+          "100%": { boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)" },
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 5px rgba(16, 185, 129, 0.5)" },
+          "50%": { boxShadow: "0 0 20px rgba(16, 185, 129, 0.8)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        shimmer: "shimmer 2s infinite",
-        "slide-in-left": "slide-in-left 0.5s ease-out",
-        "slide-in-right": "slide-in-right 0.5s ease-out",
-        "slide-in-up": "slide-in-up 0.5s ease-out",
-        "slide-in-down": "slide-in-down 0.5s ease-out",
-        "fade-in": "fade-in 0.3s ease-out",
+        "fade-in": "fade-in 0.6s ease-out",
+        "slide-in-left": "slide-in-left 0.7s ease-out",
+        "slide-in-right": "slide-in-right 0.7s ease-out",
+        "slide-in-up": "slide-in-up 0.6s ease-out",
+        "slide-in-down": "slide-in-down 0.6s ease-out",
+        "bounce-in": "bounce-in 0.8s ease-out",
+        "scale-in": "scale-in 0.5s ease-out",
+        "glow": "glow 2s ease-in-out infinite alternate",
+        "spin-slow": "spin-slow 3s linear infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+      spacing: {
+        "18": "4.5rem",
+        "88": "22rem",
+        "100": "25rem",
+        "112": "28rem",
+        "128": "32rem",
+      },
+      maxWidth: {
+        "8xl": "88rem",
+        "9xl": "96rem",
+      },
+      blur: {
+        xs: "2px",
+      },
+      transitionProperty: {
+        width: "width",
+        spacing: "margin, padding",
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+      boxShadow: {
+        "glow-sm": "0 0 10px rgba(16, 185, 129, 0.3)",
+        "glow": "0 0 20px rgba(16, 185, 129, 0.4)",
+        "glow-lg": "0 0 30px rgba(16, 185, 129, 0.5)",
+        "inner-glow": "inset 0 0 10px rgba(16, 185, 129, 0.2)",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-}
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/forms"),
+    require("@tailwindcss/aspect-ratio"),
+  ],
+} satisfies Config
+
+export default config

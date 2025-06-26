@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -10,62 +10,53 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  // Environment variables
-  envPrefix: 'VITE_',
-  
-  // GitHub Pages configuration
-  base: process.env.NODE_ENV === 'production' ? '/wem-test/' : '/',
-  
+  server: {
+    port: 5173,
+    host: true,
+    proxy: {
+      '/ws': {
+        target: 'ws://localhost:5000',
+        ws: true,
+        changeOrigin: true,
+      },
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog'],
           charts: ['recharts'],
-          ui: ['lucide-react']
-        }
-      }
-    }
-  },
-  
-  server: {
-    port: 5173,
-    host: '0.0.0.0', // Allow external connections
-    strictPort: true, // Exit if port is already in use
-    cors: {
-      origin: ['http://localhost:5000', 'http://127.0.0.1:5000'],
-      credentials: true
-    },
-    hmr: {
-      port: 24678, // Use different port for HMR WebSocket to avoid conflicts
-      host: 'localhost'
-    },
-    proxy: {
-      // Proxy API requests to backend
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-        ws: false // Don't proxy WebSocket through this rule
+          utils: ['lodash', 'date-fns'],
+        },
       },
-      // Proxy WebSocket connections to backend
-      '/ws': {
-        target: 'ws://localhost:5000',
-        ws: true, // Enable WebSocket proxying
-        changeOrigin: true,
-        secure: false
-      }
-    }
-  },
-  
-  // Define global variables for browser compatibility
-  define: {
-    'process.env': {
-      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
     },
-    global: 'globalThis',
-  }
+    target: 'es2020',
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'lucide-react',
+    ],
+  },
+  define: {
+    __DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
+  },
 })
