@@ -246,69 +246,163 @@ using (var scope = app.Services.CreateScope())
 Log.Information("Starting WEM Dashboard API on {Environment}", app.Environment.EnvironmentName);
 
 Console.WriteLine("🚀 WEM Dashboard API is running!");
-Console.WriteLine("📚 Swagger: http://localhost:5000/swagger");
+Console.WriteLine("📚 Swagger: http://localhost:5000");
 Console.WriteLine("🏥 Health: http://localhost:5000/health");
-Console.WriteLine("🔌 API: http://localhost:5000");
+Console.WriteLine("🔌 API: http://localhost:5000/api");
 Console.WriteLine("🔄 WebSocket: ws://localhost:5000/ws/energy-data");
 
 app.Run();
 
-// WebSocket handler for real-time energy data
+// Fixed WebSocket handler for real-time energy data
 static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext context)
 {
-    const int delayMs = 5000; // Send data every 5 seconds
+    Console.WriteLine("🔌 New WebSocket connection established");
+    
     var buffer = new byte[1024 * 4];
+    var cancellationTokenSource = new CancellationTokenSource();
+    
+    // Background task to send periodic data
+    var sendTask = Task.Run(async () =>
+    {
+        try
+        {
+            while (webSocket.State == WebSocketState.Open && !cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                // Generate mock real-time energy data
+                var energyData = new
+                {
+                    totalSites = 6,
+                    onlineSites = 5,
+                    totalCapacity = 293.2,
+                    currentOutput = 238.8,
+                    efficiency = Math.Round(81.4 + Random.Shared.NextDouble() * 15, 2),
+                    alerts = Random.Shared.Next(0, 4),
+                    lastUpdated = DateTime.UtcNow.ToString("O"),
+                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                };
 
+                var json = JsonSerializer.Serialize(energyData);
+                var bytes = Encoding.UTF8.GetBytes(json);
+
+                if (webSocket.State == WebSocketState.Open)
+                {
+                    await webSocket.SendAsync(
+                        new ArraySegment<byte>(bytes),
+                        WebSocketMessageType.Text,
+                        true,
+                        cancellationTokenSource.Token);
+                    
+                    Console.WriteLine($"📤 Sent energy data: {energyData.efficiency}% efficiency");
+                }
+
+                await Task.Delay(5000, cancellationTokenSource.Token); // Send every 5 seconds
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("🔌 Send task cancelled (normal shutdown)");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Send task error: {ex.Message}");
+        }
+    });
+
+    // Background task to handle incoming messages
+    var receiveTask = Task.Run(async () =>
+    {
+        try
+        {
+            while (webSocket.State == WebSocketState.Open && !cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                var result = await webSocket.ReceiveAsync(
+                    new ArraySegment<byte>(buffer), 
+                    cancellationTokenSource.Token);
+
+                if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    Console.WriteLine($"📥 Received message: {message}");
+                    
+                    // Handle ping/pong
+                    if (message.Contains("ping"))
+                    {
+                        var pong = JsonSerializer.Serialize(new { type = "pong", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() });
+                        var pongBytes = Encoding.UTF8.GetBytes(pong);
+                        
+                        if (webSocket.State == WebSocketState.Open)
+                        {
+                            await webSocket.SendAsync(
+                                new ArraySegment<byte>(pongBytes),
+                                WebSocketMessageType.Text,
+                                true,
+                                cancellationTokenSource.Token);
+                        }
+                    }
+                }
+                else if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    Console.WriteLine("🔌 Client requested close");
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("🔌 Receive task cancelled (normal shutdown)");
+        }
+        catch (WebSocketException ex)
+        {
+            Console.WriteLine($"🔌 WebSocket exception: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Receive task error: {ex.Message}");
+        }
+    });
+
+    // Wait for either task to complete
     try
     {
-        while (webSocket.State == WebSocketState.Open)
-        {
-            // Generate mock real-time energy data
-            var energyData = new
-            {
-                totalSites = 6,
-                onlineSites = 5,
-                totalCapacity = 293.2,
-                currentOutput = 238.8,
-                efficiency = 81.4 + Random.Shared.NextDouble() * 15, // Random efficiency between 81-96%
-                alerts = Random.Shared.Next(0, 4),
-                lastUpdated = DateTime.UtcNow.ToString("O"),
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            };
-
-            var json = JsonSerializer.Serialize(energyData);
-            var bytes = Encoding.UTF8.GetBytes(json);
-
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(bytes),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None);
-
-            // Check for client messages (like heartbeat)
-            var receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer),
-                new CancellationTokenSource(100).Token); // Short timeout
-
-            await Task.Delay(delayMs);
-        }
+        await Task.WhenAny(sendTask, receiveTask);
     }
-    catch (OperationCanceledException)
+    catch (Exception ex)
     {
-        // Client disconnected or timeout - normal behavior
-    }
-    catch (WebSocketException ex)
-    {
-        Console.WriteLine($"WebSocket error: {ex.Message}");
+        Console.WriteLine($"❌ WebSocket handler error: {ex.Message}");
     }
     finally
     {
+        Console.WriteLine("🔌 Cleaning up WebSocket connection");
+        
+        // Cancel both tasks
+        cancellationTokenSource.Cancel();
+        
+        // Close the WebSocket if still open
         if (webSocket.State == WebSocketState.Open)
         {
-            await webSocket.CloseAsync(
-                WebSocketCloseStatus.NormalClosure,
-                "Connection closed",
-                CancellationToken.None);
+            try
+            {
+                await webSocket.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "Server closing connection",
+                    CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error closing WebSocket: {ex.Message}");
+            }
         }
+        
+        // Wait for tasks to complete
+        try
+        {
+            await Task.WhenAll(sendTask, receiveTask);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when cancelling
+        }
+        
+        Console.WriteLine("✅ WebSocket connection closed cleanly");
     }
 }
