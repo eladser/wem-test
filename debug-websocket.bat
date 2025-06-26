@@ -1,36 +1,47 @@
 @echo off
-echo ========================================
-echo WEM Dashboard WebSocket Debug Tool
-echo ========================================
+echo ==============================================
+echo    WEM Dashboard WebSocket Troubleshooting
+echo ==============================================
 echo.
 
-REM Check if backend is running
-echo 🔍 Checking if backend API is running...
-curl -s -o nul -w "Backend API (HTTP): %%{http_code}" http://localhost:5000/health
+echo 1. Checking if backend is running...
+curl -s -o nul -w "HTTP Status: %%{http_code}" http://localhost:5000/health
+if %errorlevel% == 0 (
+    echo ✅ Backend API is responding
+) else (
+    echo ❌ Backend API is not responding
+    echo    Run: cd backend/src/WemDashboard.API ^&^& dotnet run
+    echo.
+    pause
+    exit /b 1
+)
 echo.
 
-REM Check if frontend is running  
-echo 🔍 Checking if frontend is running...
-curl -s -o nul -w "Frontend (HTTP): %%{http_code}" http://localhost:5173
+echo 2. Checking WebSocket endpoint...
+echo Attempting WebSocket connection to ws://localhost:5000/ws/energy-data
 echo.
 
-echo.
-echo 📋 Expected URLs:
-echo   Backend API: http://localhost:5000
-echo   Backend WebSocket: ws://localhost:5000/ws/energy-data
-echo   Frontend: http://localhost:5173
+echo 3. Testing with curl WebSocket upgrade request...
+curl -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" http://localhost:5000/ws/energy-data
 echo.
 
-echo 🔧 Troubleshooting Steps:
-echo   1. Make sure backend is running: run start-backend.bat
-echo   2. Make sure frontend is running: run start-frontend.bat  
-echo   3. Check .env file has: VITE_WS_URL=ws://localhost:5000/ws/energy-data
-echo   4. Open browser console to see WebSocket connection details
+echo 4. Checking environment variables...
+echo VITE_WS_URL should be: ws://localhost:5000/ws/energy-data
+echo Current VITE_WS_URL: %VITE_WS_URL%
 echo.
 
-echo 🌐 Opening browser for testing...
-start http://localhost:5173
-
+echo 5. Common Solutions:
+echo    • Make sure both backend (port 5000) and frontend (port 5173) are running
+echo    • Check that .env file contains: VITE_WS_URL="ws://localhost:5000/ws/energy-data"
+echo    • Restart frontend after changing .env: npm run dev
+echo    • Check Windows Firewall/Antivirus isn't blocking WebSocket connections
+echo    • Try different browser (Chrome DevTools shows WebSocket connections)
 echo.
-echo Press any key to exit...
-pause >nul
+
+echo 6. Browser Testing:
+echo    • Open Chrome DevTools ^> Network ^> WS to see WebSocket connections
+echo    • Frontend URL: http://localhost:5173
+echo    • Look for WebSocket connection attempts in the WS tab
+echo.
+
+pause
