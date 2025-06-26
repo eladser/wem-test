@@ -33,17 +33,21 @@ if %DB_FOUND%==0 (
     echo ✅ Database found
 )
 
-echo 🔧 Starting .NET API server...
+echo 🔧 Starting .NET API server on port 5000...
 echo.
 echo 📊 API will be available at: http://localhost:5000
-echo 📚 Swagger documentation: http://localhost:5000/swagger
+echo 📚 Swagger documentation: http://localhost:5000
 echo ❤️ Health check: http://localhost:5000/health
+echo 🔄 WebSocket: ws://localhost:5000/ws/energy-data
 echo.
 echo 🛑 Press Ctrl+C to stop the server
 echo.
 
-REM Start the API
-dotnet run
+REM Force the application to listen on port 5000
+set ASPNETCORE_URLS=http://localhost:5000
+
+REM Start the API with explicit URL binding
+dotnet run --urls "http://localhost:5000"
 
 echo.
 echo 👋 Backend API stopped
