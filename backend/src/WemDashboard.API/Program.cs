@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Text;
 using WemDashboard.API.Middleware;
@@ -211,6 +212,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         Console.WriteLine("=== DATABASE INITIALIZATION DEBUG ===");
+        
+        // Get the underlying database connection
         var connection = context.Database.GetDbConnection();
         Console.WriteLine($"DbContext Connection String: {connection.ConnectionString}");
         Console.WriteLine($"Connection Type: {connection.GetType().Name}");
@@ -220,11 +223,14 @@ using (var scope = app.Services.CreateScope())
         await context.Database.EnsureCreatedAsync();
         await seeder.SeedAsync();
         Log.Information("Database initialized successfully");
+        
+        Console.WriteLine("✅ SUCCESS: Database initialized with SQLite!");
     }
     catch (Exception ex)
     {
         Log.Error(ex, "An error occurred while initializing the database");
-        Console.WriteLine($"DATABASE ERROR: {ex.Message}");
+        Console.WriteLine($"❌ DATABASE ERROR: {ex.Message}");
+        Console.WriteLine($"❌ STACK TRACE: {ex.StackTrace}");
         throw;
     }
 }
