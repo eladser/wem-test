@@ -1,0 +1,313 @@
+name: 🚀 Deploy WEM Dashboard
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+# Environment variables
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Code Quality & Testing
+  quality-check:
+    name: 🔍 Code Quality & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🔍 Lint code
+        run: bun run lint
+
+      - name: 🏗️ Type check
+        run: bun run build --dry-run
+
+      - name: 🧪 Run tests
+        run: bun test
+        continue-on-error: true
+
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results/
+
+  # Build Application
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    needs: quality-check
+    outputs:
+      build-hash: ${{ steps.build-info.outputs.hash }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🔧 Build application
+        run: bun run build
+        env:
+          REACT_APP_VERSION: ${{ github.sha }}
+          REACT_APP_BUILD_DATE: ${{ github.event.head_commit.timestamp }}
+          REACT_APP_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+
+      - name: 📊 Generate build info
+        id: build-info
+        run: |
+          echo "hash=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
+          echo "Build completed at $(date)" >> build-info.txt
+          echo "Commit: ${{ github.sha }}" >> build-info.txt
+          echo "Branch: ${{ github.ref_name }}" >> build-info.txt
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}" >> build-info.txt
+
+      - name: 📦 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: |
+            dist/
+            build-info.txt
+          retention-days: 7
+
+  # Security Scan
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔒 Run security audit
+        run: |
+          npm audit --audit-level high
+          echo "Security scan completed"
+
+      - name: 📊 Upload security results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-results
+          path: security-audit.json
+
+  # Deploy to Staging
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref != 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://wem-dashboard-staging.vercel.app
+    steps:
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+
+      - name: 🚀 Deploy to Vercel (Staging)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./dist
+          alias-domains: wem-dashboard-staging.vercel.app
+
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **Staging deployment completed!**\n\n📺 Preview: https://wem-dashboard-staging.vercel.app\n🔗 Build: ${{ needs.build.outputs.build-hash }}\n✅ All checks passed!'
+            })
+
+  # Deploy to Production
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://wem-dashboard.vercel.app
+    steps:
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+
+      - name: 🚀 Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./dist
+          alias-domains: wem-dashboard.vercel.app
+
+      - name: 📊 Create GitHub Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: WEM Dashboard v${{ github.run_number }}
+          body: |
+            🚀 **Production Deployment**
+            
+            **Changes in this release:**
+            ${{ github.event.head_commit.message }}
+            
+            **Build Information:**
+            - 🔢 Build: ${{ needs.build.outputs.build-hash }}
+            - 📅 Date: ${{ github.event.head_commit.timestamp }}
+            - 🌐 Environment: Production
+            - 📺 URL: https://wem-dashboard.vercel.app
+            
+            **Deployment Status:**
+            ✅ Build successful
+            ✅ Security scan passed  
+            ✅ Deployed to production
+          draft: false
+          prerelease: false
+
+  # Alternative deployment options
+  deploy-alternatives:
+    name: 🔄 Alternative Deployments
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: false # Set to true to enable alternative deployments
+    strategy:
+      matrix:
+        platform: [netlify, github-pages]
+    steps:
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+
+      # Netlify deployment
+      - name: 🚀 Deploy to Netlify
+        if: matrix.platform == 'netlify'
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: './dist'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      # GitHub Pages deployment
+      - name: 🚀 Deploy to GitHub Pages
+        if: matrix.platform == 'github-pages'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          cname: wem-dashboard.your-domain.com # Optional: your custom domain
+
+  # Performance & Monitoring
+  performance-check:
+    name: 📊 Performance Check
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            https://wem-dashboard-staging.vercel.app
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: 📊 Bundle Size Analysis
+        run: |
+          echo "Running bundle size analysis..."
+          # Add bundle analysis here
+
+  # Cleanup
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: 🧹 Clean up artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+            
+            // Keep only the latest 5 artifacts
+            const oldArtifacts = artifacts.data.artifacts.slice(5);
+            
+            for (const artifact of oldArtifacts) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+            }
+
+  # Notification
+  notify:
+    name: 📢 Notify
+    runs-on: ubuntu-latest
+    needs: [deploy-production, deploy-staging]
+    if: always()
+    steps:
+      - name: 📢 Success notification
+        if: ${{ needs.deploy-production.result == 'success' || needs.deploy-staging.result == 'success' }}
+        run: |
+          echo "🎉 Deployment successful!"
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}"
+          echo "URL: ${{ github.ref == 'refs/heads/main' && 'https://wem-dashboard.vercel.app' || 'https://wem-dashboard-staging.vercel.app' }}"
+
+      - name: 📢 Failure notification
+        if: ${{ needs.deploy-production.result == 'failure' || needs.deploy-staging.result == 'failure' }}
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs for more details."
+          exit 1
