@@ -28,7 +28,7 @@ interface WebSocketConfig {
   enableLogging?: boolean;
 }
 
-// WebSocket manager class
+// WebSocket manager class with fallback logic
 class WebSocketManager {
   private ws: WebSocket | null = null;
   private config: Required<WebSocketConfig>;
@@ -39,6 +39,8 @@ class WebSocketManager {
   private messageQueue: WebSocketMessage[] = [];
   private subscribers = new Set<(state: ConnectionState) => void>();
   private messageSubscribers = new Set<(message: WebSocketMessage) => void>();
+  private urlIndex = 0;
+  private fallbackUrls: string[] = [];
 
   constructor(config: WebSocketConfig) {
     this.config = {
@@ -52,9 +54,27 @@ class WebSocketManager {
       onMessage: () => {},
       onClose: () => {},
       onError: () => {},
-      enableLogging: process.env.NODE_ENV === 'development',
+      enableLogging: import.meta.env.VITE_DEBUG === 'true' || import.meta.env.DEV,
       ...config
     };
+
+    // Setup fallback URLs
+    this.setupFallbackUrls();
+  }
+
+  private setupFallbackUrls(): void {
+    this.fallbackUrls = [
+      this.config.url, // Primary URL from config
+      import.meta.env.VITE_WS_URL_DIRECT || 'ws://localhost:5000/ws/energy-data', // Direct backend
+      'ws://localhost:5173/ws/energy-data', // Through Vite proxy
+      'ws://127.0.0.1:5000/ws/energy-data', // Localhost fallback
+    ].filter((url, index, arr) => arr.indexOf(url) === index); // Remove duplicates
+
+    this.log('Fallback URLs configured:', this.fallbackUrls);
+  }
+
+  getCurrentUrl(): string {
+    return this.fallbackUrls[this.urlIndex] || this.config.url;
   }
 
   connect(): void {
@@ -63,11 +83,13 @@ class WebSocketManager {
       return;
     }
 
+    const currentUrl = this.getCurrentUrl();
+    
     try {
-      this.log(`Connecting to ${this.config.url}...`);
+      this.log(`Connecting to ${currentUrl}... (attempt ${this.urlIndex + 1}/${this.fallbackUrls.length})`);
       this.notifyStateChange('connecting');
       
-      this.ws = new WebSocket(this.config.url, this.config.protocols);
+      this.ws = new WebSocket(currentUrl, this.config.protocols);
       this.setupEventListeners();
     } catch (error) {
       this.log('Failed to create WebSocket connection:', error);
@@ -127,8 +149,9 @@ class WebSocketManager {
     if (!this.ws) return;
 
     this.ws.onopen = (event) => {
-      this.log('WebSocket connected');
+      this.log(`WebSocket connected to ${this.getCurrentUrl()}`);
       this.reconnectAttempt = 0;
+      this.urlIndex = 0; // Reset to primary URL on successful connection
       this.isReconnecting = false;
       this.notifyStateChange('connected');
       this.startHeartbeat();
@@ -155,7 +178,7 @@ class WebSocketManager {
     };
 
     this.ws.onclose = (event) => {
-      this.log(`WebSocket closed: ${event.code} - ${event.reason}`);
+      this.log(`WebSocket closed: ${event.code} - ${event.reason} (URL: ${this.getCurrentUrl()})`);
       
       if (this.heartbeatTimeout) {
         clearTimeout(this.heartbeatTimeout);
@@ -172,7 +195,7 @@ class WebSocketManager {
     };
 
     this.ws.onerror = (event) => {
-      this.log('WebSocket error:', event);
+      this.log(`WebSocket error on ${this.getCurrentUrl()}:`, event);
       this.config.onError(event);
       this.handleConnectionError();
     };
@@ -187,6 +210,15 @@ class WebSocketManager {
   }
 
   private handleReconnection(): void {
+    // Try next URL if available
+    if (this.urlIndex < this.fallbackUrls.length - 1) {
+      this.urlIndex++;
+      this.log(`Trying next URL: ${this.getCurrentUrl()}`);
+      setTimeout(() => this.connect(), 1000);
+      return;
+    }
+
+    // If all URLs tried, use normal reconnection logic
     if (this.reconnectAttempt >= this.config.reconnectAttempts) {
       this.log('Max reconnection attempts reached');
       this.notifyStateChange('error');
@@ -195,6 +227,7 @@ class WebSocketManager {
 
     this.isReconnecting = true;
     this.reconnectAttempt++;
+    this.urlIndex = 0; // Reset to first URL
     this.notifyStateChange('reconnecting');
 
     this.log(`Reconnecting in ${this.config.reconnectInterval}ms (attempt ${this.reconnectAttempt}/${this.config.reconnectAttempts})`);
@@ -283,7 +316,7 @@ class WebSocketManager {
   }
 }
 
-// React hook for WebSocket
+// React hook for WebSocket with enhanced fallback
 export const useWebSocket = (config: WebSocketConfig) => {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
@@ -295,7 +328,7 @@ export const useWebSocket = (config: WebSocketConfig) => {
     managerRef.current = new WebSocketManager({
       ...config,
       onError: (event) => {
-        notify.error('Connection Error', 'WebSocket connection failed');
+        notify.error('Connection Error', 'WebSocket connection failed - trying fallback URLs');
         config.onError?.(event);
       },
       onClose: (event) => {
@@ -303,6 +336,10 @@ export const useWebSocket = (config: WebSocketConfig) => {
           notify.warning('Connection Lost', 'Attempting to reconnect...');
         }
         config.onClose?.(event);
+      },
+      onOpen: (event) => {
+        notify.success('Connected', 'Real-time data connection established');
+        config.onOpen?.(event);
       }
     });
 
@@ -342,7 +379,8 @@ export const useWebSocket = (config: WebSocketConfig) => {
     disconnect,
     isConnected: connectionState === 'connected',
     isConnecting: connectionState === 'connecting',
-    isReconnecting: connectionState === 'reconnecting'
+    isReconnecting: connectionState === 'reconnecting',
+    currentUrl: managerRef.current?.getCurrentUrl() || config.url
   };
 };
 
@@ -350,7 +388,8 @@ export const useWebSocket = (config: WebSocketConfig) => {
 export const ConnectionStatus: React.FC<{
   connectionState: ConnectionState;
   className?: string;
-}> = ({ connectionState, className = '' }) => {
+  currentUrl?: string;
+}> = ({ connectionState, className = '', currentUrl }) => {
   const statusConfig = {
     connected: {
       color: 'bg-green-500',
@@ -385,11 +424,14 @@ export const ConnectionStatus: React.FC<{
     <div className={`flex items-center space-x-2 ${className}`}>
       <div className={`w-2 h-2 rounded-full ${config.color} ${config.pulse ? 'animate-pulse' : ''}`} />
       <span className="text-sm text-slate-400">{config.text}</span>
+      {import.meta.env.VITE_DEBUG === 'true' && currentUrl && (
+        <span className="text-xs text-slate-500 font-mono">{currentUrl.replace('ws://', '')}</span>
+      )}
     </div>
   );
 };
 
-// Real-time data hook for specific data types
+// Real-time data hook for specific data types with enhanced fallback
 export const useRealTimeData = <T,>(
   websocketConfig: WebSocketConfig,
   dataType: string,
@@ -398,7 +440,7 @@ export const useRealTimeData = <T,>(
   const [data, setData] = useState<T | undefined>(initialData);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
 
-  const { connectionState, lastMessage, sendMessage } = useWebSocket({
+  const { connectionState, lastMessage, sendMessage, currentUrl } = useWebSocket({
     ...websocketConfig,
     onMessage: (message) => {
       if (message.type === dataType) {
@@ -421,7 +463,8 @@ export const useRealTimeData = <T,>(
     lastUpdated,
     connectionState,
     requestData,
-    sendMessage
+    sendMessage,
+    currentUrl
   };
 };
 
