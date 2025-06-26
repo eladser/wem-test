@@ -18,6 +18,25 @@ using WemDashboard.Shared.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// FORCE SQLITE CONFIGURATION - Debug what's happening
+Console.WriteLine("=== WEM DASHBOARD DATABASE CONFIGURATION DEBUG ===");
+Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
+
+// Force SQLite configuration
+var connectionString = "Data Source=wemdashboard-dev.db;";
+var databaseProvider = "SQLite";
+
+Console.WriteLine($"FORCED Database Provider: {databaseProvider}");
+Console.WriteLine($"FORCED Connection String: {connectionString}");
+
+// Override configuration values
+builder.Configuration["DatabaseProvider"] = databaseProvider;
+builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+
+Console.WriteLine($"Config DatabaseProvider: {builder.Configuration["DatabaseProvider"]}");
+Console.WriteLine($"Config ConnectionString: {builder.Configuration.GetConnectionString("DefaultConnection")}");
+Console.WriteLine("=====================================================");
+
 // Serilog configuration
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -191,6 +210,11 @@ using (var scope = app.Services.CreateScope())
     
     try
     {
+        Console.WriteLine("=== DATABASE INITIALIZATION DEBUG ===");
+        Console.WriteLine($"DbContext Connection String: {context.Database.GetConnectionString()}");
+        Console.WriteLine($"Database Provider: {context.Database.ProviderName}");
+        Console.WriteLine("=====================================");
+        
         await context.Database.EnsureCreatedAsync();
         await seeder.SeedAsync();
         Log.Information("Database initialized successfully");
@@ -198,6 +222,8 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Log.Error(ex, "An error occurred while initializing the database");
+        Console.WriteLine($"DATABASE ERROR: {ex.Message}");
+        throw;
     }
 }
 
