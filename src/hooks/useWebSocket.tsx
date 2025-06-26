@@ -26,10 +26,13 @@ interface WebSocketConfig {
   onClose?: (event: CloseEvent) => void;
   onError?: (event: Event) => void;
   enableLogging?: boolean;
-  suppressNotifications?: boolean; // New option to suppress notifications
+  suppressNotifications?: boolean;
 }
 
-// WebSocket manager class with enhanced fallback logic
+// Global WebSocket manager registry to prevent multiple instances
+const globalWebSocketRegistry = new Map<string, WebSocketManager>();
+
+// WebSocket manager class with enhanced singleton pattern
 class WebSocketManager {
   private ws: WebSocket | null = null;
   private config: Required<WebSocketConfig>;
@@ -46,13 +49,16 @@ class WebSocketManager {
   private notificationCooldown: NodeJS.Timeout | null = null;
   private connectionStabilityTimeout: NodeJS.Timeout | null = null;
   private isConnectionStable = false;
+  private isDestroyed = false;
+  private connectionId: string;
 
   constructor(config: WebSocketConfig) {
+    this.connectionId = `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.config = {
       protocols: undefined,
       reconnect: true,
-      reconnectAttempts: 5,
-      reconnectInterval: 3000,
+      reconnectAttempts: 3, // Reduced from 5
+      reconnectInterval: 5000, // Increased from 3000
       heartbeatInterval: 30000,
       heartbeatMessage: JSON.stringify({ type: 'ping', timestamp: Date.now() }),
       onOpen: () => {},
@@ -64,17 +70,15 @@ class WebSocketManager {
       ...config
     };
 
-    // Setup fallback URLs
     this.setupFallbackUrls();
+    this.log(`WebSocket Manager created with ID: ${this.connectionId}`);
   }
 
   private setupFallbackUrls(): void {
     this.fallbackUrls = [
-      this.config.url, // Primary URL from config
-      import.meta.env.VITE_WS_URL_DIRECT || 'ws://localhost:5000/ws/energy-data', // Direct backend
-      'ws://localhost:5173/ws/energy-data', // Through Vite proxy
-      'ws://127.0.0.1:5000/ws/energy-data', // Localhost fallback
-    ].filter((url, index, arr) => arr.indexOf(url) === index); // Remove duplicates
+      this.config.url,
+      import.meta.env.VITE_WS_URL_DIRECT || 'ws://localhost:5000/ws/energy-data',
+    ].filter((url, index, arr) => arr.indexOf(url) === index);
 
     this.log('Fallback URLs configured:', this.fallbackUrls);
   }
@@ -84,23 +88,18 @@ class WebSocketManager {
   }
 
   private showNotification(state: ConnectionState, notify: any): void {
-    // Skip notifications if suppressed or if it's the same state within cooldown period
-    if (this.config.suppressNotifications || this.lastNotificationState === state) {
+    if (this.config.suppressNotifications || this.lastNotificationState === state || this.isDestroyed) {
       return;
     }
 
-    // Clear any existing cooldown
     if (this.notificationCooldown) {
       clearTimeout(this.notificationCooldown);
     }
 
-    // Only show notifications for stable connections or significant state changes
     const shouldNotify = (
       state === 'connected' && this.isConnectionStable
     ) || (
       state === 'error' && this.reconnectAttempt >= 2
-    ) || (
-      state === 'disconnected' && this.lastNotificationState === 'connected' && this.isConnectionStable
     );
 
     if (shouldNotify) {
@@ -111,16 +110,9 @@ class WebSocketManager {
         case 'error':
           notify.error('Connection Error', 'Unable to establish connection - using offline data', { duration: 5000 });
           break;
-        case 'disconnected':
-          if (this.lastNotificationState === 'connected') {
-            notify.warning('Connection Lost', 'Attempting to reconnect...', { duration: 4000 });
-          }
-          break;
       }
       
       this.lastNotificationState = state;
-      
-      // Set cooldown to prevent spam (minimum 10 seconds between same notifications)
       this.notificationCooldown = setTimeout(() => {
         this.lastNotificationState = null;
       }, 10000);
@@ -128,15 +120,26 @@ class WebSocketManager {
   }
 
   connect(notify?: any): void {
+    if (this.isDestroyed) {
+      this.log('Cannot connect - WebSocket manager is destroyed');
+      return;
+    }
+
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.log('WebSocket already connected');
       return;
     }
 
+    // Close existing connection if any
+    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+      this.log('Closing existing connection before creating new one');
+      this.ws.close(1000, 'Reconnecting');
+    }
+
     const currentUrl = this.getCurrentUrl();
     
     try {
-      this.log(`Connecting to ${currentUrl}... (attempt ${this.urlIndex + 1}/${this.fallbackUrls.length})`);
+      this.log(`[${this.connectionId}] Connecting to ${currentUrl}...`);
       this.notifyStateChange('connecting');
       
       this.ws = new WebSocket(currentUrl, this.config.protocols);
@@ -148,11 +151,13 @@ class WebSocketManager {
   }
 
   disconnect(): void {
-    this.log('Disconnecting WebSocket...');
+    this.log(`[${this.connectionId}] Disconnecting WebSocket...`);
     
-    // Clear reconnection
+    this.isDestroyed = true;
     this.isReconnecting = false;
     this.isConnectionStable = false;
+    
+    // Clear all timeouts
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -163,13 +168,11 @@ class WebSocketManager {
       this.connectionStabilityTimeout = null;
     }
     
-    // Clear heartbeat
     if (this.heartbeatTimeout) {
       clearTimeout(this.heartbeatTimeout);
       this.heartbeatTimeout = null;
     }
 
-    // Clear notification cooldown
     if (this.notificationCooldown) {
       clearTimeout(this.notificationCooldown);
       this.notificationCooldown = null;
@@ -181,10 +184,18 @@ class WebSocketManager {
       this.ws = null;
     }
 
+    // Clear subscribers
+    this.subscribers.clear();
+    this.messageSubscribers.clear();
+    
     this.notifyStateChange('disconnected');
   }
 
   send(message: Omit<WebSocketMessage, 'timestamp'>): boolean {
+    if (this.isDestroyed) {
+      return false;
+    }
+
     const fullMessage: WebSocketMessage = {
       ...message,
       timestamp: Date.now()
@@ -208,21 +219,25 @@ class WebSocketManager {
   }
 
   private setupEventListeners(notify?: any): void {
-    if (!this.ws) return;
+    if (!this.ws || this.isDestroyed) return;
 
     this.ws.onopen = (event) => {
-      this.log(`WebSocket connected to ${this.getCurrentUrl()}`);
+      if (this.isDestroyed) return;
+      
+      this.log(`[${this.connectionId}] WebSocket connected to ${this.getCurrentUrl()}`);
       this.reconnectAttempt = 0;
-      this.urlIndex = 0; // Reset to primary URL on successful connection
+      this.urlIndex = 0;
       this.isReconnecting = false;
       
-      // Mark connection as stable after 5 seconds of being connected
+      // Mark connection as stable after 3 seconds (reduced from 5)
       this.connectionStabilityTimeout = setTimeout(() => {
-        this.isConnectionStable = true;
-        if (notify) {
-          this.showNotification('connected', notify);
+        if (!this.isDestroyed) {
+          this.isConnectionStable = true;
+          if (notify) {
+            this.showNotification('connected', notify);
+          }
         }
-      }, 5000);
+      }, 3000);
       
       this.notifyStateChange('connected');
       this.startHeartbeat();
@@ -231,11 +246,12 @@ class WebSocketManager {
     };
 
     this.ws.onmessage = (event) => {
+      if (this.isDestroyed) return;
+      
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
         this.log('Message received:', message);
         
-        // Handle heartbeat response
         if (message.type === 'pong') {
           this.log('Heartbeat pong received');
           return;
@@ -249,7 +265,12 @@ class WebSocketManager {
     };
 
     this.ws.onclose = (event) => {
-      this.log(`WebSocket closed: ${event.code} - ${event.reason} (URL: ${this.getCurrentUrl()})`);
+      if (this.isDestroyed) {
+        this.log(`[${this.connectionId}] WebSocket closed (manager destroyed): ${event.code} - ${event.reason}`);
+        return;
+      }
+      
+      this.log(`[${this.connectionId}] WebSocket closed: ${event.code} - ${event.reason}`);
       
       this.isConnectionStable = false;
       if (this.connectionStabilityTimeout) {
@@ -264,24 +285,26 @@ class WebSocketManager {
 
       this.config.onClose(event);
 
+      // Only reconnect if it wasn't a manual disconnect and we should reconnect
       if (this.config.reconnect && !this.isReconnecting && event.code !== 1000) {
         this.handleReconnection(notify);
       } else {
         this.notifyStateChange('disconnected');
-        if (notify && this.isConnectionStable) {
-          this.showNotification('disconnected', notify);
-        }
       }
     };
 
     this.ws.onerror = (event) => {
-      this.log(`WebSocket error on ${this.getCurrentUrl()}:`, event);
+      if (this.isDestroyed) return;
+      
+      this.log(`[${this.connectionId}] WebSocket error:`, event);
       this.config.onError(event);
       this.handleConnectionError(notify);
     };
   }
 
   private handleConnectionError(notify?: any): void {
+    if (this.isDestroyed) return;
+    
     this.notifyStateChange('error');
     
     if (notify) {
@@ -294,15 +317,8 @@ class WebSocketManager {
   }
 
   private handleReconnection(notify?: any): void {
-    // Try next URL if available
-    if (this.urlIndex < this.fallbackUrls.length - 1) {
-      this.urlIndex++;
-      this.log(`Trying next URL: ${this.getCurrentUrl()}`);
-      setTimeout(() => this.connect(notify), 1000);
-      return;
-    }
-
-    // If all URLs tried, use normal reconnection logic
+    if (this.isDestroyed) return;
+    
     if (this.reconnectAttempt >= this.config.reconnectAttempts) {
       this.log('Max reconnection attempts reached');
       this.notifyStateChange('error');
@@ -311,25 +327,26 @@ class WebSocketManager {
 
     this.isReconnecting = true;
     this.reconnectAttempt++;
-    this.urlIndex = 0; // Reset to first URL
     this.notifyStateChange('reconnecting');
 
-    this.log(`Reconnecting in ${this.config.reconnectInterval}ms (attempt ${this.reconnectAttempt}/${this.config.reconnectAttempts})`);
+    this.log(`[${this.connectionId}] Reconnecting in ${this.config.reconnectInterval}ms (attempt ${this.reconnectAttempt}/${this.config.reconnectAttempts})`);
 
     this.reconnectTimeout = setTimeout(() => {
-      this.connect(notify);
+      if (!this.isDestroyed) {
+        this.connect(notify);
+      }
     }, this.config.reconnectInterval);
   }
 
   private startHeartbeat(): void {
-    if (this.config.heartbeatInterval <= 0) return;
+    if (this.config.heartbeatInterval <= 0 || this.isDestroyed) return;
 
     this.heartbeatTimeout = setTimeout(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
+      if (this.ws?.readyState === WebSocket.OPEN && !this.isDestroyed) {
         try {
           this.ws.send(this.config.heartbeatMessage);
           this.log('Heartbeat sent');
-          this.startHeartbeat(); // Schedule next heartbeat
+          this.startHeartbeat();
         } catch (error) {
           this.log('Failed to send heartbeat:', error);
         }
@@ -338,15 +355,17 @@ class WebSocketManager {
   }
 
   private queueMessage(message: WebSocketMessage): void {
-    this.messageQueue.push(message);
+    if (this.isDestroyed) return;
     
-    // Limit queue size
-    if (this.messageQueue.length > 100) {
+    this.messageQueue.push(message);
+    if (this.messageQueue.length > 50) { // Reduced queue size
       this.messageQueue.shift();
     }
   }
 
   private sendQueuedMessages(): void {
+    if (this.isDestroyed) return;
+    
     while (this.messageQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
       const message = this.messageQueue.shift();
       if (message) {
@@ -355,7 +374,6 @@ class WebSocketManager {
           this.log('Queued message sent:', message);
         } catch (error) {
           this.log('Failed to send queued message:', error);
-          // Put it back at the front of the queue
           this.messageQueue.unshift(message);
           break;
         }
@@ -364,10 +382,12 @@ class WebSocketManager {
   }
 
   private notifyStateChange(state: ConnectionState): void {
+    if (this.isDestroyed) return;
     this.subscribers.forEach(callback => callback(state));
   }
 
   private notifyMessageReceived(message: WebSocketMessage): void {
+    if (this.isDestroyed) return;
     this.messageSubscribers.forEach(callback => callback(message));
   }
 
@@ -382,7 +402,7 @@ class WebSocketManager {
   }
 
   getConnectionState(): ConnectionState {
-    if (!this.ws) return 'disconnected';
+    if (this.isDestroyed || !this.ws) return 'disconnected';
     
     switch (this.ws.readyState) {
       case WebSocket.CONNECTING: return 'connecting';
@@ -395,37 +415,87 @@ class WebSocketManager {
 
   private log(...args: any[]): void {
     if (this.config.enableLogging) {
-      console.log('[WebSocket]', ...args);
+      console.log(`[WebSocket-${this.connectionId.slice(-8)}]`, ...args);
     }
   }
 }
 
-// React hook for WebSocket with enhanced fallback and smarter notifications
+// Enhanced React hook with singleton pattern
 export const useWebSocket = (config: WebSocketConfig) => {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const managerRef = useRef<WebSocketManager | null>(null);
   const notify = useNotify();
+  const configRef = useRef(config);
+  
+  // Stable config reference to prevent unnecessary re-connections
+  const stableConfig = useRef({
+    url: config.url,
+    reconnectAttempts: config.reconnectAttempts || 3,
+    reconnectInterval: config.reconnectInterval || 5000,
+    suppressNotifications: config.suppressNotifications || false,
+    enableLogging: config.enableLogging || false
+  });
 
-  // Initialize WebSocket manager
+  // Initialize WebSocket manager with singleton pattern
   useEffect(() => {
-    managerRef.current = new WebSocketManager(config);
+    const configKey = stableConfig.current.url;
+    
+    // Check if manager already exists for this URL
+    let manager = globalWebSocketRegistry.get(configKey);
+    
+    if (!manager) {
+      // Create new manager only if one doesn't exist
+      manager = new WebSocketManager({
+        ...stableConfig.current,
+        onMessage: (message) => {
+          setLastMessage(message);
+          config.onMessage?.(message);
+        },
+        onOpen: config.onOpen,
+        onClose: config.onClose,
+        onError: config.onError,
+      });
+      
+      globalWebSocketRegistry.set(configKey, manager);
+      console.log(`Created new WebSocket manager for ${configKey}`);
+    } else {
+      console.log(`Reusing existing WebSocket manager for ${configKey}`);
+    }
+    
+    managerRef.current = manager;
 
     // Subscribe to state changes
-    const unsubscribeState = managerRef.current.subscribeToState(setConnectionState);
-    
-    // Subscribe to messages
-    const unsubscribeMessages = managerRef.current.subscribeToMessages(setLastMessage);
+    const unsubscribeState = manager.subscribeToState(setConnectionState);
+    const unsubscribeMessages = manager.subscribeToMessages(setLastMessage);
 
-    // Auto-connect with notification context
-    managerRef.current.connect(notify);
+    // Connect if not already connected
+    if (manager.getConnectionState() === 'disconnected') {
+      manager.connect(notify);
+    }
 
     return () => {
       unsubscribeState();
       unsubscribeMessages();
-      managerRef.current?.disconnect();
+      // Don't disconnect on unmount to allow reuse
+      console.log(`Component unmounted, keeping WebSocket connection alive for ${configKey}`);
     };
-  }, [config.url]);
+  }, [config.url]); // Only depend on URL
+
+  // Cleanup on app termination
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      globalWebSocketRegistry.forEach((manager) => {
+        manager.disconnect();
+      });
+      globalWebSocketRegistry.clear();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const sendMessage = useCallback((message: Omit<WebSocketMessage, 'timestamp'>) => {
     return managerRef.current?.send(message) || false;
@@ -452,7 +522,7 @@ export const useWebSocket = (config: WebSocketConfig) => {
   };
 };
 
-// Enhanced Connection status indicator component
+// Connection status indicator component
 export const ConnectionStatus: React.FC<{
   connectionState: ConnectionState;
   className?: string;
@@ -507,7 +577,7 @@ export const ConnectionStatus: React.FC<{
   );
 };
 
-// Real-time data hook for specific data types with enhanced fallback
+// Real-time data hook
 export const useRealTimeData = <T,>(
   websocketConfig: WebSocketConfig,
   dataType: string,
