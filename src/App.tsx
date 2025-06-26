@@ -28,7 +28,7 @@ import SiteSettings from "./components/SiteSettings";
 import NotFound from "./pages/NotFound";
 import SiteGrid from "./components/SiteGrid";
 
-// Enhanced Query Client with better configuration
+// Enhanced Query Client with better error handling and performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -40,12 +40,13 @@ const queryClient = new QueryClient({
             return false;
           }
         }
-        return failureCount < 3;
+        return failureCount < 2; // Reduced retry attempts for better UX
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
       refetchOnWindowFocus: false, // Disable refetch on window focus for better performance
       refetchOnReconnect: true, // Refetch when reconnecting to network
+      refetchOnMount: true, // Refetch when component mounts
     },
     mutations: {
       retry: (failureCount, error) => {
@@ -54,7 +55,7 @@ const queryClient = new QueryClient({
         if (status && status >= 400 && status < 500) {
           return false; // Don't retry client errors
         }
-        return failureCount < 2;
+        return failureCount < 1; // Single retry for mutations
       },
     },
   },
@@ -105,13 +106,18 @@ const App: React.FC = () => {
         <QueryClientProvider client={queryClient}>
           <NotificationProvider
             position="top-right"
-            maxNotifications={5}
-            defaultDuration={5000
+            maxNotifications={3} // Reduced to prevent spam
+            defaultDuration={4000 // Shorter duration for better UX
             }
           >
-            <TooltipProvider>
+            <TooltipProvider delayDuration={300}>
               <Toaster />
-              <Sonner />
+              <Sonner 
+                position="top-right"
+                expand={false}
+                richColors
+                closeButton
+              />
               <AuthProvider>
                 <BrowserRouter>
                   <Routes>
