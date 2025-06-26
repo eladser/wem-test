@@ -43,9 +43,16 @@ public class ApiResponse<T>
     }
 }
 
-public class ApiResponse : ApiResponse<object>
+public class ApiResponse
 {
-    public static ApiResponse Success(string message = "")
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public object? Data { get; set; }
+    public List<string> Errors { get; set; } = new();
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public string? RequestId { get; set; }
+
+    public static ApiResponse SuccessResponse(string message = "")
     {
         return new ApiResponse
         {
@@ -55,13 +62,35 @@ public class ApiResponse : ApiResponse<object>
         };
     }
 
-    public static new ApiResponse ErrorResponse(string message, List<string>? errors = null)
+    public static ApiResponse SuccessResponse(object data, string message = "")
+    {
+        return new ApiResponse
+        {
+            Success = true,
+            Message = message,
+            Data = data,
+            RequestId = Guid.NewGuid().ToString()
+        };
+    }
+
+    public static ApiResponse ErrorResponse(string message, List<string>? errors = null)
     {
         return new ApiResponse
         {
             Success = false,
             Message = message,
             Errors = errors ?? new List<string>(),
+            RequestId = Guid.NewGuid().ToString()
+        };
+    }
+
+    public static ApiResponse ErrorResponse(string message, string error)
+    {
+        return new ApiResponse
+        {
+            Success = false,
+            Message = message,
+            Errors = new List<string> { error },
             RequestId = Guid.NewGuid().ToString()
         };
     }
