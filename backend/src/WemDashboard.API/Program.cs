@@ -137,15 +137,22 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// CORS with WebSocket support
+// Enhanced CORS with WebSocket support
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "https://localhost:5173")
+        policy.WithOrigins(
+                "http://localhost:5173", 
+                "http://localhost:3000", 
+                "https://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:3000"
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowCredentials()
+              .WithExposedHeaders("*");
     });
 });
 
@@ -167,8 +174,14 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty; // Serve Swagger UI at root
 });
 
-// Enable WebSocket support
-app.UseWebSockets();
+// Enable WebSocket support with options
+var webSocketOptions = new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromMinutes(2),
+    ReceiveBufferSize = 4 * 1024
+};
+
+app.UseWebSockets(webSocketOptions);
 
 // Basic hello endpoint for testing
 app.MapGet("/api/hello", () => new { message = "WEM Dashboard API is running!", timestamp = DateTime.UtcNow });
@@ -192,18 +205,23 @@ app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready");
 app.MapHealthChecks("/health/live");
 
-// WebSocket endpoint for real-time data
+// Enhanced WebSocket endpoint with better error handling
 app.MapGet("/ws/energy-data", async (HttpContext context) =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
+        Console.WriteLine($"🔌 WebSocket connection request from: {context.Connection.RemoteIpAddress}");
+        Console.WriteLine($"🔌 Origin: {context.Request.Headers["Origin"]}");
+        Console.WriteLine($"🔌 User-Agent: {context.Request.Headers["User-Agent"]}");
+        
         using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        await HandleWebSocketConnection(webSocket);
+        await HandleWebSocketConnection(webSocket, context);
     }
     else
     {
+        Console.WriteLine($"❌ Non-WebSocket request to WebSocket endpoint from: {context.Connection.RemoteIpAddress}");
         context.Response.StatusCode = 400;
-        await context.Response.WriteAsync("WebSocket connection required");
+        await context.Response.WriteAsync("WebSocket connection required. Use ws://localhost:5000/ws/energy-data");
     }
 });
 
@@ -242,20 +260,27 @@ Console.WriteLine("📚 Swagger: http://localhost:5000");
 Console.WriteLine("🏥 Health: http://localhost:5000/health");
 Console.WriteLine("🧪 Test: http://localhost:5000/api/hello");
 Console.WriteLine("🔄 WebSocket: ws://localhost:5000/ws/energy-data");
+Console.WriteLine("⚠️  If WebSocket fails, run debug-websocket.bat for troubleshooting");
 
 app.Run();
 
-// Simplified WebSocket handler
-static async Task HandleWebSocketConnection(WebSocket webSocket)
+// Enhanced WebSocket handler with better error handling and logging
+static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext context)
 {
-    Console.WriteLine("🔌 New WebSocket connection established");
+    var connectionId = Guid.NewGuid().ToString("N")[..8];
+    var clientInfo = $"{context.Connection.RemoteIpAddress}:{context.Connection.RemotePort}";
+    
+    Console.WriteLine($"🔌 [{connectionId}] New WebSocket connection from {clientInfo}");
     
     var buffer = new byte[1024 * 4];
     
     try
     {
+        // Send initial welcome message
+        await SendWelcomeMessage(webSocket, connectionId);
+        
         // Send initial data immediately
-        await SendEnergyData(webSocket);
+        await SendEnergyData(webSocket, connectionId);
         
         // Keep connection alive and send data every 5 seconds
         while (webSocket.State == WebSocketState.Open)
@@ -268,19 +293,30 @@ static async Task HandleWebSocketConnection(WebSocket webSocket)
                 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    Console.WriteLine("🔌 Client requested close");
+                    Console.WriteLine($"🔌 [{connectionId}] Client requested close");
                     break;
                 }
                 
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    Console.WriteLine($"📥 Received: {message}");
+                    Console.WriteLine($"📥 [{connectionId}] Received: {message}");
+                    
+                    // Handle ping/pong for keep-alive
+                    if (message.Contains("ping"))
+                    {
+                        await SendPongMessage(webSocket, connectionId);
+                    }
                 }
             }
             catch (OperationCanceledException)
             {
                 // Timeout is normal - just continue
+            }
+            catch (WebSocketException wsEx) when (wsEx.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+            {
+                Console.WriteLine($"🔌 [{connectionId}] Client disconnected prematurely");
+                break;
             }
             
             // Send data every 5 seconds
@@ -288,17 +324,17 @@ static async Task HandleWebSocketConnection(WebSocket webSocket)
             
             if (webSocket.State == WebSocketState.Open)
             {
-                await SendEnergyData(webSocket);
+                await SendEnergyData(webSocket, connectionId);
             }
         }
     }
     catch (WebSocketException ex)
     {
-        Console.WriteLine($"🔌 WebSocket error: {ex.Message}");
+        Console.WriteLine($"🔌 [{connectionId}] WebSocket error: {ex.Message} (Code: {ex.WebSocketErrorCode})");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ WebSocket handler error: {ex.Message}");
+        Console.WriteLine($"❌ [{connectionId}] WebSocket handler error: {ex.Message}");
     }
     finally
     {
@@ -313,14 +349,74 @@ static async Task HandleWebSocketConnection(WebSocket webSocket)
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error closing WebSocket: {ex.Message}");
+                Console.WriteLine($"❌ [{connectionId}] Error closing WebSocket: {ex.Message}");
             }
         }
-        Console.WriteLine("✅ WebSocket connection closed");
+        Console.WriteLine($"✅ [{connectionId}] WebSocket connection closed");
     }
 }
 
-static async Task SendEnergyData(WebSocket webSocket)
+static async Task SendWelcomeMessage(WebSocket webSocket, string connectionId)
+{
+    if (webSocket.State != WebSocketState.Open) return;
+    
+    try
+    {
+        var welcomeMessage = new
+        {
+            type = "welcome",
+            message = "Connected to WEM Dashboard WebSocket",
+            connectionId = connectionId,
+            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
+
+        var json = JsonSerializer.Serialize(welcomeMessage);
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        await webSocket.SendAsync(
+            new ArraySegment<byte>(bytes),
+            WebSocketMessageType.Text,
+            true,
+            CancellationToken.None);
+        
+        Console.WriteLine($"📤 [{connectionId}] Sent welcome message");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ [{connectionId}] Error sending welcome message: {ex.Message}");
+    }
+}
+
+static async Task SendPongMessage(WebSocket webSocket, string connectionId)
+{
+    if (webSocket.State != WebSocketState.Open) return;
+    
+    try
+    {
+        var pongMessage = new
+        {
+            type = "pong",
+            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
+
+        var json = JsonSerializer.Serialize(pongMessage);
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        await webSocket.SendAsync(
+            new ArraySegment<byte>(bytes),
+            WebSocketMessageType.Text,
+            true,
+            CancellationToken.None);
+        
+        Console.WriteLine($"📤 [{connectionId}] Sent pong response");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ [{connectionId}] Error sending pong: {ex.Message}");
+    }
+}
+
+static async Task SendEnergyData(WebSocket webSocket, string connectionId)
 {
     if (webSocket.State != WebSocketState.Open) return;
     
@@ -329,14 +425,15 @@ static async Task SendEnergyData(WebSocket webSocket)
         var energyData = new
         {
             type = "energy-overview",
-            totalSites = 4,
-            onlineSites = 3,
-            totalCapacity = 85.5,
-            currentOutput = Math.Round(60 + Random.Shared.NextDouble() * 25, 1),
-            efficiency = Math.Round(85 + Random.Shared.NextDouble() * 10, 1),
-            alerts = Random.Shared.Next(0, 3),
+            totalSites = 6,
+            onlineSites = Random.Shared.Next(4, 7),
+            totalCapacity = 292.7,
+            currentOutput = Math.Round(180 + Random.Shared.NextDouble() * 80, 1),
+            efficiency = Math.Round(85 + Random.Shared.NextDouble() * 12, 1),
+            alerts = Random.Shared.Next(0, 4),
             lastUpdated = DateTime.UtcNow.ToString("O"),
-            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            connectionId = connectionId
         };
 
         var json = JsonSerializer.Serialize(energyData);
@@ -348,10 +445,10 @@ static async Task SendEnergyData(WebSocket webSocket)
             true,
             CancellationToken.None);
         
-        Console.WriteLine($"📤 Sent: {energyData.efficiency}% efficiency, {energyData.currentOutput} MW");
+        Console.WriteLine($"📤 [{connectionId}] Sent: {energyData.efficiency}% efficiency, {energyData.currentOutput} MW, {energyData.alerts} alerts");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Error sending data: {ex.Message}");
+        Console.WriteLine($"❌ [{connectionId}] Error sending energy data: {ex.Message}");
     }
 }
