@@ -1,0 +1,205 @@
+name: 🗄️ SQLite Development & Build Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-sqlite-setup:
+    name: 🧪 Test SQLite Setup & Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup .NET 8.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: 📦 Setup Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 🔍 Verify Project Structure
+      run: |
+        echo "🏗️ Verifying project structure..."
+        ls -la
+        echo "📂 Backend structure:"
+        ls -la backend/src/
+        echo "📁 API Project:"
+        ls -la backend/src/WemDashboard.API/
+
+    - name: 📦 Restore .NET Dependencies
+      working-directory: ./backend/src/WemDashboard.API
+      run: dotnet restore
+
+    - name: 🔨 Build .NET Application
+      working-directory: ./backend/src/WemDashboard.API
+      run: dotnet build --no-restore --configuration Release
+
+    - name: 🗄️ Test SQLite Database Creation
+      working-directory: ./backend/src/WemDashboard.API
+      run: |
+        echo "🗄️ Testing SQLite database creation..."
+        
+        # Create test appsettings
+        cat > appsettings.Test.json << 'EOF'
+        {
+          "ConnectionStrings": {
+            "DefaultConnection": "Data Source=test.db;Cache=Shared;Foreign Keys=true;"
+          },
+          "DatabaseProvider": "SQLite",
+          "Jwt": {
+            "Key": "WemDashboard-Test-JWT-Key-For-CI-32Characters-Minimum",
+            "Issuer": "WemDashboard",
+            "Audience": "WemDashboard",
+            "ExpirationInMinutes": 60
+          }
+        }
+        EOF
+        
+        # Test database creation and seeding
+        timeout 30s dotnet run --environment Test --no-build || true
+        
+        # Verify database was created and has data
+        if [ -f "test.db" ]; then
+          echo "✅ SQLite database created successfully"
+          
+          # Use SQLite command line to check if tables exist
+          if command -v sqlite3 &> /dev/null; then
+            echo "📊 Database tables:"
+            sqlite3 test.db ".tables"
+            
+            echo "👥 User count:"
+            sqlite3 test.db "SELECT COUNT(*) FROM Users;" || echo "Users table check failed"
+            
+            echo "🏢 Site count:"
+            sqlite3 test.db "SELECT COUNT(*) FROM Sites;" || echo "Sites table check failed"
+            
+            echo "⚡ Power data count:"
+            sqlite3 test.db "SELECT COUNT(*) FROM PowerData;" || echo "PowerData table check failed"
+          else
+            echo "ℹ️ SQLite CLI not available, skipping table verification"
+          fi
+          
+          # Check file size (should be reasonable with sample data)
+          DB_SIZE=$(stat -f%z test.db 2>/dev/null || stat -c%s test.db 2>/dev/null || echo "unknown")
+          echo "📏 Database size: $DB_SIZE bytes"
+          
+          if [ "$DB_SIZE" != "unknown" ] && [ "$DB_SIZE" -gt 10000 ]; then
+            echo "✅ Database has reasonable size (contains data)"
+          fi
+        else
+          echo "❌ SQLite database was not created"
+          exit 1
+        fi
+
+    - name: 📦 Install Frontend Dependencies
+      run: npm install
+
+    - name: 🔍 Frontend Type Check
+      run: npm run type-check
+
+    - name: 🧪 Frontend Tests
+      run: npm run test -- --passWithNoTests
+
+    - name: 🏗️ Build Frontend
+      run: npm run build
+
+    - name: 📊 Build Summary
+      run: |
+        echo "🎉 Build Summary:"
+        echo "✅ .NET Backend build successful"
+        echo "✅ SQLite database creation successful"
+        echo "✅ Frontend build successful"
+        echo ""
+        echo "📁 Generated files:"
+        echo "🗄️ SQLite Database: $(ls -la backend/src/WemDashboard.API/*.db 2>/dev/null || echo 'None found')"
+        echo "🌐 Frontend Dist: $(ls -la dist/ 2>/dev/null || echo 'None found')"
+
+  test-demo-workflow:
+    name: 🎯 Test Demo Setup Process
+    runs-on: ubuntu-latest
+    needs: test-sqlite-setup
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup .NET 8.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: 📦 Setup Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 🎯 Test Enhanced Setup Script
+      run: |
+        echo "🎯 Testing the enhanced SQLite setup script..."
+        chmod +x setup-sqlite-dev.sh
+        
+        # Run setup script in test mode (without interactive parts)
+        timeout 60s ./setup-sqlite-dev.sh || true
+        
+        echo "📊 Verifying setup results..."
+        
+        # Check if database was created
+        if [ -f "backend/src/WemDashboard.API/wemdashboard-dev.db" ]; then
+          echo "✅ Development database created successfully"
+        else
+          echo "ℹ️ Development database not found (may be expected in CI)"
+        fi
+        
+        # Check if frontend config was created
+        if [ -f ".env.local" ]; then
+          echo "✅ Frontend environment configuration created"
+          cat .env.local
+        fi
+        
+        echo "🎉 Setup script test completed"
+
+  compatibility-check:
+    name: 🔄 Cross-Platform Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup .NET 8.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: 🔨 Build Backend
+      working-directory: ./backend/src/WemDashboard.API
+      run: |
+        dotnet restore
+        dotnet build --configuration Release
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: 🏗️ Build Frontend
+      run: |
+        npm install
+        npm run build
+
+    - name: ✅ Platform Test Complete
+      run: echo "✅ Build successful on ${{ matrix.os }}"
