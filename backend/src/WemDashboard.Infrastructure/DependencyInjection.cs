@@ -12,8 +12,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database configuration
-        var databaseProvider = configuration["DatabaseProvider"] ?? "SqlServer";
+        // Database configuration - Default to SQLite for development
+        var databaseProvider = configuration["DatabaseProvider"] ?? "SQLite";
         var connectionString = configuration.GetConnectionString("DefaultConnection") ?? 
             throw new InvalidOperationException("DefaultConnection string is required");
 
