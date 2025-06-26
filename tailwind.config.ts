@@ -178,9 +178,12 @@ const config: Config = {
   },
   plugins: [
     require("tailwindcss-animate"),
-    require("@tailwindcss/typography"),
-    require("@tailwindcss/forms"),
-    require("@tailwindcss/aspect-ratio"),
+    // Note: Additional plugins can be installed with:
+    // npm install @tailwindcss/typography @tailwindcss/forms @tailwindcss/aspect-ratio
+    // Then uncomment the lines below:
+    // require("@tailwindcss/typography"),
+    // require("@tailwindcss/forms"),
+    // require("@tailwindcss/aspect-ratio"),
   ],
 } satisfies Config
 
