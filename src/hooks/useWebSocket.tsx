@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNotify } from '@/components/notifications/NotificationSystem';
 
 // WebSocket connection states
@@ -390,7 +390,7 @@ export const ConnectionStatus: React.FC<{
 };
 
 // Real-time data hook for specific data types
-export const useRealTimeData = <T>(
+export const useRealTimeData = <T,>(
   websocketConfig: WebSocketConfig,
   dataType: string,
   initialData?: T
