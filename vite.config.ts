@@ -30,5 +30,12 @@ export default defineConfig({
     port: 5173,
     host: true,
     cors: true
+  },
+  // Define global variables for browser compatibility
+  define: {
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+    },
+    global: 'globalThis',
   }
 })
