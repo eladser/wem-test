@@ -13,6 +13,9 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // Asset mappings
+        CreateMap<Asset, AssetDto>()
+            .ForMember(dest => dest.SiteName, opt => opt.MapFrom(src => src.Site != null ? src.Site.Name : null));
+
         CreateMap<CreateAssetDto, Asset>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString()))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => AssetStatus.Online))
@@ -21,6 +24,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.LastUpdate, opt => opt.MapFrom(src => DateTime.UtcNow));
 
         // Site mappings
+        CreateMap<Site, SiteDto>()
+            .ForMember(dest => dest.AssetCount, opt => opt.MapFrom(src => src.Assets.Count))
+            .ForMember(dest => dest.UnreadAlertCount, opt => opt.MapFrom(src => src.Alerts.Count(a => !a.IsRead)));
+
         CreateMap<CreateSiteDto, Site>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString()))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => SiteStatus.Online))
