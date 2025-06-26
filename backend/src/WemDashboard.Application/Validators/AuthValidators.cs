@@ -1,5 +1,6 @@
 using FluentValidation;
-using WemDashboard.Application.DTOs;
+using WemDashboard.Application.DTOs.Auth;
+using WemDashboard.Domain.Entities;
 
 namespace WemDashboard.Application.Validators;
 
@@ -31,6 +32,10 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$")
             .WithMessage("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
 
+        RuleFor(x => x.ConfirmPassword)
+            .NotEmpty().WithMessage("Password confirmation is required")
+            .Equal(x => x.Password).WithMessage("Passwords must match");
+
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("First name is required")
             .MaximumLength(50).WithMessage("First name must not exceed 50 characters");
@@ -40,11 +45,6 @@ public class RegisterValidator : AbstractValidator<RegisterDto>
             .MaximumLength(50).WithMessage("Last name must not exceed 50 characters");
 
         RuleFor(x => x.Role)
-            .Must(BeValidRole).WithMessage("Role must be 'Admin', 'Manager', 'Operator', or 'Viewer'");
-    }
-
-    private static bool BeValidRole(string role)
-    {
-        return role is "Admin" or "Manager" or "Operator" or "Viewer";
+            .IsInEnum().WithMessage("Role must be a valid value");
     }
 }
