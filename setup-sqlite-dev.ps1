@@ -94,36 +94,43 @@ $appsettingsContent | Out-File -FilePath "appsettings.Development.json" -Encodin
 
 Write-Host "✅ SQLite development configuration created" -ForegroundColor $Green
 
+# Go back to project root for npm commands
+Set-Location "..\..\.."
+
+# Setup frontend dependencies first
+Write-Host "Installing frontend dependencies..." -ForegroundColor $Blue
+npm install
+
 # Install/restore .NET packages
 Write-Host "Installing .NET packages..." -ForegroundColor $Blue
-dotnet restore --verbosity quiet
+Set-Location "backend\src\WemDashboard.API"
+dotnet restore
 
 Write-Host "Building the application..." -ForegroundColor $Blue
-dotnet build --configuration Debug --verbosity quiet
+dotnet build --configuration Debug
 
 Write-Host "Creating and seeding the database..." -ForegroundColor $Blue
 
-# Start the API to seed the database
+# Start the API to seed the database using a different approach
 Write-Host "Starting API to initialize database..." -ForegroundColor $Yellow
-$job = Start-Job -ScriptBlock {
-    Set-Location $using:PWD
-    dotnet run --no-build
-}
+
+# Use Start-Process instead of Start-Job for better compatibility
+$apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--no-build" -PassThru -WindowStyle Hidden
 
 # Wait for the API to start and seed the database
 Write-Host "Waiting for database initialization..." -ForegroundColor $Yellow
-Start-Sleep -Seconds 15
+Start-Sleep -Seconds 20
 
-# Stop the API
-Stop-Job $job -Force
-Remove-Job $job -Force
+# Stop the API process
+if (-not $apiProcess.HasExited) {
+    $apiProcess.Kill()
+    $apiProcess.WaitForExit(5000)
+}
+
+Write-Host "✅ Database initialization completed" -ForegroundColor $Green
 
 # Go back to project root
 Set-Location "..\..\.."
-
-# Setup frontend dependencies
-Write-Host "Installing frontend dependencies..." -ForegroundColor $Blue
-npm install --silent
 
 # Create .env.local for frontend if it does not exist
 if (-not (Test-Path ".env.local")) {
@@ -147,11 +154,12 @@ Write-Host ""
 Write-Host "Quick Start Commands:" -ForegroundColor $Yellow
 Write-Host ""
 Write-Host "1. Start the Backend (in Command Prompt 1):" -ForegroundColor $Blue
-Write-Host "   cd backend\src\WemDashboard.API" -ForegroundColor $Blue
-Write-Host "   dotnet run" -ForegroundColor $Blue
+Write-Host "   Double-click: start-backend.bat" -ForegroundColor $Blue
+Write-Host "   OR manually: cd backend\src\WemDashboard.API && dotnet run" -ForegroundColor $Blue
 Write-Host ""
-Write-Host "2. Start the Frontend (in Command Prompt 2, from project root):" -ForegroundColor $Blue
-Write-Host "   npm run dev" -ForegroundColor $Blue
+Write-Host "2. Start the Frontend (in Command Prompt 2):" -ForegroundColor $Blue
+Write-Host "   Double-click: start-frontend.bat" -ForegroundColor $Blue
+Write-Host "   OR manually: npm run dev" -ForegroundColor $Blue
 Write-Host ""
 Write-Host "3. Ready-to-Use Login Credentials:" -ForegroundColor $Purple
 Write-Host "   Admin:    admin@wemdashboard.com    / Admin123!" -ForegroundColor $Green
@@ -195,4 +203,9 @@ Write-Host "   • JWT tokens expire after 60 minutes" -ForegroundColor $Blue
 Write-Host "   • CORS enabled for frontend development" -ForegroundColor $Blue
 Write-Host ""
 Write-Host "Happy Coding! Your WEM Dashboard is ready for development!" -ForegroundColor $Green
+Write-Host ""
+Write-Host "Next Steps:" -ForegroundColor $Yellow
+Write-Host "1. Double-click start-backend.bat" -ForegroundColor $Blue
+Write-Host "2. Double-click start-frontend.bat" -ForegroundColor $Blue
+Write-Host "3. Open http://localhost:5173 in your browser" -ForegroundColor $Blue
 Write-Host ""
