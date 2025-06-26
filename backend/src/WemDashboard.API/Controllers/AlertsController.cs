@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WemDashboard.Application.DTOs;
+using WemDashboard.Application.DTOs.Alerts;
 using WemDashboard.Application.Services;
 using WemDashboard.Shared.Constants;
 
