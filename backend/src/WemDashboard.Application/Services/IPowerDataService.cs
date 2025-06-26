@@ -1,4 +1,4 @@
-using WemDashboard.Application.DTOs;
+using WemDashboard.Application.DTOs.PowerData;
 using WemDashboard.Shared.Models;
 
 namespace WemDashboard.Application.Services;
