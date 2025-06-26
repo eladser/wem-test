@@ -1,0 +1,39 @@
+name: 🔧 Fix Lockfile
+on:
+  workflow_dispatch: # Manual trigger
+  schedule:
+    - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
+
+jobs:
+  update-lockfile:
+    name: 🔄 Update Lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 🧹 Clean install
+        run: |
+          rm -f bun.lockb
+          bun install
+
+      - name: 📝 Commit updated lockfile
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if [[ -n $(git status --porcelain) ]]; then
+            git add bun.lockb package.json
+            git commit -m "chore: update lockfile"
+            git push
+            echo "✅ Lockfile updated successfully"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
