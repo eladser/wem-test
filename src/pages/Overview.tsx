@@ -64,6 +64,8 @@ const Overview = () => {
   const isDevelopment = import.meta.env.DEV;
   const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000/ws/energy-data';
   
+  console.log(`WebSocket URL: ${wsUrl}`);
+  
   // Real-time WebSocket connection for live data
   const {
     data: realTimeData,
@@ -74,8 +76,16 @@ const Overview = () => {
     {
       url: wsUrl,
       enableLogging: isDevelopment,
-      reconnectAttempts: 5,
+      reconnectAttempts: 3,
+      reconnectInterval: 5000,
       heartbeatInterval: 30000,
+      onError: (error) => {
+        console.warn('WebSocket connection error:', error);
+        // Don't show error notifications immediately - let the reconnection logic handle it
+      },
+      onClose: (event) => {
+        console.log('WebSocket connection closed:', event.code, event.reason);
+      }
     },
     'energy-overview',
     // Fallback to mock data
@@ -190,6 +200,11 @@ const Overview = () => {
               Last updated: {new Date(lastUpdated).toLocaleTimeString()}
             </p>
           )}
+          {connectionState === 'error' && (
+            <p className="text-sm text-orange-500 mt-1">
+              Using offline data - Check backend connection
+            </p>
+          )}
         </div>
         
         {/* Action buttons */}
@@ -297,7 +312,7 @@ const Overview = () => {
       {/* Performance monitoring in development */}
       {isDevelopment && (
         <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs font-mono">
-          Renders: {renderCount} | Connection: {connectionState}
+          Renders: {renderCount} | Connection: {connectionState} | URL: {wsUrl}
         </div>
       )}
     </div>
