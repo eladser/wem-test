@@ -12,31 +12,45 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database configuration - Default to SQLite for development
-        var databaseProvider = configuration["DatabaseProvider"] ?? "SQLite";
+        // Database configuration - Force SQLite for development, allow override for production
+        var databaseProvider = configuration["DatabaseProvider"]?.ToLower() ?? "sqlite";
         var connectionString = configuration.GetConnectionString("DefaultConnection") ?? 
-            throw new InvalidOperationException("DefaultConnection string is required");
+            "Data Source=wemdashboard.db;";
+
+        // Log the configuration being used
+        Console.WriteLine($"🔧 Database Provider: {databaseProvider}");
+        Console.WriteLine($"🔧 Connection String: {connectionString}");
+
+        // Force SQLite for development environment
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            databaseProvider = "sqlite";
+            Console.WriteLine("🔧 Development mode detected - forcing SQLite");
+        }
 
         switch (databaseProvider.ToLower())
         {
             case "sqlserver":
                 services.AddDbContext<WemDashboardDbContext>(options =>
                     options.UseSqlServer(connectionString));
+                Console.WriteLine("✅ Configured SQL Server");
                 break;
             case "postgresql":
                 services.AddDbContext<WemDashboardDbContext>(options =>
                     options.UseNpgsql(connectionString));
+                Console.WriteLine("✅ Configured PostgreSQL");
                 break;
             case "mysql":
                 services.AddDbContext<WemDashboardDbContext>(options =>
                     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+                Console.WriteLine("✅ Configured MySQL");
                 break;
             case "sqlite":
+            default:
                 services.AddDbContext<WemDashboardDbContext>(options =>
                     options.UseSqlite(connectionString));
+                Console.WriteLine("✅ Configured SQLite");
                 break;
-            default:
-                throw new InvalidOperationException($"Database provider '{databaseProvider}' is not supported");
         }
 
         // Repository registration
