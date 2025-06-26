@@ -60,6 +60,10 @@ const Overview = () => {
   
   console.log(`Overview component rendering (render #${renderCount})`);
   
+  // Environment variables using Vite's import.meta.env
+  const isDevelopment = import.meta.env.DEV;
+  const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/energy-data';
+  
   // Real-time WebSocket connection for live data
   const {
     data: realTimeData,
@@ -68,8 +72,8 @@ const Overview = () => {
     lastUpdated
   } = useRealTimeData<EnergyData>(
     {
-      url: process.env.REACT_APP_WS_URL || 'ws://localhost:8080/energy-data',
-      enableLogging: process.env.NODE_ENV === 'development',
+      url: wsUrl,
+      enableLogging: isDevelopment,
       reconnectAttempts: 5,
       heartbeatInterval: 30000,
     },
@@ -291,7 +295,7 @@ const Overview = () => {
       />
 
       {/* Performance monitoring in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {isDevelopment && (
         <div className="fixed bottom-4 left-4 bg-black/80 text-white p-2 rounded text-xs font-mono">
           Renders: {renderCount} | Connection: {connectionState}
         </div>
