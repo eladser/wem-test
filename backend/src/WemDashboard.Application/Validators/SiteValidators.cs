@@ -1,5 +1,6 @@
 using FluentValidation;
-using WemDashboard.Application.DTOs;
+using WemDashboard.Application.DTOs.Sites;
+using WemDashboard.Domain.Entities;
 
 namespace WemDashboard.Application.Validators;
 
@@ -9,15 +10,15 @@ public class CreateSiteValidator : AbstractValidator<CreateSiteDto>
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Site name is required")
-            .MaximumLength(100).WithMessage("Site name must not exceed 100 characters");
+            .MaximumLength(200).WithMessage("Site name must not exceed 200 characters");
 
         RuleFor(x => x.Location)
             .NotEmpty().WithMessage("Location is required")
-            .MaximumLength(200).WithMessage("Location must not exceed 200 characters");
+            .MaximumLength(500).WithMessage("Location must not exceed 500 characters");
 
         RuleFor(x => x.Region)
             .NotEmpty().WithMessage("Region is required")
-            .MaximumLength(50).WithMessage("Region must not exceed 50 characters");
+            .MaximumLength(100).WithMessage("Region must not exceed 100 characters");
 
         RuleFor(x => x.TotalCapacity)
             .GreaterThan(0).WithMessage("Total capacity must be greater than 0");
@@ -29,15 +30,15 @@ public class UpdateSiteValidator : AbstractValidator<UpdateSiteDto>
     public UpdateSiteValidator()
     {
         RuleFor(x => x.Name)
-            .MaximumLength(100).WithMessage("Site name must not exceed 100 characters")
+            .MaximumLength(200).WithMessage("Site name must not exceed 200 characters")
             .When(x => !string.IsNullOrEmpty(x.Name));
 
         RuleFor(x => x.Location)
-            .MaximumLength(200).WithMessage("Location must not exceed 200 characters")
+            .MaximumLength(500).WithMessage("Location must not exceed 500 characters")
             .When(x => !string.IsNullOrEmpty(x.Location));
 
         RuleFor(x => x.Region)
-            .MaximumLength(50).WithMessage("Region must not exceed 50 characters")
+            .MaximumLength(100).WithMessage("Region must not exceed 100 characters")
             .When(x => !string.IsNullOrEmpty(x.Region));
 
         RuleFor(x => x.TotalCapacity)
@@ -59,12 +60,10 @@ public class UpdateSiteStatusValidator : AbstractValidator<UpdateSiteStatusDto>
     public UpdateSiteStatusValidator()
     {
         RuleFor(x => x.Status)
-            .NotEmpty().WithMessage("Status is required")
-            .Must(BeValidStatus).WithMessage("Status must be 'online', 'maintenance', or 'offline'");
-    }
+            .IsInEnum().WithMessage("Status must be a valid site status value");
 
-    private static bool BeValidStatus(string status)
-    {
-        return status.ToLower() is "online" or "maintenance" or "offline";
+        RuleFor(x => x.Notes)
+            .MaximumLength(1000).WithMessage("Notes must not exceed 1000 characters")
+            .When(x => !string.IsNullOrEmpty(x.Notes));
     }
 }
