@@ -17,16 +17,22 @@ if not exist "backend\src\WemDashboard.API" (
 REM Navigate to the API project
 cd backend\src\WemDashboard.API
 
-REM Check if database exists
-if not exist "wemdashboard-dev.db" (
+REM Check if either database file exists (Development or Production)
+set DB_FOUND=0
+if exist "wemdashboard-dev.db" set DB_FOUND=1
+if exist "wemdashboard.db" set DB_FOUND=1
+
+if %DB_FOUND%==0 (
     echo ⚠️ Database not found! 
     echo 💡 Please run setup-sqlite-dev.ps1 first
+    echo 📝 Note: The application will create the database automatically if it doesn't exist
     echo.
-    pause
-    exit /b 1
+    echo 🚀 Starting anyway - database will be auto-created...
+    echo.
+) else (
+    echo ✅ Database found
 )
 
-echo ✅ Database found
 echo 🔧 Starting .NET API server...
 echo.
 echo 📊 API will be available at: http://localhost:5000
