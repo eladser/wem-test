@@ -207,7 +207,6 @@ app.MapHealthChecks("/health/live");
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WemDashboardDbContext>();
-    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
     
     try
     {
@@ -220,11 +219,20 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Database Provider: {context.Database.ProviderName}");
         Console.WriteLine("=====================================");
         
-        await context.Database.EnsureCreatedAsync();
-        await seeder.SeedAsync();
-        Log.Information("Database initialized successfully");
+        // Delete existing database and recreate fresh
+        Console.WriteLine("🗑️ Deleting existing database...");
+        await context.Database.EnsureDeletedAsync();
         
-        Console.WriteLine("✅ SUCCESS: Database initialized with SQLite!");
+        Console.WriteLine("🔨 Creating fresh database...");
+        await context.Database.EnsureCreatedAsync();
+        
+        // Skip seeding for now to test basic functionality
+        Console.WriteLine("⏭️ Skipping data seeding for initial test...");
+        
+        Log.Information("Database initialized successfully (empty)");
+        
+        Console.WriteLine("✅ SUCCESS: Fresh SQLite database created!");
+        Console.WriteLine("📝 Database is empty - you can add test data later");
     }
     catch (Exception ex)
     {
@@ -238,5 +246,10 @@ using (var scope = app.Services.CreateScope())
 Log.Information("Starting WEM Dashboard API on {Environment}", app.Environment.EnvironmentName);
 Log.Information("Swagger UI available at: http://localhost:5000/swagger");
 Log.Information("Health checks available at: http://localhost:5000/health");
+
+Console.WriteLine("🚀 WEM Dashboard API is running!");
+Console.WriteLine("📚 Swagger: http://localhost:5000/swagger");
+Console.WriteLine("🏥 Health: http://localhost:5000/health");
+Console.WriteLine("🔌 API: http://localhost:5000");
 
 app.Run();
