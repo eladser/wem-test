@@ -15,11 +15,16 @@ public class DataSeeder
 
     public async Task SeedAsync()
     {
+        // Seed in order of dependencies to avoid foreign key constraint failures
         await SeedUsersAsync();
         await SeedSitesAsync();
+        // Save sites first before seeding dependent entities
+        await _context.SaveChangesAsync();
+        
         await SeedAssetsAsync();
         await SeedPowerDataAsync();
         await SeedAlertsAsync();
+        // Save remaining entities
         await _context.SaveChangesAsync();
     }
 
