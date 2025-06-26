@@ -16,27 +16,22 @@ using WemDashboard.Infrastructure;
 using WemDashboard.Infrastructure.Data;
 using WemDashboard.Infrastructure.Services;
 using WemDashboard.Shared.Constants;
+using System.Net.WebSockets;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// FORCE SQLITE CONFIGURATION - Debug what's happening
-Console.WriteLine("=== WEM DASHBOARD DATABASE CONFIGURATION DEBUG ===");
-Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
-
-// Force SQLite configuration
+// FORCE SQLITE CONFIGURATION
+Console.WriteLine("=== WEM DASHBOARD CONFIGURATION ===");
 var connectionString = "Data Source=wemdashboard-dev.db;";
 var databaseProvider = "SQLite";
 
-Console.WriteLine($"FORCED Database Provider: {databaseProvider}");
-Console.WriteLine($"FORCED Connection String: {connectionString}");
-
-// Override configuration values
 builder.Configuration["DatabaseProvider"] = databaseProvider;
 builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
 
-Console.WriteLine($"Config DatabaseProvider: {builder.Configuration["DatabaseProvider"]}");
-Console.WriteLine($"Config ConnectionString: {builder.Configuration.GetConnectionString("DefaultConnection")}");
-Console.WriteLine("=====================================================");
+Console.WriteLine($"✅ Database Provider: {databaseProvider}");
+Console.WriteLine($"✅ Connection String: {connectionString}");
+Console.WriteLine("==================================");
 
 // Serilog configuration
 Log.Logger = new LoggerConfiguration()
@@ -152,7 +147,7 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// CORS
+// CORS with WebSocket support
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -184,6 +179,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// Enable WebSocket support
+app.UseWebSockets();
+
 // Middleware pipeline
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -203,53 +201,114 @@ app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready");
 app.MapHealthChecks("/health/live");
 
-// Database initialization
+// WebSocket endpoint for real-time data
+app.Map("/ws/energy-data", async context =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await HandleWebSocketConnection(webSocket, context);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+    }
+});
+
+// Database initialization with seeding
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WemDashboardDbContext>();
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
     
     try
     {
-        Console.WriteLine("=== DATABASE INITIALIZATION DEBUG ===");
+        Console.WriteLine("🔨 Initializing database...");
         
-        // Get the underlying database connection
-        var connection = context.Database.GetDbConnection();
-        Console.WriteLine($"DbContext Connection String: {connection.ConnectionString}");
-        Console.WriteLine($"Connection Type: {connection.GetType().Name}");
-        Console.WriteLine($"Database Provider: {context.Database.ProviderName}");
-        Console.WriteLine("=====================================");
-        
-        // Delete existing database and recreate fresh
-        Console.WriteLine("🗑️ Deleting existing database...");
+        // Delete and recreate database to ensure clean state
         await context.Database.EnsureDeletedAsync();
-        
-        Console.WriteLine("🔨 Creating fresh database...");
         await context.Database.EnsureCreatedAsync();
         
-        // Skip seeding for now to test basic functionality
-        Console.WriteLine("⏭️ Skipping data seeding for initial test...");
+        Console.WriteLine("📊 Seeding database with sample data...");
+        await seeder.SeedAsync();
         
-        Log.Information("Database initialized successfully (empty)");
-        
-        Console.WriteLine("✅ SUCCESS: Fresh SQLite database created!");
-        Console.WriteLine("📝 Database is empty - you can add test data later");
+        Log.Information("Database initialized and seeded successfully");
+        Console.WriteLine("✅ Database ready with sample data!");
     }
     catch (Exception ex)
     {
         Log.Error(ex, "An error occurred while initializing the database");
         Console.WriteLine($"❌ DATABASE ERROR: {ex.Message}");
-        Console.WriteLine($"❌ STACK TRACE: {ex.StackTrace}");
         throw;
     }
 }
 
 Log.Information("Starting WEM Dashboard API on {Environment}", app.Environment.EnvironmentName);
-Log.Information("Swagger UI available at: http://localhost:5000/swagger");
-Log.Information("Health checks available at: http://localhost:5000/health");
 
 Console.WriteLine("🚀 WEM Dashboard API is running!");
 Console.WriteLine("📚 Swagger: http://localhost:5000/swagger");
 Console.WriteLine("🏥 Health: http://localhost:5000/health");
 Console.WriteLine("🔌 API: http://localhost:5000");
+Console.WriteLine("🔄 WebSocket: ws://localhost:5000/ws/energy-data");
 
 app.Run();
+
+// WebSocket handler for real-time energy data
+static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext context)
+{
+    const int delayMs = 5000; // Send data every 5 seconds
+    var buffer = new byte[1024 * 4];
+
+    try
+    {
+        while (webSocket.State == WebSocketState.Open)
+        {
+            // Generate mock real-time energy data
+            var energyData = new
+            {
+                totalSites = 6,
+                onlineSites = 5,
+                totalCapacity = 293.2,
+                currentOutput = 238.8,
+                efficiency = 81.4 + Random.Shared.NextDouble() * 15, // Random efficiency between 81-96%
+                alerts = Random.Shared.Next(0, 4),
+                lastUpdated = DateTime.UtcNow.ToString("O"),
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            };
+
+            var json = JsonSerializer.Serialize(energyData);
+            var bytes = Encoding.UTF8.GetBytes(json);
+
+            await webSocket.SendAsync(
+                new ArraySegment<byte>(bytes),
+                WebSocketMessageType.Text,
+                true,
+                CancellationToken.None);
+
+            // Check for client messages (like heartbeat)
+            var receiveResult = await webSocket.ReceiveAsync(
+                new ArraySegment<byte>(buffer),
+                new CancellationTokenSource(100).Token); // Short timeout
+
+            await Task.Delay(delayMs);
+        }
+    }
+    catch (OperationCanceledException)
+    {
+        // Client disconnected or timeout - normal behavior
+    }
+    catch (WebSocketException ex)
+    {
+        Console.WriteLine($"WebSocket error: {ex.Message}");
+    }
+    finally
+    {
+        if (webSocket.State == WebSocketState.Open)
+        {
+            await webSocket.CloseAsync(
+                WebSocketCloseStatus.NormalClosure,
+                "Connection closed",
+                CancellationToken.None);
+        }
+    }
+}
