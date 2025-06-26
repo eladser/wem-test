@@ -1,6 +1,6 @@
 @echo off
-REM 🚀 WEM Dashboard - Windows Quick Start Script
-REM Runs the backend API for development
+REM 🚀 WEM Dashboard - Backend Startup Script
+REM Cleans port 5000 and starts the backend API
 
 echo.
 echo 🖥️ Starting WEM Dashboard Backend API...
@@ -14,41 +14,41 @@ if not exist "backend\src\WemDashboard.API" (
     exit /b 1
 )
 
+echo 🧹 Cleaning up port 5000...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5000') do (
+    if not "%%a"=="0" (
+        taskkill /F /PID %%a 2>nul
+    )
+)
+
+REM Wait for cleanup
+timeout /t 2 /nobreak >nul
+
+echo ✅ Port 5000 cleaned
+
 REM Navigate to the API project
 cd backend\src\WemDashboard.API
 
-REM Check if either database file exists (Development or Production)
-set DB_FOUND=0
-if exist "wemdashboard-dev.db" set DB_FOUND=1
-if exist "wemdashboard.db" set DB_FOUND=1
-
-if %DB_FOUND%==0 (
-    echo ⚠️ Database not found! 
-    echo 💡 Please run setup-sqlite-dev.ps1 first
-    echo 📝 Note: The application will create the database automatically if it doesn't exist
-    echo.
-    echo 🚀 Starting anyway - database will be auto-created...
-    echo.
-) else (
+REM Check database
+if exist "wemdashboard-dev.db" (
     echo ✅ Database found
+) else (
+    echo ⚠️ Database will be auto-created
 )
 
-echo 🔧 Starting .NET API server on port 5001...
 echo.
-echo 📊 API will be available at: http://localhost:5001
-echo 📚 Swagger documentation: http://localhost:5001
-echo ❤️ Health check: http://localhost:5001/health
-echo 🔄 WebSocket: ws://localhost:5001/ws/energy-data
+echo 🚀 Starting .NET API server on port 5000...
+echo 📊 API: http://localhost:5000
+echo 📚 Swagger: http://localhost:5000
+echo ❤️ Health: http://localhost:5000/health
+echo 🔄 WebSocket: ws://localhost:5000/ws/energy-data
 echo.
-echo 🛑 Press Ctrl+C to stop the server
+echo 🛑 Press Ctrl+C to stop
 echo.
 
-REM Force the application to listen on port 5001
-set ASPNETCORE_URLS=http://localhost:5001
-
-REM Start the API with explicit URL binding
-dotnet run --urls "http://localhost:5001"
+set ASPNETCORE_URLS=http://localhost:5000
+dotnet run --urls "http://localhost:5000"
 
 echo.
-echo 👋 Backend API stopped
+echo 👋 Backend stopped
 pause
