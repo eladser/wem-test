@@ -26,9 +26,10 @@ interface WebSocketConfig {
   onClose?: (event: CloseEvent) => void;
   onError?: (event: Event) => void;
   enableLogging?: boolean;
+  suppressNotifications?: boolean; // New option to suppress notifications
 }
 
-// WebSocket manager class with fallback logic
+// WebSocket manager class with enhanced fallback logic
 class WebSocketManager {
   private ws: WebSocket | null = null;
   private config: Required<WebSocketConfig>;
@@ -41,6 +42,10 @@ class WebSocketManager {
   private messageSubscribers = new Set<(message: WebSocketMessage) => void>();
   private urlIndex = 0;
   private fallbackUrls: string[] = [];
+  private lastNotificationState: ConnectionState | null = null;
+  private notificationCooldown: NodeJS.Timeout | null = null;
+  private connectionStabilityTimeout: NodeJS.Timeout | null = null;
+  private isConnectionStable = false;
 
   constructor(config: WebSocketConfig) {
     this.config = {
@@ -55,6 +60,7 @@ class WebSocketManager {
       onClose: () => {},
       onError: () => {},
       enableLogging: import.meta.env.VITE_DEBUG === 'true' || import.meta.env.DEV,
+      suppressNotifications: false,
       ...config
     };
 
@@ -77,7 +83,51 @@ class WebSocketManager {
     return this.fallbackUrls[this.urlIndex] || this.config.url;
   }
 
-  connect(): void {
+  private showNotification(state: ConnectionState, notify: any): void {
+    // Skip notifications if suppressed or if it's the same state within cooldown period
+    if (this.config.suppressNotifications || this.lastNotificationState === state) {
+      return;
+    }
+
+    // Clear any existing cooldown
+    if (this.notificationCooldown) {
+      clearTimeout(this.notificationCooldown);
+    }
+
+    // Only show notifications for stable connections or significant state changes
+    const shouldNotify = (
+      state === 'connected' && this.isConnectionStable
+    ) || (
+      state === 'error' && this.reconnectAttempt >= 2
+    ) || (
+      state === 'disconnected' && this.lastNotificationState === 'connected' && this.isConnectionStable
+    );
+
+    if (shouldNotify) {
+      switch (state) {
+        case 'connected':
+          notify.success('Connected', 'Real-time data connection established', { duration: 3000 });
+          break;
+        case 'error':
+          notify.error('Connection Error', 'Unable to establish connection - using offline data', { duration: 5000 });
+          break;
+        case 'disconnected':
+          if (this.lastNotificationState === 'connected') {
+            notify.warning('Connection Lost', 'Attempting to reconnect...', { duration: 4000 });
+          }
+          break;
+      }
+      
+      this.lastNotificationState = state;
+      
+      // Set cooldown to prevent spam (minimum 10 seconds between same notifications)
+      this.notificationCooldown = setTimeout(() => {
+        this.lastNotificationState = null;
+      }, 10000);
+    }
+  }
+
+  connect(notify?: any): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.log('WebSocket already connected');
       return;
@@ -90,10 +140,10 @@ class WebSocketManager {
       this.notifyStateChange('connecting');
       
       this.ws = new WebSocket(currentUrl, this.config.protocols);
-      this.setupEventListeners();
+      this.setupEventListeners(notify);
     } catch (error) {
       this.log('Failed to create WebSocket connection:', error);
-      this.handleConnectionError();
+      this.handleConnectionError(notify);
     }
   }
 
@@ -102,15 +152,27 @@ class WebSocketManager {
     
     // Clear reconnection
     this.isReconnecting = false;
+    this.isConnectionStable = false;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
+    }
+    
+    if (this.connectionStabilityTimeout) {
+      clearTimeout(this.connectionStabilityTimeout);
+      this.connectionStabilityTimeout = null;
     }
     
     // Clear heartbeat
     if (this.heartbeatTimeout) {
       clearTimeout(this.heartbeatTimeout);
       this.heartbeatTimeout = null;
+    }
+
+    // Clear notification cooldown
+    if (this.notificationCooldown) {
+      clearTimeout(this.notificationCooldown);
+      this.notificationCooldown = null;
     }
 
     // Close connection
@@ -145,7 +207,7 @@ class WebSocketManager {
     }
   }
 
-  private setupEventListeners(): void {
+  private setupEventListeners(notify?: any): void {
     if (!this.ws) return;
 
     this.ws.onopen = (event) => {
@@ -153,6 +215,15 @@ class WebSocketManager {
       this.reconnectAttempt = 0;
       this.urlIndex = 0; // Reset to primary URL on successful connection
       this.isReconnecting = false;
+      
+      // Mark connection as stable after 5 seconds of being connected
+      this.connectionStabilityTimeout = setTimeout(() => {
+        this.isConnectionStable = true;
+        if (notify) {
+          this.showNotification('connected', notify);
+        }
+      }, 5000);
+      
       this.notifyStateChange('connected');
       this.startHeartbeat();
       this.sendQueuedMessages();
@@ -180,6 +251,12 @@ class WebSocketManager {
     this.ws.onclose = (event) => {
       this.log(`WebSocket closed: ${event.code} - ${event.reason} (URL: ${this.getCurrentUrl()})`);
       
+      this.isConnectionStable = false;
+      if (this.connectionStabilityTimeout) {
+        clearTimeout(this.connectionStabilityTimeout);
+        this.connectionStabilityTimeout = null;
+      }
+      
       if (this.heartbeatTimeout) {
         clearTimeout(this.heartbeatTimeout);
         this.heartbeatTimeout = null;
@@ -188,33 +265,40 @@ class WebSocketManager {
       this.config.onClose(event);
 
       if (this.config.reconnect && !this.isReconnecting && event.code !== 1000) {
-        this.handleReconnection();
+        this.handleReconnection(notify);
       } else {
         this.notifyStateChange('disconnected');
+        if (notify && this.isConnectionStable) {
+          this.showNotification('disconnected', notify);
+        }
       }
     };
 
     this.ws.onerror = (event) => {
       this.log(`WebSocket error on ${this.getCurrentUrl()}:`, event);
       this.config.onError(event);
-      this.handleConnectionError();
+      this.handleConnectionError(notify);
     };
   }
 
-  private handleConnectionError(): void {
+  private handleConnectionError(notify?: any): void {
     this.notifyStateChange('error');
     
+    if (notify) {
+      this.showNotification('error', notify);
+    }
+    
     if (this.config.reconnect && !this.isReconnecting) {
-      this.handleReconnection();
+      this.handleReconnection(notify);
     }
   }
 
-  private handleReconnection(): void {
+  private handleReconnection(notify?: any): void {
     // Try next URL if available
     if (this.urlIndex < this.fallbackUrls.length - 1) {
       this.urlIndex++;
       this.log(`Trying next URL: ${this.getCurrentUrl()}`);
-      setTimeout(() => this.connect(), 1000);
+      setTimeout(() => this.connect(notify), 1000);
       return;
     }
 
@@ -233,7 +317,7 @@ class WebSocketManager {
     this.log(`Reconnecting in ${this.config.reconnectInterval}ms (attempt ${this.reconnectAttempt}/${this.config.reconnectAttempts})`);
 
     this.reconnectTimeout = setTimeout(() => {
-      this.connect();
+      this.connect(notify);
     }, this.config.reconnectInterval);
   }
 
@@ -316,7 +400,7 @@ class WebSocketManager {
   }
 }
 
-// React hook for WebSocket with enhanced fallback
+// React hook for WebSocket with enhanced fallback and smarter notifications
 export const useWebSocket = (config: WebSocketConfig) => {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
@@ -325,23 +409,7 @@ export const useWebSocket = (config: WebSocketConfig) => {
 
   // Initialize WebSocket manager
   useEffect(() => {
-    managerRef.current = new WebSocketManager({
-      ...config,
-      onError: (event) => {
-        notify.error('Connection Error', 'WebSocket connection failed - trying fallback URLs');
-        config.onError?.(event);
-      },
-      onClose: (event) => {
-        if (event.code !== 1000) {
-          notify.warning('Connection Lost', 'Attempting to reconnect...');
-        }
-        config.onClose?.(event);
-      },
-      onOpen: (event) => {
-        notify.success('Connected', 'Real-time data connection established');
-        config.onOpen?.(event);
-      }
-    });
+    managerRef.current = new WebSocketManager(config);
 
     // Subscribe to state changes
     const unsubscribeState = managerRef.current.subscribeToState(setConnectionState);
@@ -349,8 +417,8 @@ export const useWebSocket = (config: WebSocketConfig) => {
     // Subscribe to messages
     const unsubscribeMessages = managerRef.current.subscribeToMessages(setLastMessage);
 
-    // Auto-connect
-    managerRef.current.connect();
+    // Auto-connect with notification context
+    managerRef.current.connect(notify);
 
     return () => {
       unsubscribeState();
@@ -364,8 +432,8 @@ export const useWebSocket = (config: WebSocketConfig) => {
   }, []);
 
   const connect = useCallback(() => {
-    managerRef.current?.connect();
-  }, []);
+    managerRef.current?.connect(notify);
+  }, [notify]);
 
   const disconnect = useCallback(() => {
     managerRef.current?.disconnect();
@@ -384,37 +452,43 @@ export const useWebSocket = (config: WebSocketConfig) => {
   };
 };
 
-// Connection status indicator component
+// Enhanced Connection status indicator component
 export const ConnectionStatus: React.FC<{
   connectionState: ConnectionState;
   className?: string;
   currentUrl?: string;
-}> = ({ connectionState, className = '', currentUrl }) => {
+  showUrl?: boolean;
+}> = ({ connectionState, className = '', currentUrl, showUrl = false }) => {
   const statusConfig = {
     connected: {
-      color: 'bg-green-500',
+      color: 'bg-emerald-500',
       text: 'Connected',
-      pulse: false
+      pulse: false,
+      textColor: 'text-emerald-400'
     },
     connecting: {
       color: 'bg-yellow-500',
       text: 'Connecting...',
-      pulse: true
+      pulse: true,
+      textColor: 'text-yellow-400'
     },
     reconnecting: {
       color: 'bg-orange-500',
       text: 'Reconnecting...',
-      pulse: true
+      pulse: true,
+      textColor: 'text-orange-400'
     },
     disconnected: {
-      color: 'bg-gray-500',
-      text: 'Disconnected',
-      pulse: false
+      color: 'bg-slate-500',
+      text: 'Offline',
+      pulse: false,
+      textColor: 'text-slate-400'
     },
     error: {
       color: 'bg-red-500',
       text: 'Connection Error',
-      pulse: false
+      pulse: false,
+      textColor: 'text-red-400'
     }
   };
 
@@ -423,9 +497,11 @@ export const ConnectionStatus: React.FC<{
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       <div className={`w-2 h-2 rounded-full ${config.color} ${config.pulse ? 'animate-pulse' : ''}`} />
-      <span className="text-sm text-slate-400">{config.text}</span>
-      {import.meta.env.VITE_DEBUG === 'true' && currentUrl && (
-        <span className="text-xs text-slate-500 font-mono">{currentUrl.replace('ws://', '')}</span>
+      <span className={`text-sm font-medium ${config.textColor}`}>{config.text}</span>
+      {showUrl && import.meta.env.VITE_DEBUG === 'true' && currentUrl && (
+        <span className="text-xs text-slate-500 font-mono ml-2">
+          {currentUrl.replace('ws://', '').replace('wss://', '')}
+        </span>
       )}
     </div>
   );
