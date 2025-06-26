@@ -1,0 +1,50 @@
+using FluentValidation;
+using WemDashboard.Application.DTOs;
+
+namespace WemDashboard.Application.Validators;
+
+public class LoginValidator : AbstractValidator<LoginDto>
+{
+    public LoginValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required")
+            .EmailAddress().WithMessage("A valid email address is required");
+
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Password is required")
+            .MinimumLength(6).WithMessage("Password must be at least 6 characters long");
+    }
+}
+
+public class RegisterValidator : AbstractValidator<RegisterDto>
+{
+    public RegisterValidator()
+    {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required")
+            .EmailAddress().WithMessage("A valid email address is required");
+
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Password is required")
+            .MinimumLength(8).WithMessage("Password must be at least 8 characters long")
+            .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$")
+            .WithMessage("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("First name is required")
+            .MaximumLength(50).WithMessage("First name must not exceed 50 characters");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("Last name is required")
+            .MaximumLength(50).WithMessage("Last name must not exceed 50 characters");
+
+        RuleFor(x => x.Role)
+            .Must(BeValidRole).WithMessage("Role must be 'Admin', 'Manager', 'Operator', or 'Viewer'");
+    }
+
+    private static bool BeValidRole(string role)
+    {
+        return role is "Admin" or "Manager" or "Operator" or "Viewer";
+    }
+}
