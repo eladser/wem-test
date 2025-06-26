@@ -1,7 +1,7 @@
 {
   "name": "wem-energy-dashboard",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.1.0",
   "type": "module",
   "description": "A comprehensive energy management dashboard built with modern web technologies",
   "keywords": [
@@ -42,7 +42,10 @@
     "clean:unix": "rm -rf dist .vite node_modules/.vite",
     "clean": "npm run clean:win 2>nul || npm run clean:unix",
     "prepare": "echo Prepare step completed",
-    "postinstall": "echo Postinstall completed"
+    "postinstall": "echo Postinstall completed",
+    "deps:update": "npm update",
+    "deps:check": "npm outdated",
+    "deps:audit": "npm audit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -100,6 +103,8 @@
     "@eslint/js": "^9.9.0",
     "@playwright/test": "^1.40.0",
     "@tailwindcss/typography": "^0.5.15",
+    "@tailwindcss/forms": "^0.5.9",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
