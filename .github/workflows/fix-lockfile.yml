@@ -1,8 +1,14 @@
 name: 🔧 Fix Lockfile
+
 on:
   workflow_dispatch: # Manual trigger
   schedule:
     - cron: '0 2 * * 1' # Weekly on Monday at 2 AM
+
+# Add proper permissions
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   update-lockfile:
@@ -13,6 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: 📦 Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -21,19 +28,33 @@ jobs:
 
       - name: 🧹 Clean install
         run: |
+          echo "🔄 Regenerating lockfile..."
           rm -f bun.lockb
           bun install
+          echo "✅ New lockfile generated"
 
       - name: 📝 Commit updated lockfile
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          # Configure git
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           
+          # Check if there are changes
           if [[ -n $(git status --porcelain) ]]; then
+            echo "📝 Committing lockfile changes..."
             git add bun.lockb package.json
-            git commit -m "chore: update lockfile"
+            git commit -m "chore: update lockfile [skip ci]"
             git push
             echo "✅ Lockfile updated successfully"
           else
             echo "ℹ️ No changes to commit"
           fi
+
+      - name: 📊 Summary
+        run: |
+          echo "🎯 Lockfile Update Summary"
+          echo "========================="
+          echo "📅 Date: $(date)"
+          echo "🔗 Commit: $(git rev-parse HEAD)"
+          echo "📁 Lockfile size: $(ls -lh bun.lockb | awk '{print $5}')"
+          echo "✅ Process completed"
