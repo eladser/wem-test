@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  wemdashboard-api:
+    build: .
+    ports:
+      - "5000:80"
+      - "5001:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=yourpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=WemDashboard;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;
+      - DatabaseProvider=SqlServer
+      - Jwt__Key=your-super-secret-jwt-key-here-minimum-32-characters-long
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      - sqlserver
+      - redis
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    networks:
+      - wemdashboard-network
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - wemdashboard-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - wemdashboard-network
+
+  # Alternative: PostgreSQL instead of SQL Server
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     - POSTGRES_DB=WemDashboard
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=yourpassword
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - wemdashboard-network
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  # postgres-data:
+
+networks:
+  wemdashboard-network:
+    driver: bridge
