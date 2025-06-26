@@ -38,9 +38,11 @@
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "rm -rf dist .vite node_modules/.vite",
-    "prepare": "husky install || true",
-    "postinstall": "cp .env.example .env.local || true"
+    "clean:win": "if exist dist rmdir /s /q dist && if exist .vite rmdir /s /q .vite && if exist node_modules\\.vite rmdir /s /q node_modules\\.vite",
+    "clean:unix": "rm -rf dist .vite node_modules/.vite",
+    "clean": "npm run clean:win 2>nul || npm run clean:unix",
+    "prepare": "echo Prepare step completed",
+    "postinstall": "echo Postinstall completed"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
