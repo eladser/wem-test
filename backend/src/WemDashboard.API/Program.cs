@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
 using WemDashboard.API.Middleware;
+using WemDashboard.Application;
 using WemDashboard.Application.Mappings;
 using WemDashboard.Application.Services;
 using WemDashboard.Application.Validators;
@@ -75,15 +76,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Application services
+builder.Services.AddApplication();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSiteValidator>();
-
-// Business services (will be implemented later)
-// builder.Services.AddScoped<ISiteService, SiteService>();
-// builder.Services.AddScoped<IAssetService, AssetService>();
-// builder.Services.AddScoped<IPowerDataService, PowerDataService>();
-// builder.Services.AddScoped<IAlertService, AlertService>();
-// builder.Services.AddScoped<IAuthService, AuthService>();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -206,6 +201,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-Log.Information("Starting WEM Dashboard API");
+Log.Information("Starting WEM Dashboard API on {Environment}", app.Environment.EnvironmentName);
+Log.Information("Swagger UI available at: http://localhost:5000/swagger");
+Log.Information("Health checks available at: http://localhost:5000/health");
 
 app.Run();
