@@ -1,1 +1,461 @@
-# 🌊 WEM Energy Dashboard - **Complete Full-Stack Application**\n\n<div align=\"center\">\n\n![WEM Dashboard](https://img.shields.io/badge/WEM-Dashboard-green?style=for-the-badge&logo=energy)\n![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)\n![C#](https://img.shields.io/badge/C%23-.NET_8-purple?style=for-the-badge&logo=dotnet)\n![SQLite](https://img.shields.io/badge/SQLite-Database-blue?style=for-the-badge&logo=sqlite)\n\n**A production-ready Wind Energy Management dashboard with React frontend and C# backend**\n\n[🚀 **Start Testing Now**](#-quick-start) • [📖 **Full Documentation**](TESTING_GUIDE.md) • [🎯 **Live Demo**](#-github-pages-demo)\n\n</div>\n\n---\n\n## 🎉 **What's New - Complete Backend Integration!**\n\n### ✅ **Frontend + Backend = Complete Application**\n- **🎨 React Dashboard** - Beautiful, responsive UI with your existing design\n- **⚡ C# Backend API** - Production-ready REST API with SQLite database\n- **🔒 JWT Authentication** - Secure login system with role-based access\n- **📊 Real Data** - No more mock data! Everything persists in SQLite\n- **🐳 Docker Ready** - Complete containerization for easy deployment\n- **☁️ Cloud Deployable** - Deploy to Railway, Render, Azure, AWS\n\n---\n\n## 🚀 **Quick Start (5 Minutes)**\n\n### **Option 1: One-Click Setup** (Recommended)\n\n```bash\n# Clone and setup everything automatically\ngit clone https://github.com/eladser/wem-test.git\ncd wem-test\nchmod +x setup.sh\n./setup.sh\n```\n\n### **Option 2: Manual Setup**\n\n#### **1. Backend (SQLite Database)**\n```bash\n# Navigate to backend\ncd backend/src/WemDashboard.API\n\n# Install .NET 8.0 (if not installed)\n# Download from: https://dotnet.microsoft.com/download/dotnet/8.0\n\n# Start the backend\ndotnet run\n```\n\n#### **2. Frontend**\n```bash\n# In a new terminal, go to project root\ncd wem-test\n\n# Install dependencies\nnpm install\n# or: bun install\n\n# Start frontend\nnpm run dev\n# or: bun dev\n```\n\n---\n\n## 🎯 **Test Your Complete Application**\n\n### **🌐 Backend API (http://localhost:5000)**\n- **Swagger UI**: http://localhost:5000/swagger\n- **Health Check**: http://localhost:5000/health\n- **Sample Data**: 4 sites, 6 assets, 96 hours of power data, 4 alerts\n\n### **🎨 Frontend Dashboard (http://localhost:5173)**\n- **Login**: admin@wemdashboard.com / Admin123!\n- **Real-time Data**: Connected to SQLite backend\n- **All Features Working**: Sites, assets, power data, alerts\n\n### **📊 Pre-loaded Test Data**\n- **Sites**: Main Campus (CA), Warehouse (TX), Office (Berlin), Plant (Tokyo)\n- **Assets**: Solar inverters and battery packs\n- **Power Data**: 24 hours × 4 sites of realistic energy data\n- **Alerts**: Warning, info, error, and success notifications\n\n---\n\n## 🗄️ **Database with GitHub**\n\n### **SQLite (Current Setup)**\n- ✅ **Zero Configuration** - Works immediately\n- ✅ **File-based Database** - Can be committed to GitHub\n- ✅ **Perfect for Testing** - All data persists locally\n- ✅ **Development Ready** - Great for prototyping\n\n### **Cloud Databases (Production)**\n- **Supabase** - Free PostgreSQL with GitHub integration\n- **Railway** - One-click deployment from GitHub\n- **PlanetScale** - MySQL with GitHub Actions\n- **Render** - PostgreSQL + automatic deployments\n\n**Switch databases by changing one environment variable!**\n\n---\n\n## 🏗️ **Complete Architecture**\n\n```\n🎨 React Frontend (Port 5173)\n├── Dashboard UI\n├── Authentication\n├── Real-time Charts\n└── Data Management\n           ↕ HTTP/REST\n⚡ C# Backend API (Port 5000)\n├── JWT Authentication\n├── REST API Endpoints\n├── Business Logic\n└── Entity Framework\n           ↕ SQL\n🗄️ SQLite Database\n├── Sites, Assets, Power Data\n├── Users & Authentication\n└── Alerts & Notifications\n```\n\n---\n\n## 📋 **API Endpoints Available**\n\n### **🔐 Authentication**\n```http\nPOST /api/auth/login     # Login user\nPOST /api/auth/refresh   # Refresh token\nGET  /api/auth/me        # Current user info\n```\n\n### **🏢 Sites Management**\n```http\nGET    /api/sites              # Get all sites\nGET    /api/sites/{id}         # Get site details\nPOST   /api/sites              # Create new site\nPUT    /api/sites/{id}         # Update site\nPATCH  /api/sites/{id}/status  # Update site status\n```\n\n### **⚡ Assets & Power Data**\n```http\nGET /api/sites/{id}/assets     # Get site assets\nGET /api/sites/{id}/power-data # Get power data\nGET /api/sites/{id}/metrics    # Get site metrics\n```\n\n### **🚨 Alerts**\n```http\nGET /api/alerts/recent   # Recent alerts\nGET /api/alerts/unread   # Unread alerts\n```\n\n**All endpoints documented in Swagger UI!**\n\n---\n\n## 🌐 **Deployment Options**\n\n### **🚂 Railway (Recommended)**\n1. Connect GitHub repository\n2. Add PostgreSQL database\n3. Deploy automatically on push\n4. **One-click deployment!**\n\n### **☁️ Other Cloud Platforms**\n- **Render** - Free tier with PostgreSQL\n- **Vercel** - Frontend deployment\n- **Azure** - App Service + SQL Database\n- **AWS** - Elastic Beanstalk + RDS\n- **Google Cloud** - Cloud Run + Cloud SQL\n\n### **🏠 Self-Hosted**\n- **Docker Compose** - Complete setup included\n- **VPS Deployment** - Ubuntu/CentOS ready\n- **Raspberry Pi** - ARM64 compatible\n\n---\n\n## 🧪 **Comprehensive Testing**\n\n### **✅ What's Tested**\n- **Authentication Flow** - Login, JWT tokens, authorization\n- **CRUD Operations** - Create, read, update, delete for all entities\n- **Data Persistence** - SQLite database operations\n- **API Security** - Rate limiting, input validation, CORS\n- **Real-time Updates** - Live data synchronization\n- **Error Handling** - Graceful error responses\n\n### **🔍 Testing Commands**\n```bash\n# Test backend health\ncurl http://localhost:5000/health\n\n# Test login\ncurl -X POST http://localhost:5000/api/auth/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"admin@wemdashboard.com\",\"password\":\"Admin123!\"}'\n\n# Test sites API\ncurl http://localhost:5000/api/sites \\\n  -H \"Authorization: Bearer YOUR_JWT_TOKEN\"\n```\n\n---\n\n## 🎨 **Frontend Features**\n\n### **✨ Modern React Stack**\n- **React 18** with Hooks and Suspense\n- **TypeScript** for type safety\n- **Tailwind CSS** for styling\n- **Shadcn/ui** components\n- **Recharts** for data visualization\n- **React Hook Form** with validation\n\n### **🔧 Developer Experience**\n- **Hot Module Replacement** - Instant updates\n- **ESLint + Prettier** - Code quality\n- **Jest + Testing Library** - Comprehensive testing\n- **Storybook** - Component documentation\n- **Vite** - Lightning-fast builds\n\n---\n\n## 🔒 **Security Features**\n\n### **🛡️ Backend Security**\n- **JWT Authentication** with refresh tokens\n- **Role-based Authorization** (Admin, Manager, Operator, Viewer)\n- **Input Validation** with FluentValidation\n- **Rate Limiting** (1000 requests/hour)\n- **CORS Protection** for frontend integration\n- **SQL Injection Prevention** with Entity Framework\n\n### **🔐 Frontend Security**\n- **Secure Token Storage** with httpOnly cookies\n- **XSS Protection** with input sanitization\n- **CSRF Protection** with token validation\n- **Secure Headers** configuration\n\n---\n\n## 📊 **Performance Optimization**\n\n### **⚡ Backend Performance**\n- **Async/Await** throughout the API\n- **Entity Framework Core** with optimized queries\n- **Response Caching** for frequently accessed data\n- **Connection Pooling** for database efficiency\n- **Health Checks** for monitoring\n\n### **🚀 Frontend Performance**\n- **Code Splitting** - Lazy loading of components\n- **Memoization** - Optimized re-renders\n- **Service Worker** - Offline support\n- **Bundle Optimization** - Tree shaking and compression\n\n---\n\n## 📖 **Complete Documentation**\n\n- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Comprehensive testing instructions\n- **[backend/README_BACKEND.md](backend/README_BACKEND.md)** - Backend documentation\n- **[backend/DATABASE_DEPLOYMENT.md](backend/DATABASE_DEPLOYMENT.md)** - Database deployment guide\n- **[backend/FRONTEND_INTEGRATION.md](backend/FRONTEND_INTEGRATION.md)** - Frontend integration guide\n- **Swagger UI** - Interactive API documentation at `/swagger`\n\n---\n\n## 🤝 **Contributing**\n\nWe welcome contributions! The project is structured for easy development:\n\n1. **Fork** the repository\n2. **Run setup script**: `./setup.sh`\n3. **Make changes** to frontend or backend\n4. **Test thoroughly** with the testing guide\n5. **Submit PR** with detailed description\n\n---\n\n## 🏆 **What You Get**\n\n### **✅ Complete Full-Stack Application**\n- Production-ready React frontend\n- Scalable C# backend with clean architecture\n- SQLite database with sample data\n- JWT authentication system\n- Comprehensive API documentation\n- Docker containerization\n- Cloud deployment ready\n\n### **✅ Professional Features**\n- Role-based access control\n- Real-time data updates\n- Comprehensive error handling\n- Performance monitoring\n- Security best practices\n- Automated testing\n\n### **✅ Developer Experience**\n- One-click setup script\n- Hot reload development\n- Interactive API documentation\n- Comprehensive testing guide\n- Clear project structure\n- Extensive documentation\n\n---\n\n## 🎊 **Ready to Test!**\n\n**Your WEM Dashboard is now a complete, production-ready application!**\n\n**🚀 Quick Start**: Run `./setup.sh` and follow the instructions\n\n**📖 Detailed Guide**: See [TESTING_GUIDE.md](TESTING_GUIDE.md) for comprehensive testing instructions\n\n**🌟 Live Demo**: Your dashboard will be running at `http://localhost:5173` with real data!\n\n---\n\n<div align=\"center\">\n\n**Built with ❤️ using React, C#, and SQLite**\n\n[⭐ Star this repo](https://github.com/eladser/wem-test) • [🐛 Report Issues](https://github.com/eladser/wem-test/issues) • [💡 Request Features](https://github.com/eladser/wem-test/discussions)\n\n</div>\n"
+# 🌊 WEM Energy Dashboard - **Complete Full-Stack Application**
+
+<div align="center">
+
+![WEM Dashboard](https://img.shields.io/badge/WEM-Dashboard-green?style=for-the-badge&logo=energy)
+![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
+![C#](https://img.shields.io/badge/C%23-.NET_8-purple?style=for-the-badge&logo=dotnet)
+![SQLite](https://img.shields.io/badge/SQLite-Database-blue?style=for-the-badge&logo=sqlite)
+
+**A production-ready Wind Energy Management dashboard with React frontend and C# backend**
+
+[🚀 **Start Testing Now**](#-quick-start) • [📖 **Full Documentation**](TESTING_GUIDE.md) • [🗄️ **SQLite Setup**](#-enhanced-sqlite-development-setup)
+
+</div>
+
+---
+
+## 🎉 **What's New - Enhanced SQLite Development Setup!**
+
+### ✅ **Perfect for Development & Testing**
+- **🗄️ SQLite Database** - Zero configuration, works immediately
+- **🌱 Rich Sample Data** - 6 global sites, 10 assets, 1000+ hours of power data
+- **🎯 Ready-to-Use Users** - 5 accounts with different permission levels
+- **🔄 GitHub Ready** - Database can be committed to repository
+- **⚡ Lightning Fast** - Instant setup with comprehensive data
+
+---
+
+## 🚀 **Quick Start (2 Minutes)**
+
+### **🗄️ Enhanced SQLite Development Setup** (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/eladser/wem-test.git
+cd wem-test
+
+# One-command setup with rich sample data
+chmod +x setup-sqlite-dev.sh
+./setup-sqlite-dev.sh
+```
+
+**This single script will:**
+- ✅ Configure SQLite database with comprehensive sample data
+- ✅ Install all backend dependencies
+- ✅ Install all frontend dependencies
+- ✅ Create development environment files
+- ✅ Build and verify everything works
+
+### **🚀 Start Development**
+
+**Terminal 1 - Backend API:**
+```bash
+cd backend/src/WemDashboard.API
+dotnet run
+```
+
+**Terminal 2 - Frontend Dashboard:**
+```bash
+npm run dev
+```
+
+---
+
+## 🎯 **Test Your Complete Application**
+
+### **🌐 Access Points**
+- **📊 Frontend Dashboard**: http://localhost:5173
+- **📚 API Documentation**: http://localhost:5000/swagger
+- **❤️ Health Check**: http://localhost:5000/health
+
+### **🔐 Ready-to-Use Login Credentials**
+| Role | Email | Password | Permissions |
+|------|-------|----------|-------------|
+| 👨‍💼 **Admin** | admin@wemdashboard.com | Admin123! | Full system access |
+| 👩‍💼 **Manager** | manager@wemdashboard.com | Manager123! | Site management |
+| 👨‍🔧 **Operator** | operator@wemdashboard.com | Operator123! | Operations control |
+| 👁️ **Viewer** | viewer@wemdashboard.com | Viewer123! | Read-only access |
+| 🎯 **Demo** | demo@wemdashboard.com | Demo123! | Demo account |
+
+### **📊 Rich Pre-loaded Sample Data**
+
+#### **🏢 6 Global Energy Sites**
+- 📍 **California Solar Farm Alpha** - Riverside County, USA (45.8 MW capacity)
+- 📍 **Texas Wind & Solar Complex** - West Texas, USA (62.3 MW capacity)
+- 📍 **Berlin Green Energy Hub** - Brandenburg, Germany (28.4 MW capacity, maintenance)
+- 📍 **Tokyo Bay Offshore Wind** - Japan (78.9 MW capacity)
+- 📍 **Australian Outback Solar** - Northern Territory (35.2 MW capacity)
+- 📍 **Scottish Highlands Wind Farm** - Scotland, UK (42.6 MW capacity)
+
+#### **⚡ 10 Energy Assets**
+- Wind Turbines with real-time performance data
+- Solar Panel Arrays with efficiency tracking
+- Inverter Units with monitoring
+- Battery Storage Systems with charge/discharge cycles
+
+#### **📈 1,008 Hours of Power Data**
+- 7 days × 24 hours × 6 sites of realistic energy data
+- Solar generation patterns based on time of day
+- Wind generation with natural variability
+- Battery storage and discharge cycles
+- Grid demand patterns
+
+#### **🚨 7 Realistic Alerts**
+- Success notifications (efficiency records)
+- Warning alerts (low battery, maintenance needed)
+- Error alerts (equipment failures)
+- Info notifications (system updates)
+
+---
+
+## 🗄️ **SQLite Database Details**
+
+### **📁 Database Location**
+```
+backend/src/WemDashboard.API/wemdashboard-dev.db
+```
+
+### **📊 Database Contents**
+| Table | Records | Description |
+|-------|---------|-------------|
+| **Users** | 5 | Complete user accounts with hashed passwords |
+| **Sites** | 6 | Global energy sites with real-time status |
+| **Assets** | 10 | Various energy assets across all sites |
+| **PowerData** | 1,008 | Hourly power generation/consumption data |
+| **Alerts** | 7 | Recent system alerts and notifications |
+
+### **🔄 Database Management**
+```bash
+# Reset database (delete and recreate)
+rm backend/src/WemDashboard.API/wemdashboard-dev.db
+./setup-sqlite-dev.sh
+
+# View database with SQLite Browser
+# Download: https://sqlitebrowser.org/
+
+# Or use command line
+sqlite3 backend/src/WemDashboard.API/wemdashboard-dev.db
+.tables
+SELECT COUNT(*) FROM Sites;
+```
+
+### **✅ GitHub Integration**
+- **Commitable**: SQLite database can be committed to repository
+- **Portable**: Works identically across all development environments
+- **Zero Config**: No database server setup required
+- **CI/CD Ready**: Automated testing includes database verification
+
+---
+
+## 🏗️ **Complete Architecture**
+
+```
+🎨 React Frontend (Port 5173)
+├── Dashboard UI with Real-time Charts
+├── JWT Authentication System
+├── Role-based Access Control
+└── Responsive Design (Mobile-first)
+           ↕ HTTP/REST API
+⚡ C# Backend API (Port 5000)
+├── JWT Authentication & Authorization
+├── RESTful API Endpoints
+├── Clean Architecture (Domain/Application/Infrastructure)
+├── Entity Framework Core ORM
+├── FluentValidation for Input Validation
+├── Serilog for Structured Logging
+└── Swagger/OpenAPI Documentation
+           ↕ Entity Framework Core
+🗄️ SQLite Database
+├── Users (Authentication & Authorization)
+├── Sites (Energy Generation Sites)
+├── Assets (Wind Turbines, Solar Panels, etc.)
+├── PowerData (Time-series Energy Data)
+└── Alerts (System Notifications)
+```
+
+---
+
+## 📋 **Complete API Reference**
+
+### **🔐 Authentication Endpoints**
+```http
+POST /api/auth/login     # Authenticate user and get JWT token
+POST /api/auth/refresh   # Refresh expired JWT token
+GET  /api/auth/me        # Get current user profile
+```
+
+### **🏢 Sites Management**
+```http
+GET    /api/sites              # Get all energy sites
+GET    /api/sites/{id}         # Get specific site details
+POST   /api/sites              # Create new energy site
+PUT    /api/sites/{id}         # Update site information
+PATCH  /api/sites/{id}/status  # Update site operational status
+DELETE /api/sites/{id}         # Delete energy site
+```
+
+### **⚡ Assets & Equipment**
+```http
+GET    /api/sites/{id}/assets         # Get all assets for a site
+GET    /api/assets/{id}               # Get specific asset details
+POST   /api/sites/{id}/assets         # Add new asset to site
+PUT    /api/assets/{id}               # Update asset information
+DELETE /api/assets/{id}               # Remove asset
+```
+
+### **📊 Power Data & Analytics**
+```http
+GET /api/sites/{id}/power-data        # Get power generation data
+GET /api/sites/{id}/power-data/recent # Get last 24 hours data
+GET /api/sites/{id}/metrics           # Get site performance metrics
+GET /api/analytics/dashboard          # Get dashboard overview data
+```
+
+### **🚨 Alerts & Notifications**
+```http
+GET  /api/alerts/recent    # Get recent alerts (last 7 days)
+GET  /api/alerts/unread    # Get unread alerts for current user
+POST /api/alerts/{id}/read # Mark alert as read
+GET  /api/alerts/stats     # Get alert statistics
+```
+
+### **👥 User Management** (Admin Only)
+```http
+GET    /api/users           # Get all users
+GET    /api/users/{id}      # Get specific user
+POST   /api/users           # Create new user
+PUT    /api/users/{id}      # Update user information
+DELETE /api/users/{id}      # Delete user
+```
+
+**🔍 All endpoints fully documented with examples in Swagger UI!**
+
+---
+
+## 🧪 **Comprehensive Testing & CI/CD**
+
+### **✅ Automated Testing**
+- **GitHub Actions** workflow for continuous integration
+- **Cross-platform testing** (Ubuntu, Windows, macOS)
+- **Database creation verification**
+- **API endpoint testing**
+- **Frontend build validation**
+
+### **🔍 Manual Testing**
+```bash
+# Test backend health
+curl http://localhost:5000/health
+
+# Test authentication
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@wemdashboard.com","password":"Admin123!"}'
+
+# Test sites API (use token from login response)
+curl http://localhost:5000/api/sites \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Test power data
+curl http://localhost:5000/api/sites/site-ca-001/power-data \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### **📊 Test Coverage**
+- ✅ Authentication & Authorization flows
+- ✅ CRUD operations for all entities
+- ✅ Data persistence and retrieval
+- ✅ API security (rate limiting, validation)
+- ✅ Error handling and responses
+- ✅ Database schema validation
+
+---
+
+## 🌐 **Deployment Options**
+
+### **☁️ Cloud Deployment**
+| Platform | Database | Effort | Cost |
+|----------|----------|--------|------|
+| **Railway** | PostgreSQL | ⭐ | Free tier |
+| **Render** | PostgreSQL | ⭐⭐ | Free tier |
+| **Vercel + Supabase** | PostgreSQL | ⭐⭐ | Free tier |
+| **Azure App Service** | SQL Server | ⭐⭐⭐ | Pay-as-go |
+| **AWS Elastic Beanstalk** | RDS | ⭐⭐⭐ | Pay-as-go |
+
+### **🔄 Database Migration**
+Switch from SQLite to any database by updating connection string:
+
+```bash
+# PostgreSQL
+export DATABASE_PROVIDER="PostgreSQL"
+export CONNECTION_STRING="Host=localhost;Database=WemDashboard;Username=user;Password=pass"
+
+# SQL Server
+export DATABASE_PROVIDER="SqlServer"
+export CONNECTION_STRING="Server=localhost;Database=WemDashboard;Trusted_Connection=true"
+```
+
+### **🐳 Docker Deployment**
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Access application
+# Frontend: http://localhost:3000
+# Backend: http://localhost:5000
+```
+
+---
+
+## 🔒 **Production-Ready Security**
+
+### **🛡️ Backend Security Features**
+- ✅ **JWT Authentication** with configurable expiration
+- ✅ **Role-based Authorization** (Admin, Manager, Operator, Viewer)
+- ✅ **Input Validation** with FluentValidation
+- ✅ **Rate Limiting** (1000 requests/hour per user)
+- ✅ **CORS Protection** with configurable origins
+- ✅ **SQL Injection Prevention** via Entity Framework
+- ✅ **Password Hashing** with BCrypt
+- ✅ **Request Logging** with Serilog
+
+### **🔐 Frontend Security Features**
+- ✅ **Secure Token Storage** (httpOnly cookies recommended)
+- ✅ **XSS Protection** with input sanitization
+- ✅ **CSRF Protection** with token validation
+- ✅ **Secure Headers** configuration
+- ✅ **Route Guards** for protected pages
+
+---
+
+## 📈 **Performance Optimization**
+
+### **⚡ Backend Performance**
+- **Async/Await** throughout the application
+- **Entity Framework Core** with optimized queries
+- **Response Caching** for frequently accessed data
+- **Connection Pooling** for database efficiency
+- **Health Checks** for monitoring and diagnostics
+
+### **🚀 Frontend Performance**
+- **Code Splitting** and lazy loading
+- **React.memo** for component optimization
+- **Tailwind CSS** for minimal bundle size
+- **Vite** for lightning-fast development builds
+- **Tree Shaking** for production optimization
+
+---
+
+## 📖 **Complete Documentation**
+
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Comprehensive testing instructions
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
+- **[backend/README_BACKEND.md](backend/README_BACKEND.md)** - Backend architecture
+- **[backend/DATABASE_DEPLOYMENT.md](backend/DATABASE_DEPLOYMENT.md)** - Database setup guide
+- **[backend/FRONTEND_INTEGRATION.md](backend/FRONTEND_INTEGRATION.md)** - Integration guide
+- **Swagger UI** - Interactive API documentation at `/swagger`
+
+---
+
+## 🛠️ **Development Workflow**
+
+### **🔄 Daily Development**
+```bash
+# Start development environment
+./setup-sqlite-dev.sh
+
+# Terminal 1: Backend with hot reload
+cd backend/src/WemDashboard.API
+dotnet watch run
+
+# Terminal 2: Frontend with hot reload
+npm run dev
+
+# Terminal 3: Run tests
+npm run test:watch
+```
+
+### **🧪 Testing Workflow**
+```bash
+# Run all tests
+npm run test
+
+# Test backend
+cd backend/src/WemDashboard.API
+dotnet test
+
+# Type checking
+npm run type-check
+
+# Linting and formatting
+npm run lint
+npm run format
+```
+
+---
+
+## 🏆 **What You Get - Complete Package**
+
+### **✅ Production-Ready Application**
+- 🎨 **Modern React Frontend** with TypeScript and Tailwind CSS
+- ⚡ **Scalable C# Backend** with Clean Architecture
+- 🗄️ **SQLite Database** with rich sample data
+- 🔒 **JWT Authentication** with role-based access
+- 📚 **Interactive API Documentation** via Swagger
+- 🐳 **Docker Containerization** for easy deployment
+- ☁️ **Cloud Deployment Ready** for multiple platforms
+
+### **✅ Developer Experience**
+- 🚀 **One-Command Setup** - `./setup-sqlite-dev.sh`
+- 🔥 **Hot Reload** for both frontend and backend
+- 📊 **Rich Sample Data** - 6 sites, 10 assets, 1000+ data points
+- 🧪 **Comprehensive Testing** with GitHub Actions CI/CD
+- 📖 **Extensive Documentation** with examples
+- 🔍 **Interactive API Explorer** in Swagger UI
+
+### **✅ Production Features**
+- 🛡️ **Enterprise Security** (Authentication, Authorization, Validation)
+- 📈 **Performance Optimized** (Caching, Connection Pooling, Async)
+- 🚨 **Error Handling** with detailed logging
+- 📊 **Monitoring & Health Checks** for operations
+- 🔄 **Database Flexibility** (SQLite → PostgreSQL/SQL Server)
+- 🌍 **Internationalization Ready**
+
+---
+
+## 🎊 **Ready to Start Developing!**
+
+**Your WEM Dashboard is now a complete, production-ready application with rich sample data!**
+
+### **🚀 Get Started in 2 Minutes**
+```bash
+git clone https://github.com/eladser/wem-test.git
+cd wem-test
+chmod +x setup-sqlite-dev.sh
+./setup-sqlite-dev.sh
+```
+
+### **🎯 What Happens Next**
+1. ✅ SQLite database created with comprehensive sample data
+2. ✅ Backend API running at http://localhost:5000
+3. ✅ Frontend dashboard at http://localhost:5173
+4. ✅ 5 ready-to-use accounts with different permission levels
+5. ✅ 6 global energy sites with real-time data
+6. ✅ Interactive API documentation at /swagger
+
+### **📚 Deep Dive**
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Comprehensive testing scenarios
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
+- **Swagger UI** - Interactive API exploration at http://localhost:5000/swagger
+
+---
+
+<div align="center">
+
+**🌟 Built with ❤️ using React 18, .NET 8, and SQLite**
+
+**Perfect for Development • Testing • Demos • Production**
+
+[⭐ Star this repo](https://github.com/eladser/wem-test) • [🐛 Report Issues](https://github.com/eladser/wem-test/issues) • [💡 Request Features](https://github.com/eladser/wem-test/discussions)
+
+</div>
