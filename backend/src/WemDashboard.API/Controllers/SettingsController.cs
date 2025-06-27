@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using WemDashboard.Shared.DTOs;
+using WemDashboard.Shared.Models;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -84,13 +85,19 @@ public class SettingsController : BaseController
                 });
             }
 
-            // Validate settings
-            if (string.IsNullOrWhiteSpace(settings.Company))
+            // Validate model state
+            if (!ModelState.IsValid)
             {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .Select(x => new { Field = x.Key, Errors = x.Value?.Errors.Select(e => e.ErrorMessage) })
+                    .ToList();
+                
                 return BadRequest(new ApiResponse<object>
                 {
                     Success = false,
-                    Message = "Company name is required"
+                    Message = "Validation failed",
+                    Error = string.Join("; ", errors.SelectMany(e => e.Errors ?? new List<string>()))
                 });
             }
 
@@ -190,15 +197,4 @@ public class SettingsController : BaseController
             });
         }
     }
-}
-
-/// <summary>
-/// DTO for general settings
-/// </summary>
-public class GeneralSettingsDto
-{
-    public string Company { get; set; } = string.Empty;
-    public string? Timezone { get; set; }
-    public bool DarkMode { get; set; }
-    public bool AutoSync { get; set; }
 }
