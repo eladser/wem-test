@@ -89,9 +89,9 @@ export function AppSidebar() {
   }, []);
 
   return (
-    <Sidebar className="w-80 bg-slate-900 border-r border-slate-700 flex flex-col h-screen shrink-0 fixed left-0 top-0 z-50">
+    <div className="w-full h-full bg-slate-900 border-r border-slate-700 flex flex-col">
       {/* Fixed Header */}
-      <SidebarHeader className="p-4 border-b border-slate-700 bg-slate-900 shrink-0">
+      <div className="p-4 border-b border-slate-700 bg-slate-900 shrink-0">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shrink-0">
             <Zap className="w-5 h-5 text-white" />
@@ -163,53 +163,48 @@ export function AppSidebar() {
             </span>
           </div>
         </div>
-      </SidebarHeader>
+      </div>
 
       {/* Scrollable Content */}
-      <SidebarContent className="bg-slate-900 flex-1 overflow-hidden">
+      <div className="bg-slate-900 flex-1 overflow-hidden">
         <div className="p-3 h-full flex flex-col space-y-4">
           {/* Navigation Section */}
-          <SidebarGroup className="shrink-0">
-            <SidebarGroupLabel className="text-slate-400 font-medium mb-3 text-xs uppercase tracking-wider px-3 flex items-center">
+          <div className="shrink-0">
+            <div className="text-slate-400 font-medium mb-3 text-xs uppercase tracking-wider px-3 flex items-center">
               <BarChart3 className="w-3 h-3 mr-2" />
               NAVIGATION
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                {mainNavItems.map((item) => {
-                  const isActive = currentPath === item.url || (item.url !== "/" && currentPath.startsWith(item.url));
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.url}
-                          className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full ${
-                            isActive
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : "text-slate-300 hover:text-white hover:bg-slate-800/60"
-                          }`}
-                        >
-                          <div className={`p-1.5 rounded-md transition-colors duration-200 shrink-0 ${
-                            isActive ? 'bg-emerald-500/20' : 'bg-slate-700/50'
-                          }`}>
-                            <item.icon className="w-4 h-4" />
-                          </div>
-                          <span className="font-medium text-sm truncate">{item.title}</span>
-                          {isActive && (
-                            <div className="ml-auto w-2 h-2 bg-emerald-400 rounded-full shrink-0" />
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+            </div>
+            <div className="space-y-1">
+              {mainNavItems.map((item) => {
+                const isActive = currentPath === item.url || (item.url !== "/" && currentPath.startsWith(item.url));
+                return (
+                  <NavLink
+                    key={item.title}
+                    to={item.url}
+                    className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full ${
+                      isActive
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                    }`}
+                  >
+                    <div className={`p-1.5 rounded-md transition-colors duration-200 shrink-0 ${
+                      isActive ? 'bg-emerald-500/20' : 'bg-slate-700/50'
+                    }`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
+                    <span className="font-medium text-sm truncate">{item.title}</span>
+                    {isActive && (
+                      <div className="ml-auto w-2 h-2 bg-emerald-400 rounded-full shrink-0" />
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Regions & Sites Section */}
-          <SidebarGroup className="flex-1 overflow-hidden">
-            <SidebarGroupLabel className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
+          <div className="flex-1 overflow-hidden">
+            <div className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
               <MapPin className="w-3 h-3 mr-2" />
               REGIONS & SITES
               {(searchTerm || showOnlineOnly) && (
@@ -217,9 +212,9 @@ export function AppSidebar() {
                   {totalSites}
                 </Badge>
               )}
-            </SidebarGroupLabel>
+            </div>
             
-            <SidebarGroupContent className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
               {filteredData.length === 0 ? (
                 <div className="px-3 py-8 text-center">
                   <div className="w-10 h-10 bg-slate-800/50 rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -230,16 +225,16 @@ export function AppSidebar() {
                 </div>
               ) : (
                 <ScrollArea className="h-full pr-2">
-                  <SidebarMenu className="space-y-2">
+                  <div className="space-y-2">
                     {filteredData.map((region) => {
                       const isRegionActive = currentPath.includes(`/region/${region.id}`);
                       const isExpanded = expandedRegions.has(region.id);
                       
                       return (
-                        <SidebarMenuItem key={region.id}>
+                        <div key={region.id}>
                           <Collapsible open={isExpanded} onOpenChange={() => toggleRegion(region.id)}>
                             <div className="space-y-1">
-                              {/* Region Header - Improved styling */}
+                              {/* Region Header - Clean styling */}
                               <div className="flex items-stretch gap-1">
                                 <NavLink
                                   to={`/region/${region.id}`}
@@ -277,79 +272,76 @@ export function AppSidebar() {
                                 </CollapsibleTrigger>
                               </div>
                               
-                              {/* Sites List - Improved layout and visibility */}
+                              {/* Sites List - Clean, normal styling */}
                               <CollapsibleContent className="ml-4 space-y-1">
                                 {region.sites.map((site) => {
                                   const isSiteActive = currentPath.includes(`/site/${site.id}`);
                                   const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
                                   
                                   return (
-                                    <SidebarMenuItem key={site.id}>
-                                      <SidebarMenuButton asChild>
-                                        <NavLink
-                                          to={`/site/${site.id}`}
-                                          className={`flex items-start px-4 py-3 rounded-lg transition-all duration-200 w-full border ${
-                                            isSiteActive
-                                              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                                              : "text-slate-300 hover:text-white hover:bg-slate-800/50 border-slate-700/50"
-                                          }`}
-                                        >
-                                          <div className="flex items-start space-x-3 w-full min-w-0">
-                                            {/* Status Indicator - More prominent */}
-                                            <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ring-2 ring-offset-2 ring-offset-slate-900 ${
-                                              site.status === 'online' ? 'bg-emerald-400 ring-emerald-400/30' :
-                                              site.status === 'maintenance' ? 'bg-yellow-400 ring-yellow-400/30' : 
-                                              'bg-red-400 ring-red-400/30'
-                                            }`} />
-                                            
-                                            {/* Site Information - Better typography */}
-                                            <div className="flex-1 min-w-0 space-y-1">
-                                              {/* Site Name - More prominent */}
-                                              <div>
-                                                <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
-                                                  {site.name}
-                                                </h4>
-                                                <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
-                                                  {site.location}
-                                                </p>
-                                              </div>
-                                              
-                                              {/* Capacity and Output - Better layout */}
-                                              <div className="flex items-center justify-between text-xs gap-2">
-                                                <span className="text-slate-300 font-medium">
-                                                  {site.currentOutput}MW / {site.totalCapacity}MW
-                                                </span>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
-                                                  site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                  site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
-                                                  'bg-red-500/20 text-red-400'
-                                                }`}>
-                                                  {efficiencyPercentage}%
-                                                </span>
-                                              </div>
-                                            </div>
+                                    <NavLink
+                                      key={site.id}
+                                      to={`/site/${site.id}`}
+                                      className={`flex items-start px-3 py-2.5 rounded-lg transition-all duration-200 w-full block ${
+                                        isSiteActive
+                                          ? "bg-emerald-500/20 text-emerald-400"
+                                          : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+                                      }`}
+                                    >
+                                      <div className="flex items-start space-x-3 w-full min-w-0">
+                                        {/* Status Indicator - Clean circular design */}
+                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 ${
+                                          site.status === 'online' ? 'bg-emerald-400' :
+                                          site.status === 'maintenance' ? 'bg-yellow-400' : 
+                                          'bg-red-400'
+                                        }`} />
+                                        
+                                        {/* Site Information - Clean typography */}
+                                        <div className="flex-1 min-w-0 space-y-1">
+                                          {/* Site Name */}
+                                          <div>
+                                            <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
+                                              {site.name}
+                                            </h4>
+                                            <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
+                                              {site.location}
+                                            </p>
                                           </div>
-                                        </NavLink>
-                                      </SidebarMenuButton>
-                                    </SidebarMenuItem>
+                                          
+                                          {/* Capacity and Output */}
+                                          <div className="flex items-center justify-between text-xs gap-2">
+                                            <span className="text-slate-300 font-medium">
+                                              {site.currentOutput}MW / {site.totalCapacity}MW
+                                            </span>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
+                                              site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
+                                              site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                              'bg-red-500/20 text-red-400'
+                                            }`}>
+                                              {efficiencyPercentage}%
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </NavLink>
                                   );
                                 })}
                               </CollapsibleContent>
                             </div>
                           </Collapsible>
-                        </SidebarMenuItem>
+                        </div>
                       );
                     })}
-                  </SidebarMenu>
+                  </div>
                 </ScrollArea>
               )}
-            </SidebarGroupContent>
-          </SidebarGroup>
+            </div>
+          </div>
         </div>
-      </SidebarContent>
+      </div>
 
       {/* Fixed Footer */}
-      <SidebarFooter className="p-4 border-t border-slate-700 bg-slate-900 shrink-0">
+      <div className="p-4 border-t border-slate-700 bg-slate-900 shrink-0">
         <div className="flex items-center space-x-3 p-3 bg-slate-800/60 rounded-lg border border-slate-600/50 hover:bg-slate-700/60 transition-all duration-200 cursor-pointer">
           <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shrink-0">
             <Users className="w-5 h-5 text-white" />
@@ -363,7 +355,7 @@ export function AppSidebar() {
             <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full animate-pulse" />
           </div>
         </div>
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </div>
   );
 }
