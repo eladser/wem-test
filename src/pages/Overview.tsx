@@ -63,7 +63,7 @@ interface EnergyData {
   lastUpdated: string;
 }
 
-// New component for weather and environmental data
+// Enhanced Weather Card with larger size
 const WeatherCard = () => {
   const [weather, setWeather] = useState({
     temperature: 24,
@@ -73,51 +73,51 @@ const WeatherCard = () => {
   });
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-          <Thermometer className="w-5 h-5 text-blue-400" />
+    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl h-full">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-semibold text-white flex items-center gap-3">
+          <Thermometer className="w-6 h-6 text-blue-400" />
           Environmental Conditions
         </CardTitle>
         <CardDescription className="text-slate-400">
           Real-time environmental data affecting energy production
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-400">Temperature</span>
-              <span className="text-sm font-medium text-white">{weather.temperature}°C</span>
+              <span className="text-lg font-bold text-white">{weather.temperature}°C</span>
             </div>
-            <Progress value={weather.temperature * 2} className="h-2" />
+            <Progress value={weather.temperature * 2} className="h-3" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-400 flex items-center gap-1">
-                <Wind className="w-3 h-3" />
+              <span className="text-sm text-slate-400 flex items-center gap-2">
+                <Wind className="w-4 h-4" />
                 Wind Speed
               </span>
-              <span className="text-sm font-medium text-white">{weather.windSpeed} m/s</span>
+              <span className="text-lg font-bold text-white">{weather.windSpeed} m/s</span>
             </div>
-            <Progress value={weather.windSpeed * 5} className="h-2" />
+            <Progress value={weather.windSpeed * 5} className="h-3" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-400 flex items-center gap-1">
-                <Sun className="w-3 h-3" />
+              <span className="text-sm text-slate-400 flex items-center gap-2">
+                <Sun className="w-4 h-4" />
                 Solar Irradiance
               </span>
-              <span className="text-sm font-medium text-white">{weather.solarIrradiance} W/m²</span>
+              <span className="text-lg font-bold text-white">{weather.solarIrradiance} W/m²</span>
             </div>
-            <Progress value={weather.solarIrradiance / 10} className="h-2" />
+            <Progress value={weather.solarIrradiance / 10} className="h-3" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-400">Humidity</span>
-              <span className="text-sm font-medium text-white">{weather.humidity}%</span>
+              <span className="text-lg font-bold text-white">{weather.humidity}%</span>
             </div>
-            <Progress value={weather.humidity} className="h-2" />
+            <Progress value={weather.humidity} className="h-3" />
           </div>
         </div>
       </CardContent>
@@ -125,7 +125,7 @@ const WeatherCard = () => {
   );
 };
 
-// New component for recent activities
+// Enhanced Recent Activity with larger size
 const RecentActivity = () => {
   const activities = [
     { icon: Zap, text: "Main Campus came online", time: "2 min ago", status: "success" },
@@ -136,10 +136,10 @@ const RecentActivity = () => {
   ];
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-          <Activity className="w-5 h-5 text-emerald-400" />
+    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl h-full">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-semibold text-white flex items-center gap-3">
+          <Activity className="w-6 h-6 text-emerald-400" />
           Recent Activity
         </CardTitle>
         <CardDescription className="text-slate-400">
@@ -147,19 +147,19 @@ const RecentActivity = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {activities.map((activity, index) => (
-            <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
-              <div className={`p-2 rounded-lg ${
+            <div key={index} className="flex items-start gap-4 p-4 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+              <div className={`p-3 rounded-lg ${
                 activity.status === 'success' ? 'bg-emerald-500/20 text-emerald-400' :
                 activity.status === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
                 'bg-blue-500/20 text-blue-400'
               }`}>
-                <activity.icon className="w-4 h-4" />
+                <activity.icon className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white font-medium">{activity.text}</p>
-                <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                <p className="text-xs text-slate-400 flex items-center gap-2 mt-2">
                   <Clock className="w-3 h-3" />
                   {activity.time}
                 </p>
@@ -183,10 +183,10 @@ const DailySummary = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-violet-400" />
+    <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl h-full">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-semibold text-white flex items-center gap-3">
+          <Calendar className="w-6 h-6 text-violet-400" />
           Today's Summary
         </CardTitle>
         <CardDescription className="text-slate-400">
@@ -194,30 +194,30 @@ const DailySummary = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <p className="text-xs text-slate-400">Energy Generated</p>
-            <p className="text-xl font-bold text-emerald-400">{summary.energyGenerated} kWh</p>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <p className="text-sm text-slate-400">Energy Generated</p>
+            <p className="text-2xl font-bold text-emerald-400">{summary.energyGenerated} kWh</p>
           </div>
-          <div className="space-y-1">
-            <p className="text-xs text-slate-400">Peak Output</p>
-            <p className="text-xl font-bold text-yellow-400">{summary.peakOutput}%</p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-400">Peak Output</p>
+            <p className="text-2xl font-bold text-yellow-400">{summary.peakOutput}%</p>
           </div>
-          <div className="space-y-1">
-            <p className="text-xs text-slate-400">Avg Efficiency</p>
-            <p className="text-xl font-bold text-blue-400">{summary.avgEfficiency}%</p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-400">Avg Efficiency</p>
+            <p className="text-2xl font-bold text-blue-400">{summary.avgEfficiency}%</p>
           </div>
-          <div className="space-y-1">
-            <p className="text-xs text-slate-400">CO₂ Avoided</p>
-            <p className="text-xl font-bold text-green-400">{summary.co2Avoided}t</p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-400">CO₂ Avoided</p>
+            <p className="text-2xl font-bold text-green-400">{summary.co2Avoided}t</p>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-700/50">
-          <div className="flex items-center justify-between">
+        <div className="mt-6 pt-6 border-t border-slate-700/50">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-400">System Uptime</span>
-            <span className="text-sm font-bold text-emerald-400">{summary.uptime}%</span>
+            <span className="text-lg font-bold text-emerald-400">{summary.uptime}%</span>
           </div>
-          <Progress value={summary.uptime} className="h-2 mt-2" />
+          <Progress value={summary.uptime} className="h-3" />
         </div>
       </CardContent>
     </Card>
@@ -363,8 +363,8 @@ const Overview = () => {
   };
 
   return (
-    <div className="h-full bg-slate-950">
-      <div className="p-8 space-y-8">
+    <div className="h-full bg-slate-950 w-full">
+      <div className="p-6 space-y-6 max-w-full">
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
           <div className="space-y-4">
@@ -441,58 +441,72 @@ const Overview = () => {
         </div>
 
         {/* Metrics Cards */}
-        <div>
-          <MetricsCards 
-            {...overviewStats} 
-            isRealTime={connectionState === 'connected'}
-            lastUpdated={overviewStats.lastUpdated}
-          />
+        <MetricsCards 
+          {...overviewStats} 
+          isRealTime={connectionState === 'connected'}
+          lastUpdated={overviewStats.lastUpdated}
+        />
+
+        {/* Main Content Grid - 2 column layout for better chart visibility */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Charts and Analytics */}
+          <div className="space-y-6">
+            <div className="h-96">
+              <Suspense fallback={<LoadingSpinner />}>
+                <EnergyAnalytics realTimeData={realTimeData} />
+              </Suspense>
+            </div>
+            <div className="h-80">
+              <Suspense fallback={<LoadingSpinner />}>
+                <SystemStatusMonitor realTimeData={overviewStats} />
+              </Suspense>
+            </div>
+          </div>
+
+          {/* Right Column - Widgets */}
+          <div className="space-y-6">
+            <div className="h-96">
+              <WeatherCard />
+            </div>
+            <div className="h-80">
+              <RecentActivity />
+            </div>
+          </div>
         </div>
 
-        {/* Main Content Grid - 3 column layout for better space utilization */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <WeatherCard />
+        {/* Secondary Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="h-72">
             <DailySummary />
+          </div>
+          <div className="h-72">
             <Suspense fallback={<LoadingSpinner />}>
               <QuickActions connectionState={connectionState} />
             </Suspense>
           </div>
-
-          {/* Middle Column */}
-          <div className="space-y-6">
-            <Suspense fallback={<LoadingSpinner />}>
-              <EnergyAnalytics realTimeData={realTimeData} />
-            </Suspense>
-            <Suspense fallback={<LoadingSpinner />}>
-              <SystemStatusMonitor realTimeData={overviewStats} />
-            </Suspense>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            <RecentActivity />
+          <div className="h-72">
             <Suspense fallback={<LoadingSpinner />}>
               <SystemMonitor connectionState={connectionState} />
             </Suspense>
-            <Suspense fallback={<LoadingSpinner />}>
-              <RealTimeMonitor 
-                data={realTimeData} 
-                connectionState={connectionState}
-                onRefresh={handleRefresh}
-              />
-            </Suspense>
           </div>
         </div>
 
-        {/* Regions Grid - Full width */}
-        <div>
-          <RegionsGrid 
-            regions={mockRegions} 
-            realTimeUpdates={connectionState === 'connected'}
-          />
+        {/* Real-Time Monitor - Full Width */}
+        <div className="h-80">
+          <Suspense fallback={<LoadingSpinner />}>
+            <RealTimeMonitor 
+              data={realTimeData} 
+              connectionState={connectionState}
+              onRefresh={handleRefresh}
+            />
+          </Suspense>
         </div>
+
+        {/* Regions Grid - Full width */}
+        <RegionsGrid 
+          regions={mockRegions} 
+          realTimeUpdates={connectionState === 'connected'}
+        />
 
         {/* Export Dialog */}
         <ExportDialog
