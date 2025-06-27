@@ -3,15 +3,24 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
-import { Bell, Settings, User } from "lucide-react";
+import { Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { toast } from "sonner";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const handleQuickSettings = () => {
+    toast.info("Quick settings panel - coming soon!");
+  };
+
+  const handleUserProfile = () => {
+    toast.info("User profile menu - coming soon!");
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-950">
       <AppSidebar />
@@ -28,22 +37,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           
           {/* Header Actions */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
-            >
-              <Bell className="w-4 h-4" />
-              <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
-                3
-              </Badge>
-            </Button>
+            {/* Enhanced Notification Center */}
+            <NotificationCenter />
             
             {/* Quick Settings */}
             <Button
               variant="ghost"
               size="sm"
+              onClick={handleQuickSettings}
               className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
             >
               <Settings className="w-4 h-4" />
@@ -53,6 +54,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Button
               variant="ghost"
               size="sm"
+              onClick={handleUserProfile}
               className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
             >
               <User className="w-4 h-4" />
