@@ -10,6 +10,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { KPICard } from '@/components/analytics/KPICard';
 import { AnalyticsToolbar } from '@/components/analytics/AnalyticsToolbar';
 import { ChartCard } from '@/components/analytics/ChartCard';
+import { ExportManager } from '@/components/analytics/ExportManager';
+import { toast } from 'sonner';
 
 const energyData = [
   { name: 'Jan', production: 850, consumption: 720, revenue: 125000, efficiency: 85 },
@@ -180,6 +182,19 @@ const Analytics: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 2000);
   };
 
+  const handleExport = (options: any) => {
+    console.log('Exporting analytics data with options:', options);
+    toast.success(`Analytics data exported successfully as ${options.format.toUpperCase()}`);
+  };
+
+  const handleFilter = () => {
+    toast.info('Filter functionality - coming in next update!');
+  };
+
+  const handleSettings = () => {
+    toast.info('Analytics settings - configure display preferences');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 w-full">
       <div className="p-6 space-y-6 max-w-full">
@@ -216,24 +231,23 @@ const Analytics: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
+              onClick={handleFilter}
               className="border-slate-600 hover:border-slate-500 text-slate-300 hover:bg-slate-800 hover:text-white"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
             
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-slate-600 hover:border-slate-500 text-slate-300 hover:bg-slate-800 hover:text-white"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <ExportManager 
+              data={energyData}
+              title="Analytics Dashboard"
+              onExport={handleExport}
+            />
             
             <Button
               variant="outline"
               size="sm"
+              onClick={handleSettings}
               className="border-slate-600 hover:border-slate-500 text-slate-300 hover:bg-slate-800 hover:text-white"
             >
               <Settings className="h-4 w-4 mr-2" />
