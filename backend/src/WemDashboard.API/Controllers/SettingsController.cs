@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using WemDashboard.Shared.DTOs;
 using WemDashboard.Shared.Models;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace WemDashboard.API.Controllers;
 
@@ -33,7 +32,7 @@ public class SettingsController : BaseController
     /// Get all general settings
     /// </summary>
     [HttpGet("general")]
-    public async Task<IActionResult> GetGeneralSettings()
+    public IActionResult GetGeneralSettings()
     {
         try
         {
@@ -61,7 +60,7 @@ public class SettingsController : BaseController
             {
                 Success = false,
                 Message = "Failed to retrieve settings",
-                Error = ex.Message
+                Errors = new List<string> { ex.Message }
             });
         }
     }
@@ -70,7 +69,7 @@ public class SettingsController : BaseController
     /// Update general settings
     /// </summary>
     [HttpPut("general")]
-    public async Task<IActionResult> UpdateGeneralSettings([FromBody] GeneralSettingsDto settings)
+    public IActionResult UpdateGeneralSettings([FromBody] GeneralSettingsDto settings)
     {
         try
         {
@@ -90,14 +89,14 @@ public class SettingsController : BaseController
             {
                 var errors = ModelState
                     .Where(x => x.Value?.Errors.Count > 0)
-                    .Select(x => new { Field = x.Key, Errors = x.Value?.Errors.Select(e => e.ErrorMessage) })
+                    .SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? new List<string>())
                     .ToList();
                 
                 return BadRequest(new ApiResponse<object>
                 {
                     Success = false,
                     Message = "Validation failed",
-                    Error = string.Join("; ", errors.SelectMany(e => e.Errors ?? new List<string>()))
+                    Errors = errors
                 });
             }
 
@@ -129,7 +128,7 @@ public class SettingsController : BaseController
             {
                 Success = false,
                 Message = "Failed to update settings",
-                Error = ex.Message
+                Errors = new List<string> { ex.Message }
             });
         }
     }
@@ -138,7 +137,7 @@ public class SettingsController : BaseController
     /// Get all settings
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetAllSettings()
+    public IActionResult GetAllSettings()
     {
         try
         {
@@ -158,7 +157,7 @@ public class SettingsController : BaseController
             {
                 Success = false,
                 Message = "Failed to retrieve settings",
-                Error = ex.Message
+                Errors = new List<string> { ex.Message }
             });
         }
     }
@@ -167,7 +166,7 @@ public class SettingsController : BaseController
     /// Reset settings to defaults
     /// </summary>
     [HttpPost("reset")]
-    public async Task<IActionResult> ResetSettings()
+    public IActionResult ResetSettings()
     {
         try
         {
@@ -193,7 +192,7 @@ public class SettingsController : BaseController
             {
                 Success = false,
                 Message = "Failed to reset settings",
-                Error = ex.Message
+                Errors = new List<string> { ex.Message }
             });
         }
     }
