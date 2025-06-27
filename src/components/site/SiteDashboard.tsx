@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { mockRegions } from "@/services/mockDataService";
-import SiteTopBar from "@/components/SiteTopBar";
 import { EnhancedSiteHeader } from "@/components/site/EnhancedSiteHeader";
 import { CustomizableSiteDashboard } from "@/components/site/CustomizableSiteDashboard";
 import SiteGrid from "@/components/SiteGrid";
@@ -322,9 +321,10 @@ export const SiteDashboard = () => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
-      <SiteTopBar />
+    <div className="w-full min-h-screen">
+      {/* REMOVED: SiteTopBar to prevent duplicate headers */}
       <div className="p-6 space-y-6">
+        {/* Site Header - Clean, single header */}
         <EnhancedSiteHeader site={site} />
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
