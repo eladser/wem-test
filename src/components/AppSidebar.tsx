@@ -89,7 +89,7 @@ export function AppSidebar() {
   }, []);
 
   return (
-    <Sidebar className="w-80 bg-slate-900 border-r border-slate-700 flex flex-col h-screen shrink-0">
+    <Sidebar className="w-80 bg-slate-900 border-r border-slate-700 flex flex-col h-screen shrink-0 fixed left-0 top-0 z-50">
       {/* Fixed Header */}
       <SidebarHeader className="p-4 border-b border-slate-700 bg-slate-900 shrink-0">
         <div className="flex items-center space-x-3 mb-4">
@@ -209,7 +209,7 @@ export function AppSidebar() {
 
           {/* Regions & Sites Section */}
           <SidebarGroup className="flex-1 overflow-hidden">
-            <SidebarGroupLabel className="text-slate-400 font-medium mb-3 text-xs uppercase tracking-wider flex items-center px-3">
+            <SidebarGroupLabel className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
               <MapPin className="w-3 h-3 mr-2" />
               REGIONS & SITES
               {(searchTerm || showOnlineOnly) && (
@@ -239,24 +239,24 @@ export function AppSidebar() {
                         <SidebarMenuItem key={region.id}>
                           <Collapsible open={isExpanded} onOpenChange={() => toggleRegion(region.id)}>
                             <div className="space-y-1">
-                              {/* Region Header */}
+                              {/* Region Header - Improved styling */}
                               <div className="flex items-stretch gap-1">
                                 <NavLink
                                   to={`/region/${region.id}`}
-                                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
+                                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
                                     isRegionActive
                                       ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
                                       : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                                   }`}
                                 >
                                   <div className="p-1.5 rounded-md bg-slate-700/50 shrink-0">
-                                    <MapPin className="w-3 h-3" />
+                                    <MapPin className="w-4 h-4" />
                                   </div>
                                   <div className="flex items-center justify-between w-full min-w-0">
-                                    <span className="font-medium text-sm truncate" title={region.name}>
+                                    <span className="font-semibold text-sm truncate text-white" title={region.name}>
                                       {region.name}
                                     </span>
-                                    <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-1.5 py-0.5 shrink-0 ml-2">
+                                    <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-2 py-0.5 shrink-0 ml-2 bg-slate-800/50">
                                       {region.sites.length}
                                     </Badge>
                                   </div>
@@ -266,63 +266,65 @@ export function AppSidebar() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="p-2.5 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800/50 shrink-0"
+                                    className="p-3 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800/50 shrink-0"
                                   >
                                     {isExpanded ? (
-                                      <ChevronDown className="w-3 h-3" />
+                                      <ChevronDown className="w-4 h-4" />
                                     ) : (
-                                      <ChevronRight className="w-3 h-3" />
+                                      <ChevronRight className="w-4 h-4" />
                                     )}
                                   </Button>
                                 </CollapsibleTrigger>
                               </div>
                               
-                              {/* Sites List */}
+                              {/* Sites List - Improved layout and visibility */}
                               <CollapsibleContent className="ml-4 space-y-1">
                                 {region.sites.map((site) => {
                                   const isSiteActive = currentPath.includes(`/site/${site.id}`);
+                                  const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
+                                  
                                   return (
                                     <SidebarMenuItem key={site.id}>
                                       <SidebarMenuButton asChild>
                                         <NavLink
                                           to={`/site/${site.id}`}
-                                          className={`flex items-start px-3 py-3 rounded-lg transition-all duration-200 w-full ${
+                                          className={`flex items-start px-4 py-3 rounded-lg transition-all duration-200 w-full border ${
                                             isSiteActive
-                                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                              : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+                                              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                                              : "text-slate-300 hover:text-white hover:bg-slate-800/50 border-slate-700/50"
                                           }`}
                                         >
                                           <div className="flex items-start space-x-3 w-full min-w-0">
-                                            {/* Status Indicator */}
-                                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1.5 ${
-                                              site.status === 'online' ? 'bg-emerald-400' :
-                                              site.status === 'maintenance' ? 'bg-yellow-400' : 
-                                              'bg-red-400'
+                                            {/* Status Indicator - More prominent */}
+                                            <div className={`w-3 h-3 rounded-full shrink-0 mt-1.5 ring-2 ring-offset-2 ring-offset-slate-900 ${
+                                              site.status === 'online' ? 'bg-emerald-400 ring-emerald-400/30' :
+                                              site.status === 'maintenance' ? 'bg-yellow-400 ring-yellow-400/30' : 
+                                              'bg-red-400 ring-red-400/30'
                                             }`} />
                                             
-                                            {/* Site Information */}
+                                            {/* Site Information - Better typography */}
                                             <div className="flex-1 min-w-0 space-y-1">
-                                              {/* Site Name */}
+                                              {/* Site Name - More prominent */}
                                               <div>
-                                                <h4 className="text-sm font-medium text-white leading-tight truncate" title={site.name}>
+                                                <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
                                                   {site.name}
                                                 </h4>
-                                                <p className="text-xs text-slate-400 truncate" title={site.location}>
+                                                <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
                                                   {site.location}
                                                 </p>
                                               </div>
                                               
-                                              {/* Capacity and Output - Simplified */}
+                                              {/* Capacity and Output - Better layout */}
                                               <div className="flex items-center justify-between text-xs gap-2">
-                                                <span className="text-slate-300 truncate">
-                                                  {site.currentOutput}/{site.totalCapacity}MW
+                                                <span className="text-slate-300 font-medium">
+                                                  {site.currentOutput}MW / {site.totalCapacity}MW
                                                 </span>
-                                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
+                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
                                                   site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
                                                   site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
                                                   'bg-red-500/20 text-red-400'
                                                 }`}>
-                                                  {Math.round((site.currentOutput / site.totalCapacity) * 100)}%
+                                                  {efficiencyPercentage}%
                                                 </span>
                                               </div>
                                             </div>

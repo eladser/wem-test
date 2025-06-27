@@ -29,6 +29,10 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    
+    /* Custom CSS variables for layout spacing */
+    --sidebar-width: 20rem;
+    --header-height: 4rem;
   }
 
   .dark {
@@ -69,8 +73,48 @@
   }
 }
 
-/* Custom animations for better UX */
+/* Layout-specific fixes */
 @layer utilities {
+  /* Fix for sidebar and main content layout */
+  .layout-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .sidebar-fixed {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    z-index: 50;
+  }
+  
+  .main-content-with-sidebar {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .header-with-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    height: var(--header-height);
+    width: 100%;
+  }
+  
+  .content-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Custom animations for better UX */
   .animate-fade-in {
     animation: fadeIn 0.6s ease-out;
   }
@@ -116,27 +160,29 @@
     @apply backdrop-blur-xl bg-black/10 border border-white/10;
   }
   
-  /* Enhanced scrollbars */
+  /* Enhanced scrollbars - improved visibility */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgb(148 163 184) transparent;
+    scrollbar-color: rgb(100 116 139) transparent;
   }
   
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgb(30 41 59);
+    border-radius: 4px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgb(148 163 184);
-    border-radius: 3px;
+    background-color: rgb(100 116 139);
+    border-radius: 4px;
+    border: 2px solid rgb(30 41 59);
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(100 116 139);
+    background-color: rgb(148 163 184);
   }
   
   /* Gradient text */
@@ -156,6 +202,24 @@
   
   .hover-glow {
     @apply transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20;
+  }
+
+  /* Improved site item styling */
+  .site-item-enhanced {
+    @apply border border-slate-700/50 rounded-lg p-3 transition-all duration-200 hover:border-slate-600 hover:bg-slate-800/30;
+  }
+
+  .site-item-enhanced.active {
+    @apply border-emerald-500/50 bg-emerald-500/10;
+  }
+
+  /* Region header styling */
+  .region-header-enhanced {
+    @apply font-semibold text-white bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 transition-all duration-200 hover:bg-slate-700/50;
+  }
+
+  .region-header-enhanced.active {
+    @apply border-violet-500/50 bg-violet-500/10 text-violet-400;
   }
 }
 
@@ -461,4 +525,41 @@
 
 .notification-info {
   @apply bg-blue-900/90 border border-blue-500/50 text-blue-100;
+}
+
+/* Responsive layout fixes */
+@media (max-width: 768px) {
+  .sidebar-fixed {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .sidebar-fixed.open {
+    transform: translateX(0);
+  }
+  
+  .main-content-with-sidebar {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Specific fixes for overlapping issues */
+.layout-no-overlap {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout-no-overlap .sidebar {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+
+.layout-no-overlap .main-content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 10;
 }
