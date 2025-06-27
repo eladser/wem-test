@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
@@ -18,13 +18,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen w-full bg-slate-950 overflow-hidden">
-      {/* Sidebar - Fixed positioning with proper z-index */}
-      <AppSidebar />
+      {/* Sidebar - Fixed width, no overlap */}
+      <div className="w-80 h-full shrink-0 relative z-50">
+        <AppSidebar />
+      </div>
       
-      {/* Main content area - Properly positioned relative to sidebar */}
-      <SidebarInset className="flex-1 flex flex-col h-full min-w-0 relative">
-        {/* Fixed Header - Positioned to not overlap sidebar */}
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 px-6 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800">
+      {/* Main content area - Takes remaining space, no overlap */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        {/* Fixed Header - Full width of remaining space */}
+        <header className="h-16 shrink-0 flex items-center justify-between gap-4 px-6 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 relative z-40">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <SidebarTrigger className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 shrink-0" />
             <Separator orientation="vertical" className="h-6 shrink-0" />
@@ -68,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        {/* Main Content Area - Fixed overflow and positioning */}
+        {/* Main Content Area - Proper overflow handling */}
         <main className="flex-1 bg-slate-950 overflow-hidden relative">
           <div className="absolute inset-0 overflow-auto scrollbar-thin">
             <div className="min-h-full p-6">
@@ -76,7 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         </main>
-      </SidebarInset>
+      </div>
     </div>
   );
 };
