@@ -1,4 +1,4 @@
-import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, Bell } from "lucide-react";
+import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, Bell, Activity, Gauge } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -42,7 +42,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar className="w-64 bg-slate-900 border-r border-slate-700">
+    <Sidebar className="w-72 bg-slate-900 border-r border-slate-700">
       {/* Fixed Header */}
       <SidebarHeader className="p-4 border-b border-slate-700 bg-slate-900">
         <div className="flex items-center space-x-3 mb-4">
@@ -138,29 +138,31 @@ export function AppSidebar() {
                           <div className="flex items-center w-full">
                             <NavLink
                               to={`/region/${region.id}`}
-                              className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 flex-1 ${
+                              className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 flex-1 ${
                                 isRegionActive
                                   ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
                                   : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                               }`}
                             >
-                              <div className="p-1.5 rounded-md bg-slate-700/50">
+                              <div className="p-1.5 rounded-md bg-slate-700/50 flex-shrink-0">
                                 <MapPin className="w-3 h-3" />
                               </div>
                               <div className="flex items-center justify-between w-full min-w-0">
-                                <span className="font-medium text-sm truncate">{region.name}</span>
-                                <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 ml-2 px-2 py-1">
+                                <span className="font-medium text-sm truncate pr-2" title={region.name}>
+                                  {region.name}
+                                </span>
+                                <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-2 py-1 flex-shrink-0">
                                   {region.sites.length}
                                 </Badge>
                               </div>
                             </NavLink>
                             <CollapsibleTrigger asChild>
-                              <button className="p-2 ml-1 text-slate-400 hover:text-white transition-colors rounded-md hover:bg-slate-800/50">
+                              <button className="p-2 ml-1 text-slate-400 hover:text-white transition-colors rounded-md hover:bg-slate-800/50 flex-shrink-0">
                                 <ChevronDown className="w-4 h-4 data-[state=open]:rotate-180 transition-transform duration-200" />
                               </button>
                             </CollapsibleTrigger>
                           </div>
-                          <CollapsibleContent className="ml-4 mt-2 space-y-1">
+                          <CollapsibleContent className="ml-4 mt-2 space-y-2">
                             {region.sites.map((site) => {
                               const isSiteActive = currentPath.includes(`/site/${site.id}`);
                               return (
@@ -168,15 +170,15 @@ export function AppSidebar() {
                                   <SidebarMenuButton asChild>
                                     <NavLink
                                       to={`/site/${site.id}`}
-                                      className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 w-full ${
+                                      className={`flex items-center px-3 py-4 rounded-lg transition-all duration-200 w-full ${
                                         isSiteActive
                                           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                           : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                                       }`}
                                     >
-                                      <div className="flex items-center space-x-3 w-full">
+                                      <div className="flex items-center space-x-3 w-full min-w-0">
                                         {/* Status Indicator */}
-                                        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
                                           site.status === 'online' ? 'bg-emerald-400 shadow-lg shadow-emerald-400/30' :
                                           site.status === 'maintenance' ? 'bg-yellow-400 shadow-lg shadow-yellow-400/30' : 
                                           'bg-red-400 shadow-lg shadow-red-400/30'
@@ -184,25 +186,38 @@ export function AppSidebar() {
                                         
                                         {/* Site Information */}
                                         <div className="flex-1 min-w-0">
-                                          <div className="flex items-center justify-between w-full mb-1">
-                                            <span className="text-sm font-medium text-white truncate pr-2" title={site.name}>
-                                              {site.name}
-                                            </span>
-                                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
-                                              {site.totalCapacity}MW
-                                            </span>
+                                          <div className="flex items-start justify-between w-full mb-1">
+                                            <div className="flex-1 min-w-0 pr-2">
+                                              <h4 className="text-sm font-medium text-white truncate leading-tight" title={site.name}>
+                                                {site.name}
+                                              </h4>
+                                              <p className="text-xs text-slate-400 mt-0.5">
+                                                {site.location}
+                                              </p>
+                                            </div>
+                                            <div className="flex flex-col items-end text-xs text-slate-400 flex-shrink-0">
+                                              <span className="font-medium text-white">
+                                                {site.totalCapacity}MW
+                                              </span>
+                                              <span className="text-xs text-slate-500">
+                                                capacity
+                                              </span>
+                                            </div>
                                           </div>
                                           <div className="flex items-center justify-between w-full">
-                                            <span className={`text-xs font-medium capitalize ${
-                                              site.status === 'online' ? 'text-emerald-400' :
-                                              site.status === 'maintenance' ? 'text-yellow-400' : 
-                                              'text-red-400'
-                                            }`}>
-                                              {site.status}
-                                            </span>
-                                            <span className="text-xs text-slate-500">
-                                              {site.currentOutput}MW output
-                                            </span>
+                                            <div className="flex items-center space-x-2">
+                                              <span className={`text-xs font-medium capitalize px-2 py-1 rounded-full ${
+                                                site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                                'bg-red-500/20 text-red-400'
+                                              }`}>
+                                                {site.status}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center space-x-1 text-xs text-slate-500">
+                                              <Activity className="w-3 h-3" />
+                                              <span>{site.currentOutput}MW</span>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
