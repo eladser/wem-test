@@ -22,11 +22,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex h-screen w-full bg-slate-950 overflow-hidden">
       <AppSidebar />
-      <SidebarInset className="flex flex-col flex-1 min-w-0">
+      <SidebarInset className="flex-1 flex flex-col h-full w-full min-w-0 overflow-hidden">
         {/* Enhanced Header with proper spacing */}
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 px-6 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 ml-0">
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 px-4 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <SidebarTrigger className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 flex-shrink-0" />
             <Separator orientation="vertical" className="h-6 flex-shrink-0" />
@@ -62,10 +62,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        {/* Main Content with proper padding */}
-        <main className="flex-1 bg-slate-950 min-h-0">
-          <div className="h-full w-full">
-            {children}
+        {/* Main Content - Fixed overflow and spacing issues */}
+        <main className="flex-1 bg-slate-950 overflow-hidden w-full">
+          <div className="h-full w-full overflow-auto">
+            <div className="w-full h-full">
+              {children}
+            </div>
           </div>
         </main>
       </SidebarInset>
