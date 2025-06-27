@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Separator } from "@/components/ui/separator";
@@ -6,20 +6,15 @@ import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import { toast } from "sonner";
+import { QuickSettingsPanel } from "@/components/settings/QuickSettingsPanel";
+import { UserProfileMenu } from "@/components/user/UserProfileMenu";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const handleQuickSettings = () => {
-    toast.info("Quick settings panel - coming soon!");
-  };
-
-  const handleUserProfile = () => {
-    toast.info("User profile menu - coming soon!");
-  };
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-full bg-slate-950 overflow-hidden">
@@ -40,25 +35,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Enhanced Notification Center */}
             <NotificationCenter />
             
-            {/* Quick Settings */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleQuickSettings}
-              className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            {/* Quick Settings Panel */}
+            <QuickSettingsPanel
+              open={settingsOpen}
+              onOpenChange={setSettingsOpen}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              }
+            />
             
-            {/* User Profile */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleUserProfile}
-              className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
-            >
-              <User className="w-4 h-4" />
-            </Button>
+            {/* User Profile Menu */}
+            <UserProfileMenu
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
+                >
+                  <User className="w-4 h-4" />
+                </Button>
+              }
+            />
           </div>
         </header>
         
