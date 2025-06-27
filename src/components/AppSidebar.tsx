@@ -1,23 +1,10 @@
 import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, ChevronRight, Bell, Activity, Gauge, Filter, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState, useMemo, useCallback } from "react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { mockRegions } from "@/services/mockDataService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -165,16 +152,16 @@ export function AppSidebar() {
         </div>
       </div>
 
-      {/* Scrollable Content */}
+      {/* Scrollable Content with smooth animations */}
       <div className="bg-slate-900 flex-1 overflow-hidden">
-        <div className="p-3 h-full flex flex-col space-y-4">
-          {/* Navigation Section */}
-          <div className="shrink-0">
+        <div className="h-full flex flex-col">
+          {/* Navigation Section - Fixed */}
+          <div className="shrink-0 p-3 pb-0">
             <div className="text-slate-400 font-medium mb-3 text-xs uppercase tracking-wider px-3 flex items-center">
               <BarChart3 className="w-3 h-3 mr-2" />
               NAVIGATION
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 px-3">
               {mainNavItems.map((item) => {
                 const isActive = currentPath === item.url || (item.url !== "/" && currentPath.startsWith(item.url));
                 return (
@@ -202,8 +189,8 @@ export function AppSidebar() {
             </div>
           </div>
 
-          {/* Regions & Sites Section */}
-          <div className="flex-1 overflow-hidden">
+          {/* Regions & Sites Section - Scrollable */}
+          <div className="flex-1 overflow-hidden flex flex-col p-3">
             <div className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
               <MapPin className="w-3 h-3 mr-2" />
               REGIONS & SITES
@@ -214,9 +201,10 @@ export function AppSidebar() {
               )}
             </div>
             
-            <div className="flex-1 overflow-hidden">
+            {/* Scrollable container with enhanced styling */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 scrollbar-smooth">
               {filteredData.length === 0 ? (
-                <div className="px-3 py-8 text-center">
+                <div className="py-8 text-center">
                   <div className="w-10 h-10 bg-slate-800/50 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <Search className="w-5 h-5 text-slate-500" />
                   </div>
@@ -224,57 +212,55 @@ export function AppSidebar() {
                   <p className="text-slate-500 text-xs mt-1">Try adjusting your filters</p>
                 </div>
               ) : (
-                <ScrollArea className="h-full pr-2">
-                  <div className="space-y-2">
-                    {filteredData.map((region) => {
-                      const isRegionActive = currentPath.includes(`/region/${region.id}`);
-                      const isExpanded = expandedRegions.has(region.id);
-                      
-                      return (
-                        <div key={region.id}>
-                          <Collapsible open={isExpanded} onOpenChange={() => toggleRegion(region.id)}>
-                            <div className="space-y-1">
-                              {/* Region Header - Clean styling */}
-                              <div className="flex items-stretch gap-1">
-                                <NavLink
-                                  to={`/region/${region.id}`}
-                                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
-                                    isRegionActive
-                                      ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
-                                  }`}
-                                >
-                                  <div className="p-1.5 rounded-md bg-slate-700/50 shrink-0">
-                                    <MapPin className="w-4 h-4" />
-                                  </div>
-                                  <div className="flex items-center justify-between w-full min-w-0">
-                                    <span className="font-semibold text-sm truncate text-white" title={region.name}>
-                                      {region.name}
-                                    </span>
-                                    <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-2 py-0.5 shrink-0 ml-2 bg-slate-800/50">
-                                      {region.sites.length}
-                                    </Badge>
-                                  </div>
-                                </NavLink>
-                                
-                                <CollapsibleTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="p-3 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800/50 shrink-0"
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronDown className="w-4 h-4" />
-                                    ) : (
-                                      <ChevronRight className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                </CollapsibleTrigger>
-                              </div>
+                <div className="space-y-2 pb-4">
+                  {filteredData.map((region) => {
+                    const isRegionActive = currentPath.includes(`/region/${region.id}`);
+                    const isExpanded = expandedRegions.has(region.id);
+                    
+                    return (
+                      <div key={region.id} className="animate-fade-in">
+                        <Collapsible open={isExpanded} onOpenChange={() => toggleRegion(region.id)}>
+                          <div className="space-y-1">
+                            {/* Region Header - Clean styling */}
+                            <div className="flex items-stretch gap-1">
+                              <NavLink
+                                to={`/region/${region.id}`}
+                                className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
+                                  isRegionActive
+                                    ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
+                                    : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+                                }`}
+                              >
+                                <div className="p-1.5 rounded-md bg-slate-700/50 shrink-0">
+                                  <MapPin className="w-4 h-4" />
+                                </div>
+                                <div className="flex items-center justify-between w-full min-w-0">
+                                  <span className="font-semibold text-sm truncate text-white" title={region.name}>
+                                    {region.name}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-2 py-0.5 shrink-0 ml-2 bg-slate-800/50">
+                                    {region.sites.length}
+                                  </Badge>
+                                </div>
+                              </NavLink>
                               
-                              {/* Sites List - Clean, normal styling */}
-                              <CollapsibleContent className="ml-4 space-y-1">
-                                {region.sites.map((site) => {
+                              <CollapsibleTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-3 text-slate-400 hover:text-white transition-all duration-200 rounded-lg hover:bg-slate-800/50 shrink-0"
+                                >
+                                  <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+                                    <ChevronDown className="w-4 h-4" />
+                                  </div>
+                                </Button>
+                              </CollapsibleTrigger>
+                            </div>
+                            
+                            {/* Sites List - Clean, normal styling with smooth animation */}
+                            <CollapsibleContent className="ml-4 overflow-hidden">
+                              <div className="space-y-1 animate-slide-in-down">
+                                {region.sites.map((site, index) => {
                                   const isSiteActive = currentPath.includes(`/site/${site.id}`);
                                   const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
                                   
@@ -282,18 +268,19 @@ export function AppSidebar() {
                                     <NavLink
                                       key={site.id}
                                       to={`/site/${site.id}`}
-                                      className={`flex items-start px-3 py-2.5 rounded-lg transition-all duration-200 w-full block ${
+                                      className={`flex items-start px-3 py-2.5 rounded-lg transition-all duration-200 w-full block animate-fade-in ${
                                         isSiteActive
                                           ? "bg-emerald-500/20 text-emerald-400"
                                           : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                                       }`}
+                                      style={{ animationDelay: `${index * 50}ms` }}
                                     >
                                       <div className="flex items-start space-x-3 w-full min-w-0">
                                         {/* Status Indicator - Clean circular design */}
-                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 ${
-                                          site.status === 'online' ? 'bg-emerald-400' :
-                                          site.status === 'maintenance' ? 'bg-yellow-400' : 
-                                          'bg-red-400'
+                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 transition-all duration-200 ${
+                                          site.status === 'online' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
+                                          site.status === 'maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
+                                          'bg-red-400 shadow-red-400/50 shadow-sm'
                                         }`} />
                                         
                                         {/* Site Information - Clean typography */}
@@ -326,14 +313,14 @@ export function AppSidebar() {
                                     </NavLink>
                                   );
                                 })}
-                              </CollapsibleContent>
-                            </div>
-                          </Collapsible>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
