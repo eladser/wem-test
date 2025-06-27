@@ -18,20 +18,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen w-full bg-slate-950 overflow-hidden">
+      {/* Sidebar - Fixed width and positioning */}
       <AppSidebar />
-      <SidebarInset className="flex-1 flex flex-col h-full w-full min-w-0 overflow-hidden">
-        {/* Enhanced Header with proper spacing */}
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 px-4 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800">
+      
+      {/* Main content area with proper flex management */}
+      <SidebarInset className="flex-1 flex flex-col h-full min-w-0">
+        {/* Fixed Header */}
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-4 px-6 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800">
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            <SidebarTrigger className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 flex-shrink-0" />
-            <Separator orientation="vertical" className="h-6 flex-shrink-0" />
+            <SidebarTrigger className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 shrink-0" />
+            <Separator orientation="vertical" className="h-6 shrink-0" />
             <div className="min-w-0 flex-1">
               <Breadcrumb />
             </div>
           </div>
           
           {/* Header Actions */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Enhanced Notification Center */}
             <NotificationCenter />
             
@@ -65,10 +68,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
         
-        {/* Main Content - Fixed overflow and spacing issues */}
-        <main className="flex-1 bg-slate-950 overflow-hidden w-full">
-          <div className="h-full w-full overflow-auto">
-            <div className="w-full h-full">
+        {/* Main Content Area - Improved overflow handling */}
+        <main className="flex-1 bg-slate-950 overflow-hidden relative">
+          <div className="absolute inset-0 overflow-auto">
+            <div className="min-h-full p-6">
               {children}
             </div>
           </div>
