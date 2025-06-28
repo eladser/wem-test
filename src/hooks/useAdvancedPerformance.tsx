@@ -478,6 +478,48 @@ export function useAdvancedPerformance(): UseAdvancedPerformanceReturn {
   };
 }
 
+// Operation Performance Hook for measuring specific operations
+export function useOperationPerformance() {
+  const measure = useCallback(async <T>(operationName: string, operation: () => Promise<T>): Promise<T> => {
+    const startTime = performance.now();
+    const markStart = `${operationName}-start`;
+    const markEnd = `${operationName}-end`;
+    const measureName = `${operationName}-duration`;
+
+    try {
+      // Create performance marks
+      performance.mark(markStart);
+      
+      // Execute the operation
+      const result = await operation();
+      
+      // Mark the end and measure
+      performance.mark(markEnd);
+      performance.measure(measureName, markStart, markEnd);
+      
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      console.log(`Operation "${operationName}" completed in ${duration.toFixed(2)}ms`);
+      
+      return result;
+    } catch (error) {
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      console.error(`Operation "${operationName}" failed after ${duration.toFixed(2)}ms:`, error);
+      
+      // Still mark the end for measurement
+      performance.mark(markEnd);
+      performance.measure(measureName, markStart, markEnd);
+      
+      throw error;
+    }
+  }, []);
+
+  return { measure };
+}
+
 // Performance DevTools Component for Development
 export function PerformanceDevTools() {
   const {
