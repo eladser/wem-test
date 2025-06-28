@@ -82,10 +82,10 @@ public class LogService : ILogService
         }
 
         // Get total count
-        var totalCount = query.Count();
+        var totalCount = await query.CountAsync();
 
         // Apply pagination
-        var items = query
+        var items = await query
             .OrderByDescending(l => l.Timestamp)
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
@@ -106,7 +106,7 @@ public class LogService : ILogService
                     Stack = l.StackTrace
                 } : null
             })
-            .ToList();
+            .ToListAsync();
 
         return new PagedLogResponseDto
         {
@@ -128,10 +128,10 @@ public class LogService : ILogService
         var stats = new ErrorStatisticsDto();
 
         // Count by level
-        var levelCounts = query
+        var levelCounts = await query
             .GroupBy(l => l.Level)
             .Select(g => new { Level = g.Key, Count = g.Count() })
-            .ToList();
+            .ToListAsync();
 
         foreach (var item in levelCounts)
         {
@@ -152,21 +152,22 @@ public class LogService : ILogService
         }
 
         // Count by component
-        stats.ErrorsByComponent = query
+        stats.ErrorsByComponent = await query
             .Where(l => l.Level >= DomainLogLevel.Warning && l.Component != null)
             .GroupBy(l => l.Component!)
             .Select(g => new { Component = g.Key, Count = g.Count() })
-            .ToDictionary(x => x.Component, x => x.Count);
+            .ToDictionaryAsync(x => x.Component, x => x.Count);
 
-        // Count by day
-        stats.ErrorsByDay = query
+        // Count by day - need to use DateTime.Date property
+        stats.ErrorsByDay = await query
             .Where(l => l.Level >= DomainLogLevel.Warning)
+            .Select(l => new { Date = l.Timestamp.Date, Level = l.Level })
             .GroupBy(l => l.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
-            .ToDictionary(x => x.Date, x => x.Count);
+            .ToDictionaryAsync(x => x.Date, x => x.Count);
 
         // Top errors
-        stats.TopErrors = query
+        stats.TopErrors = await query
             .Where(l => l.Level >= DomainLogLevel.Error)
             .GroupBy(l => l.Message)
             .Select(g => new TopErrorDto
@@ -177,7 +178,7 @@ public class LogService : ILogService
             })
             .OrderByDescending(x => x.Count)
             .Take(10)
-            .ToList();
+            .ToListAsync();
 
         return stats;
     }
@@ -189,7 +190,7 @@ public class LogService : ILogService
         var oldLogs = _context.LogEntries
             .Where(l => l.Timestamp < cutoffDate && l.Level < DomainLogLevel.Error); // Keep errors longer
         
-        var count = oldLogs.Count();
+        var count = await oldLogs.CountAsync();
         
         if (count > 0)
         {
