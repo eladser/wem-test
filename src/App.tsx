@@ -10,7 +10,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Error handling components
 import ErrorBoundary from './components/ErrorBoundary';
-import { Toaster as UIToaster } from './components/Toaster';
+import { Toaster as UIToaster } from './components/ui/toaster';
 import { logger, useLogger } from './utils/logger';
 
 // Pages
@@ -54,7 +54,7 @@ function AppContent() {
       userAgent: navigator.userAgent,
       url: window.location.href
     });
-  }, []);
+  }, [log]);
 
   if (isLoading) {
     return <LoadingSpinner />;
