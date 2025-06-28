@@ -1,121 +1,120 @@
-#!/usr/bin/env pwsh
+# WEM Dashboard Database Setup Script
+# Simple script to create fresh database with fixed schema
 
-Write-Host "🔧 WEM Dashboard Database Setup" -ForegroundColor Cyan
-Write-Host "=================================" -ForegroundColor Cyan
+Write-Host "WEM Dashboard Database Setup" -ForegroundColor Cyan
+Write-Host "============================" -ForegroundColor Cyan
 Write-Host ""
 
-$RootPath = Get-Location
-$ApiPath = Join-Path $RootPath "backend/src/WemDashboard.API"
-$InfrastructurePath = Join-Path $RootPath "backend/src/WemDashboard.Infrastructure"
+# Get current directory
+$CurrentDir = Get-Location
+Write-Host "Current directory: $CurrentDir" -ForegroundColor Gray
 
-Write-Host "📍 Checking paths..." -ForegroundColor Yellow
-Write-Host "   Root: $RootPath" -ForegroundColor Gray
-Write-Host "   API: $ApiPath" -ForegroundColor Gray
-Write-Host "   Infrastructure: $InfrastructurePath" -ForegroundColor Gray
+# Define paths
+$ApiProjectPath = "$CurrentDir\backend\src\WemDashboard.API"
+$InfraProjectPath = "$CurrentDir\backend\src\WemDashboard.Infrastructure"
+$BackendPath = "$CurrentDir\backend"
+
+Write-Host "API Project: $ApiProjectPath" -ForegroundColor Gray
+Write-Host "Infrastructure: $InfraProjectPath" -ForegroundColor Gray
 Write-Host ""
 
-if (-not (Test-Path $ApiPath)) {
-    Write-Host "❌ API project not found at: $ApiPath" -ForegroundColor Red
+# Check if projects exist
+if (!(Test-Path $ApiProjectPath)) {
+    Write-Host "ERROR: API project not found at $ApiProjectPath" -ForegroundColor Red
+    Write-Host "Make sure you're running this from the project root directory" -ForegroundColor Yellow
     exit 1
 }
 
-if (-not (Test-Path $InfrastructurePath)) {
-    Write-Host "❌ Infrastructure project not found at: $InfrastructurePath" -ForegroundColor Red
+if (!(Test-Path $InfraProjectPath)) {
+    Write-Host "ERROR: Infrastructure project not found at $InfraProjectPath" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ All paths found" -ForegroundColor Green
+Write-Host "Projects found successfully" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "🧹 Cleaning up old files..." -ForegroundColor Yellow
+# Clean up old files
+Write-Host "Cleaning up old database files..." -ForegroundColor Yellow
 
-# Remove existing migrations
-$migrationsPath = Join-Path $InfrastructurePath "Migrations"
-if (Test-Path $migrationsPath) {
-    Remove-Item $migrationsPath -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host "   ✅ Removed old migrations" -ForegroundColor Green
+$MigrationsDir = "$InfraProjectPath\Migrations"
+if (Test-Path $MigrationsDir) {
+    Remove-Item $MigrationsDir -Recurse -Force
+    Write-Host "Removed old migrations" -ForegroundColor Green
 }
 
-# Remove existing database files
-$dbFiles = Get-ChildItem -Path $RootPath -Include "*.db" -Recurse -ErrorAction SilentlyContinue
-foreach ($dbFile in $dbFiles) {
-    Remove-Item $dbFile.FullName -Force -ErrorAction SilentlyContinue
-    Write-Host "   ✅ Removed: $($dbFile.Name)" -ForegroundColor Green
-}
-
+# Remove database files
+Get-ChildItem -Path $CurrentDir -Include "*.db" -Recurse | Remove-Item -Force
+Write-Host "Removed old database files" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "🔨 Building solution..." -ForegroundColor Yellow
-Set-Location (Join-Path $RootPath "backend")
+# Build solution
+Write-Host "Building solution..." -ForegroundColor Yellow
+Set-Location $BackendPath
 
-$buildResult = dotnet build --verbosity quiet 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "   ✅ Build successful" -ForegroundColor Green
-} else {
-    Write-Host "   ❌ Build failed:" -ForegroundColor Red
-    $buildResult | ForEach-Object { Write-Host "      $_" -ForegroundColor White }
-    Set-Location $RootPath
+$BuildOutput = dotnet build --verbosity quiet 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Build failed:" -ForegroundColor Red
+    Write-Host $BuildOutput -ForegroundColor White
+    Set-Location $CurrentDir
     exit 1
 }
 
-Set-Location $RootPath
+Write-Host "Build successful" -ForegroundColor Green
+Set-Location $CurrentDir
 Write-Host ""
 
-Write-Host "📦 Creating migration..." -ForegroundColor Yellow
-Set-Location $InfrastructurePath
+# Create migration
+Write-Host "Creating fresh migration..." -ForegroundColor Yellow
+Set-Location $InfraProjectPath
 
-$migrationResult = dotnet ef migrations add InitialCreate --startup-project $ApiPath --verbose 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "   ✅ Migration created successfully" -ForegroundColor Green
-} else {
-    Write-Host "   ❌ Migration creation failed:" -ForegroundColor Red
-    $migrationResult | ForEach-Object { Write-Host "      $_" -ForegroundColor White }
-    Set-Location $RootPath
+$MigrationOutput = dotnet ef migrations add InitialCreate --startup-project $ApiProjectPath 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Migration creation failed:" -ForegroundColor Red
+    Write-Host $MigrationOutput -ForegroundColor White
+    Set-Location $CurrentDir
     exit 1
 }
 
+Write-Host "Migration created successfully" -ForegroundColor Green
 Write-Host ""
-Write-Host "🗄️ Creating database..." -ForegroundColor Yellow
 
-$updateResult = dotnet ef database update --startup-project $ApiPath --verbose 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "   ✅ Database created successfully" -ForegroundColor Green
-} else {
-    Write-Host "   ❌ Database creation failed:" -ForegroundColor Red
-    $updateResult | ForEach-Object { Write-Host "      $_" -ForegroundColor White }
-    Set-Location $RootPath
+# Update database
+Write-Host "Creating database..." -ForegroundColor Yellow
+
+$UpdateOutput = dotnet ef database update --startup-project $ApiProjectPath 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Database update failed:" -ForegroundColor Red
+    Write-Host $UpdateOutput -ForegroundColor White
+    Set-Location $CurrentDir
     exit 1
 }
 
-Set-Location $RootPath
+Write-Host "Database created successfully" -ForegroundColor Green
+Set-Location $CurrentDir
 Write-Host ""
 
-Write-Host "🔍 Verifying setup..." -ForegroundColor Yellow
+# Verify
+Write-Host "Verifying setup..." -ForegroundColor Yellow
 
-# Check for database file
-$dbFiles = Get-ChildItem -Path $RootPath -Include "*.db" -Recurse -ErrorAction SilentlyContinue
-if ($dbFiles.Count -gt 0) {
-    foreach ($dbFile in $dbFiles) {
-        Write-Host "   ✅ Database found: $($dbFile.FullName)" -ForegroundColor Green
+$DatabaseFiles = Get-ChildItem -Path $CurrentDir -Include "*.db" -Recurse
+if ($DatabaseFiles.Count -gt 0) {
+    foreach ($DbFile in $DatabaseFiles) {
+        Write-Host "Database found: $($DbFile.FullName)" -ForegroundColor Green
     }
 } else {
-    Write-Host "   ⚠️ No database files found" -ForegroundColor Yellow
+    Write-Host "Warning: No database files found" -ForegroundColor Yellow
 }
 
-# Check for migration files
-$migrationsPath = Join-Path $InfrastructurePath "Migrations"
-if (Test-Path $migrationsPath) {
-    $migrationFiles = Get-ChildItem $migrationsPath -Filter "*.cs" -ErrorAction SilentlyContinue
-    if ($migrationFiles.Count -gt 0) {
-        Write-Host "   ✅ Migration files created: $($migrationFiles.Count)" -ForegroundColor Green
-    }
+if (Test-Path $MigrationsDir) {
+    $MigrationFiles = Get-ChildItem $MigrationsDir -Filter "*.cs"
+    Write-Host "Migration files created: $($MigrationFiles.Count)" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "🎉 Database setup complete!" -ForegroundColor Green
+Write-Host "Setup complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "1. Run: start-backend.bat" -ForegroundColor White
-Write-Host "2. Run: start-frontend.bat (in new terminal)" -ForegroundColor White
-Write-Host "3. Access: http://localhost:5173" -ForegroundColor White
+Write-Host "2. Run: start-frontend.bat" -ForegroundColor White
+Write-Host "3. Open: http://localhost:5173" -ForegroundColor White
 Write-Host ""
