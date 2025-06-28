@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WemDashboard.Application.DTOs;
 using WemDashboard.Application.Interfaces;
