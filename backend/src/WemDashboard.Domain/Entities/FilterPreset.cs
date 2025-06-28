@@ -14,6 +14,12 @@ public class FilterPreset
     [Required]
     public string PresetName { get; set; } = string.Empty;
     
+    // Add Name property for backward compatibility
+    public string Name { get; set; } = string.Empty;
+    
+    // Add PageName property that repositories expect
+    public string PageName { get; set; } = string.Empty;
+    
     public string Description { get; set; } = string.Empty;
     
     [Required]

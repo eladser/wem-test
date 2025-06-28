@@ -19,6 +19,12 @@ public class GridComponentConfiguration
     
     public string ComponentName { get; set; } = string.Empty;
     
+    // Add Name property for backward compatibility
+    public string Name { get; set; } = string.Empty;
+    
+    // Add Status property that DbContext expects
+    public string Status { get; set; } = "Active";
+    
     // Position and Size
     public int X { get; set; } = 0;
     public int Y { get; set; } = 0;
@@ -31,7 +37,7 @@ public class GridComponentConfiguration
     public string BorderStyle { get; set; } = "solid";
     public int BorderWidth { get; set; } = 1;
     
-    // Component-specific configuration as JSON - Remove SQL Server specific TypeName
+    // Component-specific configuration as JSON
     public string ComponentConfig { get; set; } = "{}";
     
     // Data source configuration
