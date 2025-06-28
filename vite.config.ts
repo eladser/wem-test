@@ -9,6 +9,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // Explicitly prefer .tsx over .ts for module resolution
+    extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json']
   },
   server: {
     port: 5173,
@@ -55,6 +57,8 @@ export default defineConfig({
       '@tanstack/react-query',
       'lucide-react',
     ],
+    // Force re-optimization when deps change
+    force: process.env.NODE_ENV === 'development'
   },
   define: {
     __DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
