@@ -5,7 +5,7 @@ namespace WemDashboard.Domain.Interfaces;
 public interface IEnergyFlowConfigurationRepository
 {
     Task<IEnumerable<EnergyFlowConfiguration>> GetByUserIdAsync(string userId);
-    Task<IEnumerable<EnergyFlowConfiguration>> GetBySiteIdAsync(string userId, int siteId);
+    Task<IEnumerable<EnergyFlowConfiguration>> GetBySiteIdAsync(string userId, string? siteId);
     Task<EnergyFlowConfiguration?> GetByIdAsync(int id);
     Task<EnergyFlowConfiguration?> GetByFlowIdAsync(string userId, string flowId);
     Task<EnergyFlowConfiguration> CreateAsync(EnergyFlowConfiguration flow);
