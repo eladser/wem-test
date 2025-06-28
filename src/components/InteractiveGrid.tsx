@@ -6,9 +6,14 @@ import EnergyFlowRenderer from './grid/EnergyFlowRenderer';
 import GridComponentView from './grid/GridComponent';
 import StatusPanel from './grid/StatusPanel';
 import ControlsPanel from './grid/ControlsPanel';
+import { GridAnalytics } from './grid/GridAnalytics';
+import { Button } from '@/components/ui/button';
+import { BarChart3, Grid, Maximize2, Minimize2 } from 'lucide-react';
 
 const InteractiveGrid = () => {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'analytics' | 'split'>('grid');
 
   const [components, setComponents] = useState<GridComponent[]>([
     {
@@ -114,61 +119,121 @@ const InteractiveGrid = () => {
 
   return (
     <div className="h-full bg-slate-950 text-white overflow-hidden">
-      <div
-        ref={gridRef}
-        className="relative w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onClick={() => setSelectedComponent(null)}
-      >
-        {/* Grid Pattern */}
-        <svg className="absolute inset-0 w-full h-full opacity-10" style={{ zIndex: 1 }}>
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#475569" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
+      {/* View Mode Controls */}
+      <div className="absolute top-4 right-4 z-50 flex space-x-2">
+        <Button
+          variant={viewMode === 'grid' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('grid')}
+          className="text-xs"
+        >
+          <Grid className="w-3 h-3 mr-1" />
+          Grid
+        </Button>
+        <Button
+          variant={viewMode === 'analytics' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('analytics')}
+          className="text-xs"
+        >
+          <BarChart3 className="w-3 h-3 mr-1" />
+          Analytics
+        </Button>
+        <Button
+          variant={viewMode === 'split' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setViewMode('split')}
+          className="text-xs"
+        >
+          <Maximize2 className="w-3 h-3 mr-1" />
+          Split
+        </Button>
+      </div>
 
-        {/* Energy Flow Lines */}
-        <EnergyFlowRenderer energyFlows={energyFlows} components={components} />
+      <div className={`h-full flex ${viewMode === 'split' ? 'divide-x divide-slate-700' : ''}`}>
+        {/* Grid View */}
+        {(viewMode === 'grid' || viewMode === 'split') && (
+          <div 
+            ref={gridRef}
+            className={`relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 ${
+              viewMode === 'split' ? 'w-1/2' : 'w-full'
+            } h-full`}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onClick={() => setSelectedComponent(null)}
+          >
+            {/* Grid Pattern */}
+            <svg className="absolute inset-0 w-full h-full opacity-10" style={{ zIndex: 1 }}>
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#475569" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
 
-        {/* Status Panel */}
-        {statusPanel && (
-          <StatusPanel
-            panel={statusPanel}
-            netBalance={netBalance}
-            totalProduction={totalProduction}
-            totalConsumption={totalConsumption}
-            onMouseDown={handlePanelMouseDown}
-          />
+            {/* Energy Flow Lines */}
+            <EnergyFlowRenderer energyFlows={energyFlows} components={components} />
+
+            {/* Status Panel */}
+            {statusPanel && (
+              <StatusPanel
+                panel={statusPanel}
+                netBalance={netBalance}
+                totalProduction={totalProduction}
+                totalConsumption={totalConsumption}
+                onMouseDown={handlePanelMouseDown}
+              />
+            )}
+
+            {/* Controls Panel */}
+            {controlsPanel && (
+              <ControlsPanel
+                panel={controlsPanel}
+                energyFlows={energyFlows}
+                onMouseDown={handlePanelMouseDown}
+                onToggleEnergyFlow={toggleEnergyFlow}
+                onAddComponent={addComponent}
+              />
+            )}
+
+            {/* Components */}
+            {components.map((component) => (
+              <GridComponentView
+                key={component.id}
+                component={component}
+                isSelected={selectedComponent === component.id}
+                isDragged={draggedComponent === component.id}
+                onMouseDown={handleComponentMouseDown}
+                onSelect={setSelectedComponent}
+                onRemove={removeComponent}
+              />
+            ))}
+
+            {/* Grid Title for split view */}
+            {viewMode === 'split' && (
+              <div className="absolute top-4 left-4 z-40">
+                <h3 className="text-lg font-semibold text-white bg-slate-900/80 px-3 py-1 rounded-lg backdrop-blur-sm">
+                  Interactive Grid
+                </h3>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Controls Panel */}
-        {controlsPanel && (
-          <ControlsPanel
-            panel={controlsPanel}
-            energyFlows={energyFlows}
-            onMouseDown={handlePanelMouseDown}
-            onToggleEnergyFlow={toggleEnergyFlow}
-            onAddComponent={addComponent}
-          />
+        {/* Analytics View */}
+        {(viewMode === 'analytics' || viewMode === 'split') && (
+          <div className={`${viewMode === 'split' ? 'w-1/2' : 'w-full'} h-full overflow-auto bg-slate-900`}>
+            <div className="p-6 h-full">
+              <GridAnalytics 
+                components={components} 
+                energyFlows={energyFlows}
+                className="h-full"
+              />
+            </div>
+          </div>
         )}
-
-        {/* Components */}
-        {components.map((component) => (
-          <GridComponentView
-            key={component.id}
-            component={component}
-            isSelected={selectedComponent === component.id}
-            isDragged={draggedComponent === component.id}
-            onMouseDown={handleComponentMouseDown}
-            onSelect={setSelectedComponent}
-            onRemove={removeComponent}
-          />
-        ))}
       </div>
     </div>
   );
