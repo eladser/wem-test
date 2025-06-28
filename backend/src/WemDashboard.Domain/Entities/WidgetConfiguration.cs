@@ -25,8 +25,7 @@ public class WidgetConfiguration
     public int Width { get; set; } = 4;
     public int Height { get; set; } = 4;
     
-    // Widget-specific settings as JSON
-    [Column(TypeName = "nvarchar(max)")]
+    // Widget-specific settings as JSON - Remove SQL Server specific TypeName
     public string Settings { get; set; } = "{}";
     
     // Data source configuration
