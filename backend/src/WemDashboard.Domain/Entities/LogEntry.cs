@@ -71,7 +71,10 @@ public class LogEntry
     public string? RelatedEntityType { get; set; }
     public string? RelatedEntityId { get; set; }
 
-    // Index helpers
+    // Index helpers - Fixed: NotMapped to exclude from database
+    [NotMapped]
     public string LevelString => Level.ToString();
+    
+    [NotMapped]
     public DateTime Date => Timestamp.Date;
 }
