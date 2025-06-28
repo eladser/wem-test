@@ -6,14 +6,16 @@ Write-Host "[FINAL TEST] Testing Migration After All Foreign Key Fixes" -Foregro
 Write-Host "========================================================" -ForegroundColor Cyan
 
 $ApiPath = "./backend/src/WemDashboard.API"
+$InfrastructurePath = "./backend/src/WemDashboard.Infrastructure"
 $BackendPath = "./backend"
 
 Write-Host "`n[STEP 1] Environment Check" -ForegroundColor Magenta
 Write-Host "Current directory: $(Get-Location)" -ForegroundColor Blue
 Write-Host "API Path exists: $(Test-Path $ApiPath)" -ForegroundColor Blue
+Write-Host "Infrastructure Path exists: $(Test-Path $InfrastructurePath)" -ForegroundColor Blue
 
 Write-Host "`n[STEP 2] Clean Previous Attempts" -ForegroundColor Magenta
-$migrationsPath = "$ApiPath/Migrations"
+$migrationsPath = "$InfrastructurePath/Migrations"
 if (Test-Path $migrationsPath) {
     Write-Host "Removing existing migrations..." -ForegroundColor Yellow
     Remove-Item $migrationsPath -Recurse -Force -ErrorAction SilentlyContinue
@@ -54,10 +56,10 @@ finally {
 }
 
 Write-Host "`n[STEP 4] Test EF DbContext" -ForegroundColor Magenta
-Push-Location $ApiPath
+Push-Location $InfrastructurePath
 try {
     Write-Host "Testing EF dbcontext info..." -ForegroundColor Yellow
-    $dbContextOutput = dotnet ef dbcontext info 2>&1
+    $dbContextOutput = dotnet ef dbcontext info --startup-project $ApiPath 2>&1
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] EF DbContext works!" -ForegroundColor Green
@@ -74,16 +76,16 @@ finally {
 }
 
 Write-Host "`n[STEP 5] Create Migration" -ForegroundColor Magenta
-Push-Location $ApiPath
+Push-Location $InfrastructurePath
 try {
     Write-Host "Creating InitialCreate migration..." -ForegroundColor Yellow
-    $migrationOutput = dotnet ef migrations add InitialCreate 2>&1
+    $migrationOutput = dotnet ef migrations add InitialCreate --startup-project $ApiPath 2>&1
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[SUCCESS] Migration created successfully!" -ForegroundColor Green
         
         Write-Host "`nUpdating database..." -ForegroundColor Yellow
-        $updateOutput = dotnet ef database update 2>&1
+        $updateOutput = dotnet ef database update --startup-project $ApiPath 2>&1
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[SUCCESS] Database updated successfully!" -ForegroundColor Green
@@ -131,7 +133,7 @@ if (-not $dbFound) {
     }
 }
 
-$migrationsPath = "$ApiPath/Migrations"
+$migrationsPath = "$InfrastructurePath/Migrations"
 if (Test-Path $migrationsPath) {
     $migrationFiles = Get-ChildItem $migrationsPath -Filter "*.cs" -ErrorAction SilentlyContinue
     Write-Host "[OK] Migration files created: $($migrationFiles.Count)" -ForegroundColor Green
@@ -149,6 +151,8 @@ if ($dbFound) {
     Write-Host "3. Fixed GridComponentConfiguration.SiteId - changed int? to string?" -ForegroundColor Cyan
     Write-Host "4. Fixed EnergyFlowConfiguration.SiteId - changed int? to string?" -ForegroundColor Cyan
     Write-Host "5. Updated all related interfaces and repositories" -ForegroundColor Cyan
+    Write-Host "6. Fixed EF migrations assembly configuration" -ForegroundColor Cyan
+    Write-Host "7. Updated migration commands to use correct project paths" -ForegroundColor Cyan
     
     Write-Host "`n[READY TO GO] You can now run:" -ForegroundColor Green
     Write-Host "powershell -ExecutionPolicy Bypass -File .\setup-quick-integration.bat" -ForegroundColor White
