@@ -342,3 +342,11 @@ public class WemDashboardDbContext : DbContext
         return base.SaveChangesAsync(cancellationToken);
     }
 }
+
+// Create an alias for ApplicationDbContext for the LogService
+public class ApplicationDbContext : WemDashboardDbContext
+{
+    public ApplicationDbContext(DbContextOptions<WemDashboard.Infrastructure.Data.WemDashboardDbContext> options) : base(options)
+    {
+    }
+}
