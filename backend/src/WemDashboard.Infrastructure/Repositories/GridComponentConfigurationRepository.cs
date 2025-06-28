@@ -23,7 +23,7 @@ public class GridComponentConfigurationRepository : IGridComponentConfigurationR
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<GridComponentConfiguration>> GetBySiteIdAsync(string userId, int siteId)
+    public async Task<IEnumerable<GridComponentConfiguration>> GetBySiteIdAsync(string userId, string? siteId)
     {
         return await _context.GridComponentConfigurations
             .Where(c => c.UserId == userId && c.SiteId == siteId)
