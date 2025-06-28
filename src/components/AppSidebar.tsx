@@ -1,4 +1,4 @@
-import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, ChevronRight, Bell, Activity, Gauge, Filter, X } from "lucide-react";
+import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, ChevronRight, Bell, Activity, Gauge, Filter, X, TrendingUp, Monitor } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState, useMemo, useCallback } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -17,6 +17,8 @@ export function AppSidebar() {
   const mainNavItems = [
     { title: "Overview", url: "/", icon: Home },
     { title: "Analytics", url: "/analytics", icon: BarChart3 },
+    { title: "Advanced Analytics", url: "/advanced-analytics", icon: TrendingUp },
+    { title: "Real-time Monitoring", url: "/monitoring", icon: Monitor },
     { title: "Assets", url: "/assets", icon: Package },
     { title: "Settings", url: "/settings", icon: Settings },
   ];
