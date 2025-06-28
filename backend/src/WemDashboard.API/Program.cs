@@ -128,7 +128,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Application services
 builder.Services.AddApplication();
 
-// Register our logging service
+// Register our logging service - use the actual DbContext type
 builder.Services.AddScoped<ILogService, LogService>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
