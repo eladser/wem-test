@@ -32,7 +32,10 @@ import {
   Eye,
   Download,
   Maximize2,
-  BarChart3
+  BarChart3,
+  Grid3X3,
+  FileText,
+  DollarSign
 } from "lucide-react";
 
 // Quick Stats Component for site overview
@@ -321,140 +324,183 @@ export const SiteDashboard = () => {
   }
 
   return (
-    <div className="w-full min-h-screen">
-      {/* REMOVED: SiteTopBar to prevent duplicate headers */}
-      <div className="p-6 space-y-6">
-        {/* Site Header - Clean, single header */}
-        <EnhancedSiteHeader site={site} />
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50">
-            <TabsTrigger 
-              value="overview" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Overview
-            </TabsTrigger>
-            <TabsTrigger 
-              value="grid" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Grid
-            </TabsTrigger>
-            <TabsTrigger 
-              value="assets" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Assets
-            </TabsTrigger>
-            <TabsTrigger 
-              value="reports" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Reports
-            </TabsTrigger>
-            <TabsTrigger 
-              value="team" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Team
-            </TabsTrigger>
-            <TabsTrigger 
-              value="finances" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Finances
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
-            >
-              Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            {/* Quick Stats */}
-            <SiteQuickStats site={site} />
-            
-            {/* Main Dashboard Content - Better Layout */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <RealTimeMonitoring site={site} />
-                <PerformanceAnalytics site={site} />
-              </div>
-              
-              {/* Middle Column */}
-              <div className="xl:col-span-2 space-y-6">
-                <CustomizableSiteDashboard siteData={site} />
+    <div className="w-full space-y-6">
+      {/* Site Header - Clean, single header integrated into main layout */}
+      <div className="bg-gradient-to-r from-slate-900/60 via-slate-800/60 to-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="relative group">
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 via-purple-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Zap className="w-6 h-6 text-white" />
               </div>
             </div>
             
-            {/* Bottom Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SiteAlerts />
-              
-              {/* Additional monitoring card */}
-              <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-cyan-400" />
-                    Today's Summary
-                  </CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Daily performance overview
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-emerald-400">2,847</p>
-                      <p className="text-sm text-slate-400">kWh Generated</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-400">98.5%</p>
-                      <p className="text-sm text-slate-400">Peak Efficiency</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-400">12</p>
-                      <p className="text-sm text-slate-400">Days Maintenance</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-yellow-400">3</p>
-                      <p className="text-sm text-slate-400">Active Alerts</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-violet-200 to-cyan-200 bg-clip-text text-transparent">
+                {site.name}
+              </h1>
+              <div className="flex items-center space-x-3 mt-1">
+                <p className="text-cyan-300 text-sm font-medium flex items-center space-x-2">
+                  <span>{site.location}</span>
+                  <div className="w-1 h-1 bg-cyan-400 rounded-full"></div>
+                  <span className="text-white/60">Capacity: {site.totalCapacity}MW</span>
+                </p>
+              </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="grid" className="space-y-6 mt-6">
-            <SiteGrid />
-          </TabsContent>
-
-          <TabsContent value="assets" className="space-y-6 mt-6">
-            <SiteAssets />
-          </TabsContent>
-
-          <TabsContent value="reports" className="space-y-6 mt-6">
-            <SiteReports />
-          </TabsContent>
-
-          <TabsContent value="team" className="space-y-6 mt-6">
-            <SiteTeam />
-          </TabsContent>
-
-          <TabsContent value="finances" className="space-y-6 mt-6">
-            <SiteFinances />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6 mt-6">
-            <SiteSettings />
-          </TabsContent>
-        </Tabs>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <Badge className={`${
+              site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+              site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+              'bg-red-500/20 text-red-400 border-red-500/30'
+            } font-semibold backdrop-blur-xl px-4 py-2`}>
+              <Activity className="w-3 h-3 mr-2" />
+              {site.status}
+            </Badge>
+            
+            <div className="flex items-center space-x-2 bg-emerald-500/20 border border-emerald-400/30 rounded-xl px-4 py-2 backdrop-blur-xl">
+              <TrendingUp className="w-4 h-4 text-emerald-300" />
+              <span className="text-emerald-300 font-semibold text-sm">98.5% Uptime</span>
+            </div>
+          </div>
+        </div>
       </div>
+        
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-7 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50">
+          <TabsTrigger 
+            value="overview" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="grid" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <Grid3X3 className="w-4 h-4 mr-2" />
+            Grid
+          </TabsTrigger>
+          <TabsTrigger 
+            value="assets" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Assets
+          </TabsTrigger>
+          <TabsTrigger 
+            value="reports" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Reports
+          </TabsTrigger>
+          <TabsTrigger 
+            value="team" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Team
+          </TabsTrigger>
+          <TabsTrigger 
+            value="finances" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <DollarSign className="w-4 h-4 mr-2" />
+            Finances
+          </TabsTrigger>
+          <TabsTrigger 
+            value="settings" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 data-[state=active]:border-emerald-500/30"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 mt-6">
+          {/* Quick Stats */}
+          <SiteQuickStats site={site} />
+          
+          {/* Main Dashboard Content - Better Layout */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <RealTimeMonitoring site={site} />
+              <PerformanceAnalytics site={site} />
+            </div>
+            
+            {/* Middle Column */}
+            <div className="xl:col-span-2 space-y-6">
+              <CustomizableSiteDashboard siteData={site} />
+            </div>
+          </div>
+          
+          {/* Bottom Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SiteAlerts />
+            
+            {/* Additional monitoring card */}
+            <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-xl">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-cyan-400" />
+                  Today's Summary
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Daily performance overview
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-emerald-400">2,847</p>
+                    <p className="text-sm text-slate-400">kWh Generated</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-400">98.5%</p>
+                    <p className="text-sm text-slate-400">Peak Efficiency</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-purple-400">12</p>
+                    <p className="text-sm text-slate-400">Days Maintenance</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-yellow-400">3</p>
+                    <p className="text-sm text-slate-400">Active Alerts</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="grid" className="space-y-6 mt-6">
+          <SiteGrid />
+        </TabsContent>
+
+        <TabsContent value="assets" className="space-y-6 mt-6">
+          <SiteAssets />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6 mt-6">
+          <SiteReports />
+        </TabsContent>
+
+        <TabsContent value="team" className="space-y-6 mt-6">
+          <SiteTeam />
+        </TabsContent>
+
+        <TabsContent value="finances" className="space-y-6 mt-6">
+          <SiteFinances />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6 mt-6">
+          <SiteSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

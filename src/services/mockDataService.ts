@@ -5,66 +5,188 @@ export const mockRegions: Region[] = [
   {
     id: 'north-america',
     name: 'North America',
-    sites: [
+    subRegions: [
       {
-        id: 'site-a',
-        name: 'Main Campus',
-        location: 'California, USA',
-        region: 'north-america',
-        status: 'online',
-        totalCapacity: 25.5,
-        currentOutput: 18.2,
-        efficiency: 94.2,
-        lastUpdate: '2 min ago'
+        id: 'north-america-west',
+        name: 'West Coast',
+        sites: [
+          {
+            id: 'site-a',
+            name: 'Main Campus',
+            location: 'California, USA',
+            region: 'north-america',
+            subRegion: 'north-america-west',
+            status: 'online',
+            totalCapacity: 25.5,
+            currentOutput: 18.2,
+            efficiency: 94.2,
+            lastUpdate: '2 min ago'
+          },
+          {
+            id: 'site-e',
+            name: 'Silicon Valley Plant',
+            location: 'San Jose, CA, USA',
+            region: 'north-america',
+            subRegion: 'north-america-west',
+            status: 'online',
+            totalCapacity: 18.7,
+            currentOutput: 15.3,
+            efficiency: 92.8,
+            lastUpdate: '1 min ago'
+          }
+        ]
       },
       {
-        id: 'site-b',
-        name: 'Warehouse Complex',
-        location: 'Texas, USA',
-        region: 'north-america',
-        status: 'online',
-        totalCapacity: 15.8,
-        currentOutput: 12.1,
-        efficiency: 91.5,
-        lastUpdate: '3 min ago'
+        id: 'north-america-central',
+        name: 'Central Plains',
+        sites: [
+          {
+            id: 'site-b',
+            name: 'Warehouse Complex',
+            location: 'Texas, USA',
+            region: 'north-america',
+            subRegion: 'north-america-central',
+            status: 'online',
+            totalCapacity: 15.8,
+            currentOutput: 12.1,
+            efficiency: 91.5,
+            lastUpdate: '3 min ago'
+          },
+          {
+            id: 'site-f',
+            name: 'Dallas Distribution Center',
+            location: 'Dallas, TX, USA',
+            region: 'north-america',
+            subRegion: 'north-america-central',
+            status: 'maintenance',
+            totalCapacity: 22.4,
+            currentOutput: 0,
+            efficiency: 0,
+            lastUpdate: '1 hour ago'
+          }
+        ]
       }
-    ]
+    ],
+    sites: [] // Legacy support - will be populated from subRegions
   },
   {
     id: 'europe',
     name: 'Europe',
-    sites: [
+    subRegions: [
       {
-        id: 'site-c',
-        name: 'Office Complex',
-        location: 'Berlin, Germany',
-        region: 'europe',
-        status: 'maintenance',
-        totalCapacity: 12.3,
-        currentOutput: 0,
-        efficiency: 0,
-        lastUpdate: '2 hours ago'
+        id: 'europe-western',
+        name: 'Western Europe',
+        sites: [
+          {
+            id: 'site-c',
+            name: 'Office Complex',
+            location: 'Berlin, Germany',
+            region: 'europe',
+            subRegion: 'europe-western',
+            status: 'maintenance',
+            totalCapacity: 12.3,
+            currentOutput: 0,
+            efficiency: 0,
+            lastUpdate: '2 hours ago'
+          },
+          {
+            id: 'site-g',
+            name: 'Amsterdam Data Center',
+            location: 'Amsterdam, Netherlands',
+            region: 'europe',
+            subRegion: 'europe-western',
+            status: 'online',
+            totalCapacity: 28.9,
+            currentOutput: 26.1,
+            efficiency: 95.4,
+            lastUpdate: '30 seconds ago'
+          }
+        ]
+      },
+      {
+        id: 'europe-northern',
+        name: 'Northern Europe',
+        sites: [
+          {
+            id: 'site-h',
+            name: 'Stockholm Facility',
+            location: 'Stockholm, Sweden',
+            region: 'europe',
+            subRegion: 'europe-northern',
+            status: 'online',
+            totalCapacity: 19.6,
+            currentOutput: 17.8,
+            efficiency: 93.7,
+            lastUpdate: '45 seconds ago'
+          }
+        ]
       }
-    ]
+    ],
+    sites: [] // Legacy support - will be populated from subRegions
   },
   {
     id: 'asia-pacific',
     name: 'Asia Pacific',
-    sites: [
+    subRegions: [
       {
-        id: 'site-d',
-        name: 'Manufacturing Plant',
-        location: 'Tokyo, Japan',
-        region: 'asia-pacific',
-        status: 'online',
-        totalCapacity: 32.1,
-        currentOutput: 28.7,
-        efficiency: 96.8,
-        lastUpdate: '1 min ago'
+        id: 'asia-pacific-east',
+        name: 'East Asia',
+        sites: [
+          {
+            id: 'site-d',
+            name: 'Manufacturing Plant',
+            location: 'Tokyo, Japan',
+            region: 'asia-pacific',
+            subRegion: 'asia-pacific-east',
+            status: 'online',
+            totalCapacity: 32.1,
+            currentOutput: 28.7,
+            efficiency: 96.8,
+            lastUpdate: '1 min ago'
+          },
+          {
+            id: 'site-i',
+            name: 'Seoul Operations Center',
+            location: 'Seoul, South Korea',
+            region: 'asia-pacific',
+            subRegion: 'asia-pacific-east',
+            status: 'online',
+            totalCapacity: 24.3,
+            currentOutput: 21.9,
+            efficiency: 94.1,
+            lastUpdate: '2 min ago'
+          }
+        ]
+      },
+      {
+        id: 'asia-pacific-southeast',
+        name: 'Southeast Asia',
+        sites: [
+          {
+            id: 'site-j',
+            name: 'Singapore Hub',
+            location: 'Singapore',
+            region: 'asia-pacific',
+            subRegion: 'asia-pacific-southeast',
+            status: 'online',
+            totalCapacity: 16.8,
+            currentOutput: 14.2,
+            efficiency: 89.3,
+            lastUpdate: '4 min ago'
+          }
+        ]
       }
-    ]
+    ],
+    sites: [] // Legacy support - will be populated from subRegions
   }
 ];
+
+// Populate legacy sites array for backward compatibility
+mockRegions.forEach(region => {
+  if (region.subRegions) {
+    region.sites = region.subRegions.flatMap(subRegion => subRegion.sites || []);
+  }
+});
 
 export const generatePowerData = (): PowerData[] => {
   return [
@@ -144,6 +266,89 @@ export const getMockAssets = (siteId: string): Asset[] => {
         power: '13.5 kW',
         efficiency: '95.1%',
         lastUpdate: '1 min ago'
+      }
+    ],
+    // Add assets for new sites
+    'site-e': [
+      {
+        id: 'INV-005',
+        name: 'Solar Inverter #5',
+        type: 'inverter',
+        siteId: 'site-e',
+        status: 'online',
+        power: '7.8 kW',
+        efficiency: '92.8%',
+        lastUpdate: '1 min ago'
+      }
+    ],
+    'site-f': [
+      {
+        id: 'INV-006',
+        name: 'Solar Inverter #6',
+        type: 'inverter',
+        siteId: 'site-f',
+        status: 'maintenance',
+        power: '0 kW',
+        efficiency: '0%',
+        lastUpdate: '1 hour ago'
+      }
+    ],
+    'site-g': [
+      {
+        id: 'INV-007',
+        name: 'Solar Inverter #7',
+        type: 'inverter',
+        siteId: 'site-g',
+        status: 'online',
+        power: '12.4 kW',
+        efficiency: '95.4%',
+        lastUpdate: '30 seconds ago'
+      },
+      {
+        id: 'BAT-003',
+        name: 'Battery Pack #3',
+        type: 'battery',
+        siteId: 'site-g',
+        status: 'online',
+        power: '13.7 kW',
+        efficiency: '94.8%',
+        lastUpdate: '30 seconds ago'
+      }
+    ],
+    'site-h': [
+      {
+        id: 'INV-008',
+        name: 'Solar Inverter #8',
+        type: 'inverter',
+        siteId: 'site-h',
+        status: 'online',
+        power: '9.6 kW',
+        efficiency: '93.7%',
+        lastUpdate: '45 seconds ago'
+      }
+    ],
+    'site-i': [
+      {
+        id: 'INV-009',
+        name: 'Solar Inverter #9',
+        type: 'inverter',
+        siteId: 'site-i',
+        status: 'online',
+        power: '11.2 kW',
+        efficiency: '94.1%',
+        lastUpdate: '2 min ago'
+      }
+    ],
+    'site-j': [
+      {
+        id: 'INV-010',
+        name: 'Solar Inverter #10',
+        type: 'inverter',
+        siteId: 'site-j',
+        status: 'online',
+        power: '8.9 kW',
+        efficiency: '89.3%',
+        lastUpdate: '4 min ago'
       }
     ]
   };

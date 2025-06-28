@@ -11,6 +11,7 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set(mockRegions.map(r => r.id)));
+  const [expandedSubRegions, setExpandedSubRegions] = useState<Set<string>>(new Set());
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
   const mainNavItems = [
@@ -20,14 +21,34 @@ export function AppSidebar() {
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 
-  // Optimized filtering logic for scalability
+  // Enhanced filtering logic for sub-regions
   const filteredData = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     
     return mockRegions.map(region => {
       const matchingRegion = region.name.toLowerCase().includes(searchLower);
       
-      const filteredSites = region.sites.filter(site => {
+      // Process sub-regions if they exist
+      const filteredSubRegions = region.subRegions?.map(subRegion => {
+        const matchingSubRegion = subRegion.name.toLowerCase().includes(searchLower);
+        
+        const filteredSites = subRegion.sites.filter(site => {
+          const matchesSearch = site.name.toLowerCase().includes(searchLower) ||
+                              site.id.toLowerCase().includes(searchLower) ||
+                              site.location.toLowerCase().includes(searchLower);
+          const matchesStatus = !showOnlineOnly || site.status === 'online';
+          return matchesSearch && matchesStatus;
+        });
+
+        return {
+          ...subRegion,
+          sites: filteredSites,
+          visible: matchingSubRegion || filteredSites.length > 0
+        };
+      }).filter(subRegion => subRegion.visible) || [];
+
+      // Also filter direct sites for backward compatibility
+      const filteredDirectSites = region.sites.filter(site => {
         const matchesSearch = site.name.toLowerCase().includes(searchLower) ||
                             site.id.toLowerCase().includes(searchLower) ||
                             site.location.toLowerCase().includes(searchLower);
@@ -35,23 +56,37 @@ export function AppSidebar() {
         return matchesSearch && matchesStatus;
       });
 
+      const hasVisibleContent = matchingRegion || 
+                                filteredSubRegions.length > 0 || 
+                                filteredDirectSites.length > 0;
+
       return {
         ...region,
-        sites: filteredSites,
-        visible: matchingRegion || filteredSites.length > 0
+        sites: filteredDirectSites,
+        subRegions: filteredSubRegions,
+        visible: hasVisibleContent
       };
     }).filter(region => region.visible);
   }, [searchTerm, showOnlineOnly]);
 
   const totalSites = useMemo(() => 
-    filteredData.reduce((acc, region) => acc + region.sites.length, 0), 
+    filteredData.reduce((acc, region) => {
+      const directSites = region.sites.length;
+      const subRegionSites = region.subRegions?.reduce((subAcc, subRegion) => 
+        subAcc + subRegion.sites.length, 0) || 0;
+      return acc + directSites + subRegionSites;
+    }, 0), 
     [filteredData]
   );
 
   const onlineSites = useMemo(() => 
-    filteredData.reduce((acc, region) => 
-      acc + region.sites.filter(site => site.status === 'online').length, 0
-    ), [filteredData]
+    filteredData.reduce((acc, region) => {
+      const directOnline = region.sites.filter(site => site.status === 'online').length;
+      const subRegionOnline = region.subRegions?.reduce((subAcc, subRegion) => 
+        subAcc + subRegion.sites.filter(site => site.status === 'online').length, 0) || 0;
+      return acc + directOnline + subRegionOnline;
+    }, 0), 
+    [filteredData]
   );
 
   const toggleRegion = useCallback((regionId: string) => {
@@ -61,6 +96,18 @@ export function AppSidebar() {
         newSet.delete(regionId);
       } else {
         newSet.add(regionId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const toggleSubRegion = useCallback((subRegionId: string) => {
+    setExpandedSubRegions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(subRegionId)) {
+        newSet.delete(subRegionId);
+      } else {
+        newSet.add(subRegionId);
       }
       return newSet;
     });
@@ -239,7 +286,7 @@ export function AppSidebar() {
                                     {region.name}
                                   </span>
                                   <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-2 py-0.5 shrink-0 ml-2 bg-slate-800/50">
-                                    {region.sites.length}
+                                    {(region.subRegions?.reduce((acc, sub) => acc + sub.sites.length, 0) || 0) + region.sites.length}
                                   </Badge>
                                 </div>
                               </NavLink>
@@ -257,10 +304,110 @@ export function AppSidebar() {
                               </CollapsibleTrigger>
                             </div>
                             
-                            {/* Sites List - Clean, normal styling with smooth animation */}
+                            {/* Region Content - Sub-regions and Sites */}
                             <CollapsibleContent className="ml-4 overflow-hidden">
                               <div className="space-y-1 animate-slide-in-down">
+                                {/* Sub-regions */}
+                                {region.subRegions?.map((subRegion, subIndex) => {
+                                  const isSubRegionExpanded = expandedSubRegions.has(subRegion.id);
+                                  
+                                  return (
+                                    <div key={subRegion.id}>
+                                      <Collapsible open={isSubRegionExpanded} onOpenChange={() => toggleSubRegion(subRegion.id)}>
+                                        {/* Sub-region Header */}
+                                        <div className="flex items-stretch gap-1 ml-2">
+                                          <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-800/30 flex-1 min-w-0">
+                                            <div className="p-1 rounded bg-slate-700/50 shrink-0">
+                                              <MapPin className="w-3 h-3 text-slate-500" />
+                                            </div>
+                                            <span className="font-medium text-xs text-slate-300 truncate" title={subRegion.name}>
+                                              {subRegion.name}
+                                            </span>
+                                            <Badge variant="outline" className="text-xs border-slate-600 text-slate-500 px-1.5 py-0.5 shrink-0 ml-auto bg-slate-800/50">
+                                              {subRegion.sites.length}
+                                            </Badge>
+                                          </div>
+                                          
+                                          <CollapsibleTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="p-2 text-slate-500 hover:text-slate-300 transition-all duration-200 rounded-lg hover:bg-slate-800/50 shrink-0"
+                                            >
+                                              <div className={`transition-transform duration-200 ${isSubRegionExpanded ? 'rotate-180' : 'rotate-0'}`}>
+                                                <ChevronDown className="w-3 h-3" />
+                                              </div>
+                                            </Button>
+                                          </CollapsibleTrigger>
+                                        </div>
+                                        
+                                        {/* Sub-region Sites */}
+                                        <CollapsibleContent className="ml-6 overflow-hidden">
+                                          <div className="space-y-1 animate-slide-in-down">
+                                            {subRegion.sites.map((site, siteIndex) => {
+                                              const isSiteActive = currentPath.includes(`/site/${site.id}`);
+                                              const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
+                                              
+                                              return (
+                                                <NavLink
+                                                  key={site.id}
+                                                  to={`/site/${site.id}`}
+                                                  className={`flex items-start px-3 py-2.5 rounded-lg transition-all duration-200 w-full block animate-fade-in ${
+                                                    isSiteActive
+                                                      ? "bg-emerald-500/20 text-emerald-400"
+                                                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+                                                  }`}
+                                                  style={{ animationDelay: `${siteIndex * 50}ms` }}
+                                                >
+                                                  <div className="flex items-start space-x-3 w-full min-w-0">
+                                                    {/* Status Indicator */}
+                                                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 transition-all duration-200 ${
+                                                      site.status === 'online' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
+                                                      site.status === 'maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
+                                                      'bg-red-400 shadow-red-400/50 shadow-sm'
+                                                    }`} />
+                                                    
+                                                    {/* Site Information */}
+                                                    <div className="flex-1 min-w-0 space-y-1">
+                                                      <div>
+                                                        <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
+                                                          {site.name}
+                                                        </h4>
+                                                        <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
+                                                          {site.location}
+                                                        </p>
+                                                      </div>
+                                                      
+                                                      {/* Capacity and Output */}
+                                                      <div className="flex items-center justify-between text-xs gap-2">
+                                                        <span className="text-slate-300 font-medium">
+                                                          {site.currentOutput}MW / {site.totalCapacity}MW
+                                                        </span>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
+                                                          site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                          site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                                          'bg-red-500/20 text-red-400'
+                                                        }`}>
+                                                          {efficiencyPercentage}%
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </NavLink>
+                                              );
+                                            })}
+                                          </div>
+                                        </CollapsibleContent>
+                                      </Collapsible>
+                                    </div>
+                                  );
+                                })}
+                                
+                                {/* Direct Sites (for backward compatibility) */}
                                 {region.sites.map((site, index) => {
+                                  // Skip sites that are already in sub-regions
+                                  if (site.subRegion) return null;
+                                  
                                   const isSiteActive = currentPath.includes(`/site/${site.id}`);
                                   const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
                                   
@@ -276,16 +423,15 @@ export function AppSidebar() {
                                       style={{ animationDelay: `${index * 50}ms` }}
                                     >
                                       <div className="flex items-start space-x-3 w-full min-w-0">
-                                        {/* Status Indicator - Clean circular design */}
+                                        {/* Status Indicator */}
                                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 transition-all duration-200 ${
                                           site.status === 'online' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
                                           site.status === 'maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
                                           'bg-red-400 shadow-red-400/50 shadow-sm'
                                         }`} />
                                         
-                                        {/* Site Information - Clean typography */}
+                                        {/* Site Information */}
                                         <div className="flex-1 min-w-0 space-y-1">
-                                          {/* Site Name */}
                                           <div>
                                             <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
                                               {site.name}
