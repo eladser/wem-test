@@ -1,9 +1,5 @@
 using AutoMapper;
-using WemDashboard.Application.DTOs.Auth;
-using WemDashboard.Application.DTOs.Alerts;
-using WemDashboard.Application.DTOs.Assets;
-using WemDashboard.Application.DTOs.Sites;
-using WemDashboard.Application.DTOs.PowerData;
+using WemDashboard.Application.DTOs;
 using WemDashboard.Domain.Entities;
 
 namespace WemDashboard.Application.Mappings;
@@ -12,56 +8,80 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Asset mappings
-        CreateMap<Asset, AssetDto>()
-            .ForMember(dest => dest.SiteName, opt => opt.MapFrom(src => src.Site != null ? src.Site.Name : null));
-
-        CreateMap<CreateAssetDto, Asset>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString()))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => AssetStatus.Online))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.LastUpdate, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-        // Site mappings
-        CreateMap<Site, SiteDto>()
-            .ForMember(dest => dest.AssetCount, opt => opt.MapFrom(src => src.Assets.Count))
-            .ForMember(dest => dest.UnreadAlertCount, opt => opt.MapFrom(src => src.Alerts.Count(a => !a.IsRead)));
-
-        CreateMap<CreateSiteDto, Site>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString()))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => SiteStatus.Online))
-            .ForMember(dest => dest.CurrentOutput, opt => opt.MapFrom(src => 0))
-            .ForMember(dest => dest.Efficiency, opt => opt.MapFrom(src => 0))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.LastUpdate, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-        // PowerData mappings
-        CreateMap<PowerData, PowerDataDto>()
-            .ForMember(dest => dest.SiteName, opt => opt.MapFrom(src => src.Site != null ? src.Site.Name : null));
+        // User Preferences
+        CreateMap<UserPreferences, UserPreferencesDto>().ReverseMap();
         
-        CreateMap<CreatePowerDataDto, PowerData>()
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-        // Alert mappings
-        CreateMap<Alert, AlertDto>()
-            .ForMember(dest => dest.SiteName, opt => opt.MapFrom(src => src.Site != null ? src.Site.Name : null));
+        // Dashboard Layout
+        CreateMap<DashboardLayout, DashboardLayoutDto>().ReverseMap();
         
-        CreateMap<CreateAlertDto, Alert>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString()))
-            .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.IsRead, opt => opt.MapFrom(src => false))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-        // User mappings
-        CreateMap<User, UserDto>();
+        // Widget Configuration
+        CreateMap<WidgetConfiguration, WidgetConfigurationDto>().ReverseMap();
         
-        CreateMap<RegisterDto, User>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid().ToString()))
-            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.LastLogin, opt => opt.MapFrom(src => DateTime.UtcNow));
+        // Grid Component Configuration
+        CreateMap<GridComponentConfiguration, GridComponentConfigurationDto>().ReverseMap();
+        
+        // Energy Flow Configuration
+        CreateMap<EnergyFlowConfiguration, EnergyFlowConfigurationDto>().ReverseMap();
+        
+        // Filter Preset
+        CreateMap<FilterPreset, FilterPresetDto>()
+            .ForMember(dest => dest.FilterConfig, opt => opt.MapFrom(src => src.FilterConfig))
+            .ReverseMap();
+        
+        // Report Template
+        CreateMap<ReportTemplate, ReportTemplateDto>()
+            .ForMember(dest => dest.TemplateConfig, opt => opt.MapFrom(src => src.TemplateConfig))
+            .ReverseMap();
+        
+        // View State
+        CreateMap<ViewState, ViewStateDto>()
+            .ForMember(dest => dest.StateValue, opt => opt.MapFrom(src => src.StateValue))
+            .ReverseMap();
     }
+}
+
+// Additional DTOs for completeness
+public class FilterPresetDto
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string PageName { get; set; } = string.Empty;
+    public string FilterConfig { get; set; } = "{}";
+    public bool IsDefault { get; set; } = false;
+    public bool IsShared { get; set; } = false;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class ReportTemplateDto
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string ReportType { get; set; } = string.Empty;
+    public string TemplateConfig { get; set; } = "{}";
+    public bool IsScheduled { get; set; } = false;
+    public string ScheduleCron { get; set; } = string.Empty;
+    public string Recipients { get; set; } = string.Empty;
+    public string ExportFormat { get; set; } = "pdf";
+    public bool IncludeCharts { get; set; } = true;
+    public bool IncludeData { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class ViewStateDto
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string PageName { get; set; } = string.Empty;
+    public string StateKey { get; set; } = string.Empty;
+    public string StateValue { get; set; } = "{}";
+    public DateTime? ExpiresAt { get; set; }
+    public bool IsPersistent { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
