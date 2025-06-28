@@ -1,7 +1,7 @@
 // This is an alias for WemDashboardDbContext to maintain compatibility
 // with the LogService which expects ApplicationDbContext
 
-using WemDashboard.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace WemDashboard.Infrastructure.Data
 {
