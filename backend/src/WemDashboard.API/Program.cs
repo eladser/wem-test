@@ -6,9 +6,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Serilog.Events;
 using System.Text;
 using WemDashboard.API.Middleware;
 using WemDashboard.Application;
+using WemDashboard.Application.Interfaces;
 using WemDashboard.Application.Mappings;
 using WemDashboard.Application.Services;
 using WemDashboard.Application.Validators;
@@ -33,12 +35,27 @@ Console.WriteLine($"✅ Database Provider: {databaseProvider}");
 Console.WriteLine($"✅ Connection String: {connectionString}");
 Console.WriteLine("==================================");
 
-// Serilog configuration
+// Enhanced Serilog configuration for better error tracking
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/wemdashboard-.txt", rollingInterval: RollingInterval.Day)
+    .Enrich.WithProperty("Application", "WemDashboard")
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/wemdashboard-.txt",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
+    .WriteTo.File(
+        path: "logs/errors/wemdashboard-errors-.txt",
+        rollingInterval: RollingInterval.Day,
+        restrictedToMinimumLevel: LogEventLevel.Warning,
+        retainedFileCountLimit: 90,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -47,6 +64,24 @@ builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// Configure request logging options
+builder.Services.AddSingleton(new RequestLoggingOptions
+{
+    LogRequestBody = !builder.Environment.IsProduction(),
+    LogResponseBody = false,
+    MaxRequestBodySize = 4096,
+    MaxResponseBodySize = 4096,
+    SlowRequestThresholdMs = 3000,
+    SkipPaths = new List<string>
+    {
+        "/health",
+        "/metrics",
+        "/swagger",
+        "/ws",
+        "/favicon.ico"
+    }
+});
+
 // Swagger/OpenAPI configuration
 builder.Services.AddSwaggerGen(c =>
 {
@@ -54,7 +89,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "WEM Dashboard API",
         Version = "v1",
-        Description = "WEM Dashboard API for energy management",
+        Description = "WEM Dashboard API for energy management with comprehensive logging and error handling",
         Contact = new OpenApiContact
         {
             Name = "WEM Dashboard Support",
@@ -92,6 +127,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // Application services
 builder.Services.AddApplication();
+
+// Register our logging service
+builder.Services.AddScoped<ILogService, LogService>();
+
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSiteValidator>();
 
@@ -165,7 +204,14 @@ builder.Services.AddResponseCaching();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline with proper error handling
+
+// Add our custom error handling middleware first
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// Add request logging middleware
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 // ALWAYS enable Swagger (not just in development)
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -210,16 +256,14 @@ app.MapGet("/ws/energy-data", async (HttpContext context) =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        Console.WriteLine($"🔌 WebSocket connection request from: {context.Connection.RemoteIpAddress}");
-        Console.WriteLine($"🔌 Origin: {context.Request.Headers["Origin"]}");
-        Console.WriteLine($"🔌 User-Agent: {context.Request.Headers["User-Agent"]}");
+        Log.Information("WebSocket connection request from {RemoteIpAddress}", context.Connection.RemoteIpAddress);
         
         using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
         await HandleWebSocketConnection(webSocket, context);
     }
     else
     {
-        Console.WriteLine($"❌ Non-WebSocket request to WebSocket endpoint from: {context.Connection.RemoteIpAddress}");
+        Log.Warning("Non-WebSocket request to WebSocket endpoint from {RemoteIpAddress}", context.Connection.RemoteIpAddress);
         context.Response.StatusCode = 400;
         await context.Response.WriteAsync("WebSocket connection required. Use ws://localhost:5000/ws/energy-data");
     }
@@ -230,6 +274,7 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WemDashboardDbContext>();
     var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
     
     try
     {
@@ -242,24 +287,34 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("📊 Seeding database with sample data...");
         await seeder.SeedAsync();
         
+        // Log application startup
+        await logService.LogApplicationEventAsync("ApplicationStartup", "WEM Dashboard API started successfully", new
+        {
+            Version = "3.0.0",
+            Environment = app.Environment.EnvironmentName,
+            DatabaseProvider = databaseProvider,
+            StartupTime = DateTime.UtcNow
+        });
+        
         Log.Information("Database initialized and seeded successfully");
         Console.WriteLine("✅ Database ready with sample data!");
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "An error occurred while initializing the database");
+        Log.Fatal(ex, "An error occurred while initializing the database");
         Console.WriteLine($"❌ DATABASE ERROR: {ex.Message}");
         throw;
     }
 }
 
-Log.Information("Starting WEM Dashboard API on {Environment}", app.Environment.EnvironmentName);
+Log.Information("Starting WEM Dashboard API on {Environment} with enhanced logging and error handling", app.Environment.EnvironmentName);
 
-Console.WriteLine("🚀 WEM Dashboard API is running!");
+Console.WriteLine("🚀 WEM Dashboard API is running with enhanced error handling!");
 Console.WriteLine("📚 Swagger: http://localhost:5000");
 Console.WriteLine("🏥 Health: http://localhost:5000/health");
 Console.WriteLine("🧪 Test: http://localhost:5000/api/hello");
 Console.WriteLine("🔄 WebSocket: ws://localhost:5000/ws/energy-data");
+Console.WriteLine("📊 Logs API: http://localhost:5000/api/logs");
 Console.WriteLine("⚠️  If WebSocket fails, run debug-websocket.bat for troubleshooting");
 
 app.Run();
@@ -270,7 +325,7 @@ static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext con
     var connectionId = Guid.NewGuid().ToString("N")[..8];
     var clientInfo = $"{context.Connection.RemoteIpAddress}:{context.Connection.RemotePort}";
     
-    Console.WriteLine($"🔌 [{connectionId}] New WebSocket connection from {clientInfo}");
+    Log.Information("WebSocket connection established {ConnectionId} from {ClientInfo}", connectionId, clientInfo);
     
     var buffer = new byte[1024 * 4];
     
@@ -293,14 +348,14 @@ static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext con
                 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    Console.WriteLine($"🔌 [{connectionId}] Client requested close");
+                    Log.Information("WebSocket client requested close {ConnectionId}", connectionId);
                     break;
                 }
                 
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    Console.WriteLine($"📥 [{connectionId}] Received: {message}");
+                    Log.Debug("WebSocket message received {ConnectionId}: {Message}", connectionId, message);
                     
                     // Handle ping/pong for keep-alive
                     if (message.Contains("ping"))
@@ -315,7 +370,7 @@ static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext con
             }
             catch (WebSocketException wsEx) when (wsEx.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
             {
-                Console.WriteLine($"🔌 [{connectionId}] Client disconnected prematurely");
+                Log.Warning("WebSocket client disconnected prematurely {ConnectionId}", connectionId);
                 break;
             }
             
@@ -330,11 +385,11 @@ static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext con
     }
     catch (WebSocketException ex)
     {
-        Console.WriteLine($"🔌 [{connectionId}] WebSocket error: {ex.Message} (Code: {ex.WebSocketErrorCode})");
+        Log.Warning(ex, "WebSocket error {ConnectionId}: {ErrorCode}", connectionId, ex.WebSocketErrorCode);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ [{connectionId}] WebSocket handler error: {ex.Message}");
+        Log.Error(ex, "WebSocket handler error {ConnectionId}", connectionId);
     }
     finally
     {
@@ -349,10 +404,10 @@ static async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext con
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ [{connectionId}] Error closing WebSocket: {ex.Message}");
+                Log.Warning(ex, "Error closing WebSocket {ConnectionId}", connectionId);
             }
         }
-        Console.WriteLine($"✅ [{connectionId}] WebSocket connection closed");
+        Log.Information("WebSocket connection closed {ConnectionId}", connectionId);
     }
 }
 
@@ -379,11 +434,11 @@ static async Task SendWelcomeMessage(WebSocket webSocket, string connectionId)
             true,
             CancellationToken.None);
         
-        Console.WriteLine($"📤 [{connectionId}] Sent welcome message");
+        Log.Debug("Sent welcome message {ConnectionId}", connectionId);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ [{connectionId}] Error sending welcome message: {ex.Message}");
+        Log.Error(ex, "Error sending welcome message {ConnectionId}", connectionId);
     }
 }
 
@@ -408,11 +463,11 @@ static async Task SendPongMessage(WebSocket webSocket, string connectionId)
             true,
             CancellationToken.None);
         
-        Console.WriteLine($"📤 [{connectionId}] Sent pong response");
+        Log.Debug("Sent pong response {ConnectionId}", connectionId);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ [{connectionId}] Error sending pong: {ex.Message}");
+        Log.Error(ex, "Error sending pong {ConnectionId}", connectionId);
     }
 }
 
@@ -445,10 +500,11 @@ static async Task SendEnergyData(WebSocket webSocket, string connectionId)
             true,
             CancellationToken.None);
         
-        Console.WriteLine($"📤 [{connectionId}] Sent: {energyData.efficiency}% efficiency, {energyData.currentOutput} MW, {energyData.alerts} alerts");
+        Log.Debug("Sent energy data {ConnectionId}: {Efficiency}% efficiency, {Output} MW", 
+            connectionId, energyData.efficiency, energyData.currentOutput);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ [{connectionId}] Error sending energy data: {ex.Message}");
+        Log.Error(ex, "Error sending energy data {ConnectionId}", connectionId);
     }
 }
