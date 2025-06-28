@@ -5,7 +5,7 @@ namespace WemDashboard.Domain.Interfaces;
 public interface IGridComponentConfigurationRepository
 {
     Task<IEnumerable<GridComponentConfiguration>> GetByUserIdAsync(string userId);
-    Task<IEnumerable<GridComponentConfiguration>> GetBySiteIdAsync(string userId, int siteId);
+    Task<IEnumerable<GridComponentConfiguration>> GetBySiteIdAsync(string userId, string? siteId);
     Task<GridComponentConfiguration?> GetByIdAsync(int id);
     Task<GridComponentConfiguration?> GetByComponentIdAsync(string userId, string componentId);
     Task<GridComponentConfiguration> CreateAsync(GridComponentConfiguration component);
