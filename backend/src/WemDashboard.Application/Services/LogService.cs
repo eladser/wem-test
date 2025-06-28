@@ -5,6 +5,8 @@ using WemDashboard.Application.Interfaces;
 using WemDashboard.Domain.Entities;
 using WemDashboard.Domain.Enums;
 using WemDashboard.Infrastructure.Data;
+using DomainLogLevel = WemDashboard.Domain.Enums.LogLevel;
+using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace WemDashboard.Application.Services;
 
@@ -54,7 +56,7 @@ public class LogService : ILogService
         var query = _context.LogEntries.AsQueryable();
 
         // Apply filters
-        if (!string.IsNullOrEmpty(filter.Level) && Enum.TryParse<LogLevel>(filter.Level, true, out var level))
+        if (!string.IsNullOrEmpty(filter.Level) && Enum.TryParse<DomainLogLevel>(filter.Level, true, out var level))
         {
             query = query.Where(l => l.Level == level);
         }
@@ -137,13 +139,13 @@ public class LogService : ILogService
             
             switch (item.Level)
             {
-                case LogLevel.Error:
+                case DomainLogLevel.Error:
                     stats.TotalErrors += item.Count;
                     break;
-                case LogLevel.Warning:
+                case DomainLogLevel.Warning:
                     stats.TotalWarnings += item.Count;
                     break;
-                case LogLevel.Critical:
+                case DomainLogLevel.Critical:
                     stats.TotalCritical += item.Count;
                     break;
             }
@@ -151,21 +153,21 @@ public class LogService : ILogService
 
         // Count by component
         stats.ErrorsByComponent = query
-            .Where(l => l.Level >= LogLevel.Warning && l.Component != null)
+            .Where(l => l.Level >= DomainLogLevel.Warning && l.Component != null)
             .GroupBy(l => l.Component!)
             .Select(g => new { Component = g.Key, Count = g.Count() })
             .ToDictionary(x => x.Component, x => x.Count);
 
         // Count by day
         stats.ErrorsByDay = query
-            .Where(l => l.Level >= LogLevel.Warning)
+            .Where(l => l.Level >= DomainLogLevel.Warning)
             .GroupBy(l => l.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
             .ToDictionary(x => x.Date, x => x.Count);
 
         // Top errors
         stats.TopErrors = query
-            .Where(l => l.Level >= LogLevel.Error)
+            .Where(l => l.Level >= DomainLogLevel.Error)
             .GroupBy(l => l.Message)
             .Select(g => new TopErrorDto
             {
@@ -185,7 +187,7 @@ public class LogService : ILogService
         var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
         
         var oldLogs = _context.LogEntries
-            .Where(l => l.Timestamp < cutoffDate && l.Level < LogLevel.Error); // Keep errors longer
+            .Where(l => l.Timestamp < cutoffDate && l.Level < DomainLogLevel.Error); // Keep errors longer
         
         var count = oldLogs.Count();
         
@@ -203,7 +205,7 @@ public class LogService : ILogService
         var logEntry = new LogEntry
         {
             Message = $"{eventName}: {message}",
-            Level = LogLevel.Information,
+            Level = DomainLogLevel.Information,
             Component = "System",
             ContextJson = data != null ? JsonSerializer.Serialize(data) : null,
             Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
@@ -218,7 +220,7 @@ public class LogService : ILogService
         var logEntry = new LogEntry
         {
             Message = $"Performance metric: {metricName}",
-            Level = LogLevel.Information,
+            Level = DomainLogLevel.Information,
             Component = "Performance",
             ContextJson = JsonSerializer.Serialize(new { Metric = metricName, Value = value, Unit = unit }),
             Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
@@ -233,7 +235,7 @@ public class LogService : ILogService
         var logEntry = new LogEntry
         {
             Message = $"User action: {action}",
-            Level = LogLevel.Information,
+            Level = DomainLogLevel.Information,
             Component = "UserAction",
             UserId = userId,
             ContextJson = details != null ? JsonSerializer.Serialize(new { Action = action, Details = details }) : null,
@@ -244,16 +246,16 @@ public class LogService : ILogService
         await _context.SaveChangesAsync();
     }
 
-    private static LogLevel ParseLogLevel(string level)
+    private static DomainLogLevel ParseLogLevel(string level)
     {
         return level.ToUpperInvariant() switch
         {
-            "TRACE" or "DEBUG" => LogLevel.Debug,
-            "INFO" or "INFORMATION" => LogLevel.Information,
-            "WARN" or "WARNING" => LogLevel.Warning,
-            "ERROR" => LogLevel.Error,
-            "FATAL" or "CRITICAL" => LogLevel.Critical,
-            _ => LogLevel.Information
+            "TRACE" or "DEBUG" => DomainLogLevel.Debug,
+            "INFO" or "INFORMATION" => DomainLogLevel.Information,
+            "WARN" or "WARNING" => DomainLogLevel.Warning,
+            "ERROR" => DomainLogLevel.Error,
+            "FATAL" or "CRITICAL" => DomainLogLevel.Critical,
+            _ => DomainLogLevel.Information
         };
     }
 
