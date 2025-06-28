@@ -480,7 +480,7 @@ export function useAdvancedPerformance(): UseAdvancedPerformanceReturn {
 
 // Operation Performance Hook for measuring specific operations
 export function useOperationPerformance() {
-  const measure = useCallback(async <T>(operationName: string, operation: () => Promise<T>): Promise<T> => {
+  const measure = useCallback(async function<T>(operationName: string, operation: () => Promise<T>): Promise<T> {
     const startTime = performance.now();
     const markStart = `${operationName}-start`;
     const markEnd = `${operationName}-end`;
