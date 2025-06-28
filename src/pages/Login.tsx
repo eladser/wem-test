@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,17 +26,18 @@ const Login = () => {
       const success = await login(email, password);
       
       if (success) {
-        toast.success("Welcome to EnergyOS! 🌱", {
+        toast.success("Welcome to WEM Dashboard! 🌱", {
           description: "Successfully logged into your renewable energy dashboard"
         });
         navigate("/");
       } else {
-        setError("Invalid email or password");
+        setError("Invalid email or password. Please check your credentials.");
         toast.error("Login failed", {
           description: "Please check your credentials and try again"
         });
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError("An error occurred during login");
       toast.error("Login error", {
         description: "Please try again later"
@@ -45,6 +45,12 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDemoAccountClick = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword("password");
+    setError(""); // Clear any previous errors
   };
 
   const demoAccounts = [
@@ -74,7 +80,7 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <CardTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                EnergyOS
+                WEM Dashboard
               </CardTitle>
               <CardDescription className="text-slate-400 text-base">
                 Your gateway to sustainable energy management
@@ -163,7 +169,7 @@ const Login = () => {
               
               <div className="text-center space-y-2">
                 <p className="text-sm text-slate-400">
-                  All accounts use password: <span className="text-emerald-400 font-mono">password</span>
+                  All accounts use password: <span className="text-emerald-400 font-mono font-bold">password</span>
                 </p>
                 <p className="text-xs text-slate-500">
                   Don't have an account? <a href="#" className="text-emerald-400 hover:text-emerald-300">Request access</a>
@@ -185,27 +191,34 @@ const Login = () => {
             {demoAccounts.map((account, index) => (
               <div
                 key={account.email}
-                className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 cursor-pointer hover:border-emerald-500/30 transition-all duration-200 hover:bg-slate-800/70"
-                onClick={() => {
-                  setEmail(account.email);
-                  setPassword("password");
-                }}
+                className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 cursor-pointer hover:border-emerald-500/30 transition-all duration-200 hover:bg-slate-800/70 group"
+                onClick={() => handleDemoAccountClick(account.email)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-emerald-400 font-medium">{account.role}</span>
-                  <span className="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
+                  <span className="text-emerald-400 font-medium group-hover:text-emerald-300">{account.role}</span>
+                  <span className="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                     Click to use
                   </span>
                 </div>
                 <div className="text-sm text-slate-300 font-mono mb-1">
                   {account.email}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-slate-500 group-hover:text-slate-400">
                   {account.permissions}
                 </div>
               </div>
             ))}
           </CardContent>
+          <CardFooter className="pt-0">
+            <div className="w-full p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <div className="text-center">
+                <p className="text-sm text-emerald-400 font-semibold mb-1">Quick Login</p>
+                <p className="text-xs text-emerald-300">
+                  Click any account above, then click "Sign In to Dashboard"
+                </p>
+              </div>
+            </div>
+          </CardFooter>
         </Card>
       </div>
     </div>
