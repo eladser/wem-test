@@ -23,7 +23,7 @@ public class EnergyFlowConfigurationRepository : IEnergyFlowConfigurationReposit
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<EnergyFlowConfiguration>> GetBySiteIdAsync(string userId, int siteId)
+    public async Task<IEnumerable<EnergyFlowConfiguration>> GetBySiteIdAsync(string userId, string? siteId)
     {
         return await _context.EnergyFlowConfigurations
             .Where(f => f.UserId == userId && f.SiteId == siteId)
