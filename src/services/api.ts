@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// API base configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7297';
+// API base configuration - Updated to use your existing API on port 5000
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
