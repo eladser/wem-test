@@ -4,6 +4,7 @@ export interface Site {
   name: string;
   location: string;
   region: string;
+  subRegion?: string; // New field for sub-region support
   status: 'online' | 'maintenance' | 'offline';
   totalCapacity: number;
   currentOutput: number;
@@ -54,8 +55,15 @@ export interface Alert {
   timestamp: string;
 }
 
-export interface Region {
+export interface SubRegion {
   id: string;
   name: string;
   sites: Site[];
+}
+
+export interface Region {
+  id: string;
+  name: string;
+  sites: Site[]; // For backward compatibility - will be flattened from subRegions
+  subRegions?: SubRegion[]; // New field for hierarchical structure
 }
