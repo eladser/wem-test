@@ -27,6 +27,9 @@ public class WemDashboardDbContext : DbContext
     public DbSet<FilterPreset> FilterPresets { get; set; }
     public DbSet<ReportTemplate> ReportTemplates { get; set; }
     public DbSet<ViewState> ViewStates { get; set; }
+    
+    // Logging entity
+    public DbSet<LogEntry> LogEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +42,7 @@ public class WemDashboardDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AlertConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
+        modelBuilder.ApplyConfiguration(new LogEntryConfiguration());
 
         // Configure new entities relationships
         ConfigureUserPreferences(modelBuilder);
