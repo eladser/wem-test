@@ -64,7 +64,7 @@ public class GridConfigurationService : IGridConfigurationService
 
     public async Task<IEnumerable<GridComponentConfigurationDto>> GetSiteComponentsAsync(string userId, int siteId)
     {
-        var components = await _componentRepository.GetBySiteIdAsync(userId, siteId);
+        var components = await _componentRepository.GetBySiteIdAsync(userId, siteId.ToString());
         return _mapper.Map<IEnumerable<GridComponentConfigurationDto>>(components);
     }
 
@@ -120,7 +120,7 @@ public class GridConfigurationService : IGridConfigurationService
 
     public async Task<IEnumerable<EnergyFlowConfigurationDto>> GetSiteFlowsAsync(string userId, int siteId)
     {
-        var flows = await _flowRepository.GetBySiteIdAsync(userId, siteId);
+        var flows = await _flowRepository.GetBySiteIdAsync(userId, siteId.ToString());
         return _mapper.Map<IEnumerable<EnergyFlowConfigurationDto>>(flows);
     }
 
