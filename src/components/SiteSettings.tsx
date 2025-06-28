@@ -9,6 +9,7 @@ import { theme } from "@/lib/theme";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { mockRegions } from "@/services/mockDataService";
+import { apiGateway } from "@/services/apiGateway";
 
 const SiteSettings = () => {
   const { siteId } = useParams();
@@ -66,39 +67,24 @@ const SiteSettings = () => {
     setHasUnsavedChanges(true);
   };
 
-  // Mock API call for saving settings with better error handling
+  // Enhanced API call for saving settings using the API Gateway
   const saveSiteSettings = async (data: typeof formData) => {
-    // Simulate API call with different responses based on environment
-    const isDevelopment = import.meta.env.DEV;
-    
-    if (isDevelopment) {
-      // In development, simulate a successful API call
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true, message: 'Settings saved successfully (mock)' });
-        }, 1000); // Simulate network delay
-      });
-    }
-    
-    // In production, try the real API call
     try {
-      const response = await fetch(`/api/sites/${siteId}/settings`, {
+      const response = await apiGateway.request({
+        endpoint: `/sites/${siteId}/settings`,
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        data: data,
+        requiresAuth: true
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.success) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to save settings');
       }
-
-      return await response.json();
     } catch (error) {
-      // If API call fails, fall back to mock success
-      console.warn('API call failed, using mock response:', error);
-      return { success: true, message: 'Settings saved successfully (fallback)' };
+      console.error('API Gateway error:', error);
+      throw error;
     }
   };
 
@@ -114,7 +100,7 @@ const SiteSettings = () => {
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error("Save Failed", {
-        description: "Unable to save site settings. Please try again."
+        description: error instanceof Error ? error.message : "Unable to save site settings. Please try again."
       });
     } finally {
       setIsLoading(false);

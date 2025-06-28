@@ -1,4 +1,3 @@
-
 import { config } from './environment';
 import { logger } from '@/utils/logging';
 
@@ -74,22 +73,47 @@ export class ApiConfiguration {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout
 
-      const response = await fetch(`${endpoint.url}/health`, {
-        method: 'HEAD',
-        signal: controller.signal,
-      });
+      // Try different health check endpoints that your backend might have
+      const healthEndpoints = ['/health', '/api/health', '/', '/status'];
+      
+      for (const healthPath of healthEndpoints) {
+        try {
+          const response = await fetch(`${endpoint.url}${healthPath}`, {
+            method: 'GET', // Changed from HEAD to GET for better compatibility
+            signal: controller.signal,
+          });
 
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            endpoint.isHealthy = true;
+            endpoint.lastChecked = new Date();
+            logger.info('Backend health check successful', { 
+              endpoint: endpoint.url,
+              healthPath
+            });
+            return true;
+          }
+        } catch (err) {
+          // Continue to next health endpoint
+          continue;
+        }
+      }
+
+      // If all health checks failed, mark as unhealthy
       clearTimeout(timeoutId);
-      endpoint.isHealthy = response.ok;
+      endpoint.isHealthy = false;
       endpoint.lastChecked = new Date();
+      return false;
 
-      return response.ok;
     } catch (error) {
       endpoint.isHealthy = false;
       endpoint.lastChecked = new Date();
-      logger.warn('Endpoint health check failed', { 
+      
+      // Only log as warning, not error, since this is expected when backend is down
+      logger.warn('Backend endpoint health check failed', { 
         endpoint: endpoint.url, 
         error: error instanceof Error ? error.message : String(error) 
       });
@@ -120,11 +144,11 @@ export class ApiConfiguration {
     const mockEndpoint = this.endpoints.find(e => e.url === 'mock://api');
     if (mockEndpoint) {
       this.currentEndpointIndex = this.endpoints.indexOf(mockEndpoint);
-      logger.warn('All real endpoints unhealthy, using mock endpoint');
+      logger.info('Backend unavailable, using mock endpoint');
       return mockEndpoint;
     }
 
-    logger.error('No healthy endpoints available');
+    logger.warn('No healthy endpoints available, using primary endpoint');
     return current;
   }
 

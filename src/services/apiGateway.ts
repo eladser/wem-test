@@ -241,27 +241,61 @@ class ApiGateway {
     };
   }
 
-  private generateMockData(endpoint: string, method: string): any {
-    if (endpoint.includes('/health')) {
+  private generateMockData(endpoint: string | undefined, method: string): any {
+    // Handle undefined endpoint gracefully
+    const safeEndpoint = endpoint || '';
+    
+    if (safeEndpoint.includes('/health')) {
       return { status: 'healthy', timestamp: new Date().toISOString() };
     }
     
-    if (endpoint.includes('/auth/login')) {
+    if (safeEndpoint.includes('/auth/login')) {
       return { token: 'mock_jwt_token', user: { id: '1', email: 'user@example.com' } };
     }
 
-    if (endpoint.includes('/regions')) {
+    if (safeEndpoint.includes('/regions')) {
       return method === 'GET' ? [] : { id: 'new-region', name: 'New Region' };
     }
 
-    if (endpoint.includes('/assets')) {
+    if (safeEndpoint.includes('/assets')) {
       return method === 'GET' ? [] : { id: 'new-asset', name: 'New Asset' };
+    }
+
+    if (safeEndpoint.includes('/sites') && safeEndpoint.includes('/settings')) {
+      return method === 'PUT' ? 
+        { success: true, message: 'Site settings updated successfully' } :
+        { id: 'site-settings', name: 'Site Settings' };
+    }
+
+    if (safeEndpoint.includes('/automation/rules')) {
+      if (method === 'GET') {
+        return [
+          {
+            id: '1',
+            name: 'Peak Hours Optimization',
+            type: 'schedule',
+            enabled: true,
+            schedule: '0 8-18 * * *',
+            action: 'optimize_output'
+          },
+          {
+            id: '2',
+            name: 'Maintenance Window',
+            type: 'schedule',
+            enabled: true,
+            schedule: '0 2 * * 0',
+            action: 'maintenance_mode'
+          }
+        ];
+      }
+      return { id: 'new-rule', name: 'New Automation Rule' };
     }
 
     return { 
       message: `Mock ${method} response`, 
       timestamp: new Date().toISOString(),
-      endpoint 
+      endpoint: safeEndpoint,
+      success: true
     };
   }
 
