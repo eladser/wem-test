@@ -82,7 +82,7 @@ export const usePersistentState = <T>(
   const saveNow = useCallback(async () => {
     if (!hasUnsavedChanges) return;
     await saveValue(value);
-  }, [value, hasUnsavedChanges, saveType]);
+  }, [value, hasUnsavedChanges, saveValue]);
 
   const reset = useCallback(() => {
     setValue(defaultValue);
