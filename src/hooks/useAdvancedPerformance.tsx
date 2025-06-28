@@ -1,364 +1,599 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { realTimeDataService, RealTimeMetrics, RealTimeAlert } from '@/services/realTimeDataService';
+import { schedulerService } from '@/services/schedulerService';
 
-// Performance monitoring configuration
-interface PerformanceConfig {
-  enableLogging?: boolean;
-  enableMetrics?: boolean;
-  enableMemoryMonitoring?: boolean;
-  slowThreshold?: number; // milliseconds
-  memoryThreshold?: number; // MB
-}
-
-interface PerformanceMetrics {
+export interface PerformanceMetrics {
   renderTime: number;
-  componentName: string;
-  timestamp: number;
-  memoryUsage?: number;
-  props?: any;
-  isSlowRender: boolean;
+  loadTime: number;
+  memoryUsage: number;
+  networkLatency: number;
+  errorRate: number;
+  userInteractions: number;
+  apiResponseTimes: Record<string, number>;
 }
 
-interface MemoryInfo {
-  usedJSMemory: number;
-  totalJSMemory: number;
-  jsMemoryLimit: number;
+export interface SystemHealth {
+  overall: 'excellent' | 'good' | 'fair' | 'poor';
+  scores: {
+    performance: number;
+    reliability: number;
+    security: number;
+    usability: number;
+  };
+  alerts: RealTimeAlert[];
+  recommendations: string[];
 }
 
-class PerformanceMonitor {
-  private static instance: PerformanceMonitor;
-  private metrics: PerformanceMetrics[] = [];
-  private config: PerformanceConfig;
-  private observers: Set<(metrics: PerformanceMetrics[]) => void> = new Set();
-
-  constructor(config: PerformanceConfig = {}) {
-    this.config = {
-      enableLogging: process.env.NODE_ENV === 'development',
-      enableMetrics: true,
-      enableMemoryMonitoring: true,
-      slowThreshold: 16, // 60fps threshold
-      memoryThreshold: 50, // 50MB
-      ...config
-    };
-  }
-
-  static getInstance(config?: PerformanceConfig): PerformanceMonitor {
-    if (!PerformanceMonitor.instance) {
-      PerformanceMonitor.instance = new PerformanceMonitor(config);
-    }
-    return PerformanceMonitor.instance;
-  }
-
-  logMetric(metric: PerformanceMetrics) {
-    if (!this.config.enableMetrics) return;
-
-    this.metrics.push(metric);
-    
-    // Keep only last 1000 metrics to prevent memory leaks
-    if (this.metrics.length > 1000) {
-      this.metrics = this.metrics.slice(-1000);
-    }
-
-    if (this.config.enableLogging) {
-      this.logToConsole(metric);
-    }
-
-    // Notify observers
-    this.observers.forEach(observer => observer(this.metrics));
-  }
-
-  private logToConsole(metric: PerformanceMetrics) {
-    const { componentName, renderTime, isSlowRender, memoryUsage } = metric;
-    
-    if (isSlowRender) {
-      console.warn(
-        `🐌 Slow render detected: ${componentName} took ${renderTime.toFixed(2)}ms`,
-        metric
-      );
-    } else if (this.config.enableLogging) {
-      console.log(
-        `⚡ ${componentName}: ${renderTime.toFixed(2)}ms${memoryUsage ? ` | Memory: ${memoryUsage.toFixed(1)}MB` : ''}`
-      );
-    }
-  }
-
-  getMetrics(): PerformanceMetrics[] {
-    return [...this.metrics];
-  }
-
-  getSlowRenders(): PerformanceMetrics[] {
-    return this.metrics.filter(m => m.isSlowRender);
-  }
-
-  getAverageRenderTime(componentName?: string): number {
-    const relevantMetrics = componentName 
-      ? this.metrics.filter(m => m.componentName === componentName)
-      : this.metrics;
-    
-    if (relevantMetrics.length === 0) return 0;
-    
-    return relevantMetrics.reduce((sum, m) => sum + m.renderTime, 0) / relevantMetrics.length;
-  }
-
-  subscribe(observer: (metrics: PerformanceMetrics[]) => void) {
-    this.observers.add(observer);
-    return () => this.observers.delete(observer);
-  }
-
-  clear() {
-    this.metrics = [];
-  }
-
-  // Get memory usage if available
-  getMemoryUsage(): MemoryInfo | null {
-    if (!this.config.enableMemoryMonitoring) return null;
-    
-    const memory = (performance as any).memory;
-    if (!memory) return null;
-
-    return {
-      usedJSMemory: memory.usedJSHeapSize / 1024 / 1024, // Convert to MB
-      totalJSMemory: memory.totalJSHeapSize / 1024 / 1024,
-      jsMemoryLimit: memory.jsMemoryLimit / 1024 / 1024
-    };
-  }
+export interface UseAdvancedPerformanceReturn {
+  // Performance metrics
+  performance: PerformanceMetrics;
+  systemHealth: SystemHealth;
+  
+  // Real-time data
+  realTimeMetrics: RealTimeMetrics | null;
+  isConnected: boolean;
+  
+  // Controls
+  startMonitoring: (siteId?: string) => void;
+  stopMonitoring: () => void;
+  resetMetrics: () => void;
+  
+  // Analytics
+  getPerformanceReport: () => Promise<any>;
+  optimizePerformance: () => Promise<void>;
+  
+  // Error handling
+  errors: Error[];
+  clearErrors: () => void;
 }
 
-// Main performance hook
-export const usePerformance = (
-  componentName: string, 
-  dependencies?: any[], 
-  config?: PerformanceConfig
-) => {
-  const monitor = PerformanceMonitor.getInstance(config);
-  const startTimeRef = useRef<number>();
-  const mountTimeRef = useRef<number>();
-  const [renderCount, setRenderCount] = useState(0);
-
-  // Start timing on every render
-  const startTime = performance.now();
-  startTimeRef.current = startTime;
-
-  // Log render time after render is complete
-  const logRenderTime = useCallback(() => {
-    if (!startTimeRef.current) return;
-    
-    const endTime = performance.now();
-    const renderTime = endTime - startTimeRef.current;
-    const memoryUsage = monitor.getMemoryUsage()?.usedJSMemory;
-    
-    const metric: PerformanceMetrics = {
-      renderTime,
-      componentName,
-      timestamp: endTime,
-      memoryUsage,
-      props: dependencies,
-      isSlowRender: renderTime > (config?.slowThreshold || 16)
-    };
-
-    monitor.logMetric(metric);
-  }, [componentName, dependencies, config?.slowThreshold, monitor]);
-
-  // Track component lifecycle
-  useEffect(() => {
-    mountTimeRef.current = performance.now();
-    setRenderCount(prev => prev + 1);
-    
-    // Log mount time
-    if (mountTimeRef.current && startTimeRef.current) {
-      const mountTime = mountTimeRef.current - startTimeRef.current;
-      console.log(`🎯 ${componentName} mounted in ${mountTime.toFixed(2)}ms`);
-    }
-
-    return () => {
-      console.log(`💀 ${componentName} unmounted after ${renderCount} renders`);
-    };
-  }, []);
-
-  // Auto-log render time after each render
-  useEffect(() => {
-    logRenderTime();
+export function useAdvancedPerformance(): UseAdvancedPerformanceReturn {
+  const [performance, setPerformance] = useState<PerformanceMetrics>({
+    renderTime: 0,
+    loadTime: 0,
+    memoryUsage: 0,
+    networkLatency: 0,
+    errorRate: 0,
+    userInteractions: 0,
+    apiResponseTimes: {}
   });
 
-  return {
-    logRenderTime,
-    renderCount,
-    getMetrics: () => monitor.getMetrics(),
-    getComponentMetrics: () => monitor.getMetrics().filter(m => m.componentName === componentName),
-    getSlowRenders: () => monitor.getSlowRenders(),
-    getAverageRenderTime: () => monitor.getAverageRenderTime(componentName),
-    subscribe: monitor.subscribe.bind(monitor),
-    clear: monitor.clear.bind(monitor)
-  };
-};
+  const [systemHealth, setSystemHealth] = useState<SystemHealth>({
+    overall: 'good',
+    scores: {
+      performance: 85,
+      reliability: 90,
+      security: 88,
+      usability: 92
+    },
+    alerts: [],
+    recommendations: []
+  });
 
-// Hook for monitoring specific operations
-export const useOperationPerformance = () => {
-  const measure = useCallback((name: string, operation: () => Promise<any> | any) => {
-    const start = performance.now();
-    
-    const finish = (result?: any) => {
-      const end = performance.now();
-      const duration = end - start;
-      
-      console.log(`⚡ Operation "${name}" took ${duration.toFixed(2)}ms`);
-      
-      if (duration > 100) {
-        console.warn(`🐌 Slow operation detected: "${name}" took ${duration.toFixed(2)}ms`);
-      }
-      
-      return result;
-    };
+  const [realTimeMetrics, setRealTimeMetrics] = useState<RealTimeMetrics | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [errors, setErrors] = useState<Error[]>([]);
+  const [isMonitoring, setIsMonitoring] = useState(false);
 
-    try {
-      const result = operation();
-      
-      if (result && typeof result.then === 'function') {
-        // Handle async operations
-        return result
-          .then((asyncResult: any) => finish(asyncResult))
-          .catch((error: any) => {
-            finish();
-            throw error;
-          });
-      } else {
-        // Handle sync operations
-        return finish(result);
-      }
-    } catch (error) {
-      finish();
-      throw error;
-    }
-  }, []);
+  const metricsRef = useRef<PerformanceMetrics>(performance);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const observerRef = useRef<PerformanceObserver | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  return { measure };
-};
-
-// Hook for monitoring network requests
-export const useNetworkPerformance = () => {
-  const [networkMetrics, setNetworkMetrics] = useState<{
-    [key: string]: { duration: number; timestamp: number; status?: number }
-  }>({});
-
-  const measureRequest = useCallback(async (
-    url: string, 
-    requestInit?: RequestInit
-  ): Promise<Response> => {
-    const start = performance.now();
-    
-    try {
-      const response = await fetch(url, requestInit);
-      const duration = performance.now() - start;
-      
-      setNetworkMetrics(prev => ({
-        ...prev,
-        [url]: {
-          duration,
-          timestamp: Date.now(),
-          status: response.status
-        }
-      }));
-      
-      if (duration > 1000) {
-        console.warn(`🐌 Slow network request: ${url} took ${duration.toFixed(2)}ms`);
-      } else {
-        console.log(`🌐 ${url}: ${duration.toFixed(2)}ms (${response.status})`);
-      }
-      
-      return response;
-    } catch (error) {
-      const duration = performance.now() - start;
-      setNetworkMetrics(prev => ({
-        ...prev,
-        [url]: {
-          duration,
-          timestamp: Date.now(),
-          status: 0 // Error
-        }
-      }));
-      
-      console.error(`❌ Network request failed: ${url} after ${duration.toFixed(2)}ms`, error);
-      throw error;
-    }
-  }, []);
-
-  return {
-    measureRequest,
-    networkMetrics,
-    clearNetworkMetrics: () => setNetworkMetrics({})
-  };
-};
-
-// Performance monitoring component for debugging
-export const PerformanceDevTools: React.FC = () => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics[]>([]);
-  const [isVisible, setIsVisible] = useState(false);
-  
+  // Update ref when performance state changes
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-    
-    const monitor = PerformanceMonitor.getInstance();
-    const unsubscribe = monitor.subscribe(setMetrics);
-    
-    // Add keyboard shortcut to toggle visibility
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'P') {
-        setIsVisible(prev => !prev);
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    
+    metricsRef.current = performance;
+  }, [performance]);
+
+  // Initialize performance monitoring
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      initializePerformanceMonitoring();
+    }
+
     return () => {
-      unsubscribe();
-      window.removeEventListener('keydown', handleKeyPress);
+      cleanup();
     };
   }, []);
 
-  if (process.env.NODE_ENV !== 'development' || !isVisible) return null;
+  const initializePerformanceMonitoring = useCallback(() => {
+    try {
+      // Performance Observer for paint timing
+      if ('PerformanceObserver' in window) {
+        observerRef.current = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          
+          entries.forEach((entry) => {
+            if (entry.entryType === 'paint') {
+              if (entry.name === 'first-contentful-paint') {
+                updateMetrics({ renderTime: entry.startTime });
+              }
+            } else if (entry.entryType === 'navigation') {
+              const navEntry = entry as PerformanceNavigationTiming;
+              updateMetrics({
+                loadTime: navEntry.loadEventEnd - navEntry.fetchStart,
+                networkLatency: navEntry.responseStart - navEntry.requestStart
+              });
+            } else if (entry.entryType === 'measure') {
+              if (entry.name.startsWith('api-')) {
+                const apiName = entry.name.replace('api-', '');
+                updateMetrics({
+                  apiResponseTimes: {
+                    ...metricsRef.current.apiResponseTimes,
+                    [apiName]: entry.duration
+                  }
+                });
+              }
+            }
+          });
+        });
 
-  const slowRenders = metrics.filter(m => m.isSlowRender);
-  const averageRenderTime = metrics.length > 0 
-    ? metrics.reduce((sum, m) => sum + m.renderTime, 0) / metrics.length 
-    : 0;
+        observerRef.current.observe({ 
+          entryTypes: ['paint', 'navigation', 'measure', 'resource'] 
+        });
+      }
+
+      // Memory usage monitoring
+      if ('memory' in performance) {
+        intervalRef.current = setInterval(() => {
+          const memInfo = (performance as any).memory;
+          if (memInfo) {
+            updateMetrics({
+              memoryUsage: memInfo.usedJSHeapSize / memInfo.jsHeapSizeLimit
+            });
+          }
+        }, 5000);
+      }
+
+      // Error rate monitoring
+      window.addEventListener('error', handleError);
+      window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+      // User interaction monitoring
+      const interactionEvents = ['click', 'keydown', 'scroll', 'touchstart'];
+      interactionEvents.forEach(event => {
+        document.addEventListener(event, trackUserInteraction, { passive: true });
+      });
+
+    } catch (error) {
+      console.error('Error initializing performance monitoring:', error);
+      addError(new Error('Failed to initialize performance monitoring'));
+    }
+  }, []);
+
+  const updateMetrics = useCallback((updates: Partial<PerformanceMetrics>) => {
+    setPerformance(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const handleError = useCallback((event: ErrorEvent) => {
+    addError(new Error(event.message));
+    updateMetrics({
+      errorRate: metricsRef.current.errorRate + 1
+    });
+  }, []);
+
+  const handleUnhandledRejection = useCallback((event: PromiseRejectionEvent) => {
+    addError(new Error(`Unhandled promise rejection: ${event.reason}`));
+    updateMetrics({
+      errorRate: metricsRef.current.errorRate + 1
+    });
+  }, []);
+
+  const trackUserInteraction = useCallback(() => {
+    updateMetrics({
+      userInteractions: metricsRef.current.userInteractions + 1
+    });
+  }, []);
+
+  const addError = useCallback((error: Error) => {
+    setErrors(prev => [...prev.slice(-9), error]); // Keep last 10 errors
+  }, []);
+
+  const startMonitoring = useCallback(async (siteId?: string) => {
+    if (isMonitoring) return;
+
+    try {
+      setIsMonitoring(true);
+
+      // Connect to real-time data service
+      if (siteId) {
+        const unsubscribe = realTimeDataService.subscribeToMetrics(siteId, (metrics) => {
+          setRealTimeMetrics(metrics);
+        });
+        unsubscribeRef.current = unsubscribe;
+      }
+
+      // Subscribe to alerts
+      const alertUnsubscribe = realTimeDataService.subscribeToAlerts((alert) => {
+        setSystemHealth(prev => ({
+          ...prev,
+          alerts: [...prev.alerts.slice(-9), alert] // Keep last 10 alerts
+        }));
+      });
+
+      // Combine unsubscribe functions
+      const originalUnsubscribe = unsubscribeRef.current;
+      unsubscribeRef.current = () => {
+        originalUnsubscribe?.();
+        alertUnsubscribe();
+      };
+
+      setIsConnected(true);
+
+      // Start health monitoring
+      startHealthMonitoring();
+
+    } catch (error) {
+      console.error('Error starting monitoring:', error);
+      addError(new Error('Failed to start monitoring'));
+      setIsMonitoring(false);
+    }
+  }, [isMonitoring]);
+
+  const stopMonitoring = useCallback(() => {
+    if (!isMonitoring) return;
+
+    setIsMonitoring(false);
+    setIsConnected(false);
+    
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+
+    setRealTimeMetrics(null);
+  }, [isMonitoring]);
+
+  const startHealthMonitoring = useCallback(() => {
+    const checkHealth = () => {
+      const scores = calculateHealthScores();
+      const overall = calculateOverallHealth(scores);
+      const recommendations = generateRecommendations(scores);
+
+      setSystemHealth(prev => ({
+        ...prev,
+        overall,
+        scores,
+        recommendations
+      }));
+    };
+
+    // Check health every 30 seconds
+    const healthInterval = setInterval(checkHealth, 30000);
+    checkHealth(); // Initial check
+
+    return () => clearInterval(healthInterval);
+  }, [performance]);
+
+  const calculateHealthScores = useCallback(() => {
+    const { renderTime, loadTime, memoryUsage, networkLatency, errorRate } = performance;
+
+    // Performance score (0-100)
+    let performanceScore = 100;
+    if (renderTime > 2000) performanceScore -= 20;
+    if (loadTime > 3000) performanceScore -= 20;
+    if (networkLatency > 1000) performanceScore -= 15;
+    performanceScore = Math.max(0, performanceScore);
+
+    // Reliability score (0-100)
+    let reliabilityScore = 100;
+    if (errorRate > 0) reliabilityScore -= Math.min(50, errorRate * 10);
+    if (memoryUsage > 0.8) reliabilityScore -= 20;
+    reliabilityScore = Math.max(0, reliabilityScore);
+
+    // Security score (default good, would need actual security checks)
+    const securityScore = 88;
+
+    // Usability score based on interactions and errors
+    let usabilityScore = 100;
+    if (errorRate > 0) usabilityScore -= Math.min(30, errorRate * 5);
+    usabilityScore = Math.max(0, usabilityScore);
+
+    return {
+      performance: Math.round(performanceScore),
+      reliability: Math.round(reliabilityScore),
+      security: securityScore,
+      usability: Math.round(usabilityScore)
+    };
+  }, [performance]);
+
+  const calculateOverallHealth = useCallback((scores: SystemHealth['scores']): SystemHealth['overall'] => {
+    const average = (scores.performance + scores.reliability + scores.security + scores.usability) / 4;
+    
+    if (average >= 90) return 'excellent';
+    if (average >= 75) return 'good';
+    if (average >= 60) return 'fair';
+    return 'poor';
+  }, []);
+
+  const generateRecommendations = useCallback((scores: SystemHealth['scores']): string[] => {
+    const recommendations: string[] = [];
+
+    if (scores.performance < 80) {
+      recommendations.push('Consider optimizing render performance and reducing load times');
+    }
+    if (scores.reliability < 80) {
+      recommendations.push('Address error handling and memory usage optimization');
+    }
+    if (scores.security < 80) {
+      recommendations.push('Review security protocols and implement additional safeguards');
+    }
+    if (scores.usability < 80) {
+      recommendations.push('Improve user experience and reduce interaction friction');
+    }
+
+    if (performance.memoryUsage > 0.8) {
+      recommendations.push('High memory usage detected - consider memory optimization');
+    }
+    if (performance.networkLatency > 1000) {
+      recommendations.push('High network latency - consider CDN or server optimization');
+    }
+    if (performance.errorRate > 5) {
+      recommendations.push('High error rate - implement better error handling');
+    }
+
+    return recommendations;
+  }, [performance]);
+
+  const resetMetrics = useCallback(() => {
+    setPerformance({
+      renderTime: 0,
+      loadTime: 0,
+      memoryUsage: 0,
+      networkLatency: 0,
+      errorRate: 0,
+      userInteractions: 0,
+      apiResponseTimes: {}
+    });
+    setErrors([]);
+  }, []);
+
+  const getPerformanceReport = useCallback(async () => {
+    try {
+      const report = {
+        timestamp: new Date().toISOString(),
+        metrics: performance,
+        systemHealth,
+        realTimeData: realTimeMetrics,
+        browser: {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          platform: navigator.platform
+        },
+        session: {
+          duration: Date.now() - (window.performance?.timing?.navigationStart || 0),
+          errors: errors.length,
+          interactions: performance.userInteractions
+        }
+      };
+
+      // Store report for later analysis
+      localStorage.setItem('wem-performance-report', JSON.stringify(report));
+      
+      return report;
+    } catch (error) {
+      console.error('Error generating performance report:', error);
+      throw error;
+    }
+  }, [performance, systemHealth, realTimeMetrics, errors]);
+
+  const optimizePerformance = useCallback(async () => {
+    try {
+      // Client-side optimizations
+      if (performance.memoryUsage > 0.8) {
+        // Trigger garbage collection if available
+        if ('gc' in window && typeof (window as any).gc === 'function') {
+          (window as any).gc();
+        }
+      }
+
+      // Clear old cached data
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        const oldCaches = cacheNames.filter(name => 
+          name.includes('old') || name.includes('temp')
+        );
+        await Promise.all(oldCaches.map(name => caches.delete(name)));
+      }
+
+      // Optimize image loading
+      const images = document.querySelectorAll('img[data-src]');
+      images.forEach(img => {
+        if (img instanceof HTMLImageElement && img.dataset.src) {
+          img.src = img.dataset.src;
+          delete img.dataset.src;
+        }
+      });
+
+      // Create optimization task
+      await schedulerService.createTask({
+        name: 'Performance Optimization',
+        description: 'Automated performance optimization task',
+        type: 'optimization',
+        schedule: {
+          pattern: 'daily',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          nextRun: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        },
+        config: {
+          parameters: {
+            optimizationType: 'client-side',
+            metrics: performance
+          },
+          notifications: {
+            onSuccess: true,
+            onFailure: true,
+            recipients: ['admin@example.com']
+          }
+        },
+        status: 'active',
+        priority: 'medium',
+        createdBy: 'system'
+      });
+
+    } catch (error) {
+      console.error('Error optimizing performance:', error);
+      addError(new Error('Performance optimization failed'));
+    }
+  }, [performance]);
+
+  const clearErrors = useCallback(() => {
+    setErrors([]);
+    updateMetrics({ errorRate: 0 });
+  }, []);
+
+  const cleanup = useCallback(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+    }
+
+    // Remove event listeners
+    window.removeEventListener('error', handleError);
+    window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    const interactionEvents = ['click', 'keydown', 'scroll', 'touchstart'];
+    interactionEvents.forEach(event => {
+      document.removeEventListener(event, trackUserInteraction);
+    });
+  }, [handleError, handleUnhandledRejection, trackUserInteraction]);
+
+  return {
+    performance,
+    systemHealth,
+    realTimeMetrics,
+    isConnected,
+    startMonitoring,
+    stopMonitoring,
+    resetMetrics,
+    getPerformanceReport,
+    optimizePerformance,
+    errors,
+    clearErrors
+  };
+}
+
+// Performance DevTools Component for Development
+export function PerformanceDevTools() {
+  const {
+    performance,
+    systemHealth,
+    isConnected,
+    startMonitoring,
+    stopMonitoring,
+    resetMetrics,
+    errors,
+    clearErrors
+  } = useAdvancedPerformance();
+
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Only show in development
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-black/90 text-white p-4 rounded-lg max-w-sm z-50 font-mono text-xs">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-bold">Performance Monitor</h3>
-        <button 
-          onClick={() => setIsVisible(false)}
-          className="text-gray-400 hover:text-white"
-        >
-          ×
-        </button>
-      </div>
+    <div className="fixed bottom-4 right-4 z-50">
+      <button
+        onClick={() => setIsVisible(!isVisible)}
+        className="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        title="Performance DevTools"
+      >
+        📊
+      </button>
       
-      <div className="space-y-1">
-        <div>Total Renders: {metrics.length}</div>
-        <div>Slow Renders: {slowRenders.length}</div>
-        <div>Avg Render Time: {averageRenderTime.toFixed(2)}ms</div>
-        
-        {slowRenders.length > 0 && (
-          <details className="mt-2">
-            <summary className="cursor-pointer text-yellow-400">
-              Slow Renders ({slowRenders.length})
-            </summary>
-            <div className="mt-1 max-h-32 overflow-y-auto">
-              {slowRenders.slice(-5).map((metric, idx) => (
-                <div key={idx} className="text-red-400 text-xs">
-                  {metric.componentName}: {metric.renderTime.toFixed(2)}ms
-                </div>
-              ))}
+      {isVisible && (
+        <div className="absolute bottom-12 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 w-80 max-h-96 overflow-y-auto">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Performance Monitor</h3>
+            <button
+              onClick={() => setIsVisible(false)}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span>Status:</span>
+              <span className={`font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
             </div>
-          </details>
-        )}
-      </div>
-      
-      <div className="text-gray-400 mt-2 text-xs">
-        Press Ctrl+Shift+P to toggle
-      </div>
+            
+            <div className="flex justify-between">
+              <span>Health:</span>
+              <span className={`font-medium ${
+                systemHealth.overall === 'excellent' ? 'text-green-600' :
+                systemHealth.overall === 'good' ? 'text-blue-600' :
+                systemHealth.overall === 'fair' ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                {systemHealth.overall}
+              </span>
+            </div>
+            
+            <div className="border-t pt-2">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Metrics:</div>
+              <div className="grid grid-cols-2 gap-1 text-xs">
+                <div>Render: {Math.round(performance.renderTime)}ms</div>
+                <div>Load: {Math.round(performance.loadTime)}ms</div>
+                <div>Memory: {Math.round(performance.memoryUsage * 100)}%</div>
+                <div>Errors: {performance.errorRate}</div>
+              </div>
+            </div>
+            
+            {errors.length > 0 && (
+              <div className="border-t pt-2">
+                <div className="text-xs text-red-600 mb-1">Recent Errors:</div>
+                <div className="text-xs text-red-500 max-h-20 overflow-y-auto">
+                  {errors.slice(-3).map((error, index) => (
+                    <div key={index} className="truncate">{error.message}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex gap-2 pt-2 border-t">
+              <button
+                onClick={() => startMonitoring()}
+                disabled={isConnected}
+                className="flex-1 px-2 py-1 bg-blue-600 text-white rounded text-xs disabled:opacity-50"
+              >
+                Start
+              </button>
+              <button
+                onClick={stopMonitoring}
+                disabled={!isConnected}
+                className="flex-1 px-2 py-1 bg-red-600 text-white rounded text-xs disabled:opacity-50"
+              >
+                Stop
+              </button>
+              <button
+                onClick={resetMetrics}
+                className="flex-1 px-2 py-1 bg-gray-600 text-white rounded text-xs"
+              >
+                Reset
+              </button>
+            </div>
+            
+            {errors.length > 0 && (
+              <button
+                onClick={clearErrors}
+                className="w-full px-2 py-1 bg-yellow-600 text-white rounded text-xs"
+              >
+                Clear Errors
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default PerformanceMonitor;
+}
