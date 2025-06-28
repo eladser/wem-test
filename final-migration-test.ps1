@@ -5,28 +5,31 @@
 Write-Host "[FINAL TEST] Testing Migration After All Foreign Key Fixes" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
-$ApiPath = "./backend/src/WemDashboard.API"
-$InfrastructurePath = "./backend/src/WemDashboard.Infrastructure"
-$BackendPath = "./backend"
+$RootPath = Get-Location
+$ApiPath = Join-Path $RootPath "backend/src/WemDashboard.API"
+$InfrastructurePath = Join-Path $RootPath "backend/src/WemDashboard.Infrastructure"
+$BackendPath = Join-Path $RootPath "backend"
 
 Write-Host "`n[STEP 1] Environment Check" -ForegroundColor Magenta
-Write-Host "Current directory: $(Get-Location)" -ForegroundColor Blue
+Write-Host "Current directory: $RootPath" -ForegroundColor Blue
+Write-Host "API Path: $ApiPath" -ForegroundColor Blue
+Write-Host "Infrastructure Path: $InfrastructurePath" -ForegroundColor Blue
 Write-Host "API Path exists: $(Test-Path $ApiPath)" -ForegroundColor Blue
 Write-Host "Infrastructure Path exists: $(Test-Path $InfrastructurePath)" -ForegroundColor Blue
 
 Write-Host "`n[STEP 2] Clean Previous Attempts" -ForegroundColor Magenta
-$migrationsPath = "$InfrastructurePath/Migrations"
+$migrationsPath = Join-Path $InfrastructurePath "Migrations"
 if (Test-Path $migrationsPath) {
     Write-Host "Removing existing migrations..." -ForegroundColor Yellow
     Remove-Item $migrationsPath -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 $dbFiles = @(
-    "$BackendPath/wemdashboard.db", 
-    "$ApiPath/wemdashboard.db", 
-    "./wemdashboard.db", 
-    "$BackendPath/wemdashboard-dev.db", 
-    "$ApiPath/wemdashboard-dev.db"
+    (Join-Path $BackendPath "wemdashboard.db"), 
+    (Join-Path $ApiPath "wemdashboard.db"), 
+    (Join-Path $RootPath "wemdashboard.db"), 
+    (Join-Path $BackendPath "wemdashboard-dev.db"), 
+    (Join-Path $ApiPath "wemdashboard-dev.db")
 )
 
 foreach ($dbFile in $dbFiles) {
@@ -59,7 +62,10 @@ Write-Host "`n[STEP 4] Test EF DbContext" -ForegroundColor Magenta
 Push-Location $InfrastructurePath
 try {
     Write-Host "Testing EF dbcontext info..." -ForegroundColor Yellow
-    $dbContextOutput = dotnet ef dbcontext info --startup-project $ApiPath 2>&1
+    Write-Host "Running from: $(Get-Location)" -ForegroundColor Blue
+    Write-Host "Startup project: $ApiPath" -ForegroundColor Blue
+    
+    $dbContextOutput = dotnet ef dbcontext info --startup-project "$ApiPath" 2>&1
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] EF DbContext works!" -ForegroundColor Green
@@ -79,13 +85,16 @@ Write-Host "`n[STEP 5] Create Migration" -ForegroundColor Magenta
 Push-Location $InfrastructurePath
 try {
     Write-Host "Creating InitialCreate migration..." -ForegroundColor Yellow
-    $migrationOutput = dotnet ef migrations add InitialCreate --startup-project $ApiPath 2>&1
+    Write-Host "Running from: $(Get-Location)" -ForegroundColor Blue
+    Write-Host "Startup project: $ApiPath" -ForegroundColor Blue
+    
+    $migrationOutput = dotnet ef migrations add InitialCreate --startup-project "$ApiPath" 2>&1
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[SUCCESS] Migration created successfully!" -ForegroundColor Green
         
         Write-Host "`nUpdating database..." -ForegroundColor Yellow
-        $updateOutput = dotnet ef database update --startup-project $ApiPath 2>&1
+        $updateOutput = dotnet ef database update --startup-project "$ApiPath" 2>&1
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[SUCCESS] Database updated successfully!" -ForegroundColor Green
@@ -107,10 +116,10 @@ finally {
 Write-Host "`n[STEP 6] Verify Results" -ForegroundColor Magenta
 $dbFound = $false
 $dbPaths = @(
-    "$BackendPath/wemdashboard.db", 
-    "$ApiPath/wemdashboard.db", 
-    "$BackendPath/wemdashboard-dev.db", 
-    "$ApiPath/wemdashboard-dev.db"
+    (Join-Path $BackendPath "wemdashboard.db"), 
+    (Join-Path $ApiPath "wemdashboard.db"), 
+    (Join-Path $BackendPath "wemdashboard-dev.db"), 
+    (Join-Path $ApiPath "wemdashboard-dev.db")
 )
 
 foreach ($dbPath in $dbPaths) {
@@ -133,7 +142,7 @@ if (-not $dbFound) {
     }
 }
 
-$migrationsPath = "$InfrastructurePath/Migrations"
+$migrationsPath = Join-Path $InfrastructurePath "Migrations"
 if (Test-Path $migrationsPath) {
     $migrationFiles = Get-ChildItem $migrationsPath -Filter "*.cs" -ErrorAction SilentlyContinue
     Write-Host "[OK] Migration files created: $($migrationFiles.Count)" -ForegroundColor Green
