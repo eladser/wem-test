@@ -2,7 +2,7 @@ import React, { useMemo, Suspense, lazy, useState, useEffect, useRef } from "rea
 import { mockRegions } from "@/services/mockDataService";
 import { MetricsCards } from "@/components/overview/MetricsCards";
 import { RegionsGrid } from "@/components/overview/RegionsGrid";
-import { usePerformance } from "@/hooks/useAdvancedPerformance";
+import { usePerformance } from "@/hooks/usePerformance";
 import { useRealTimeData, ConnectionStatus } from "@/hooks/useWebSocket";
 import { useNotify } from "@/components/notifications/NotificationSystem";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -225,13 +225,14 @@ const DailySummary = () => {
 };
 
 const Overview = () => {
-  const { logRenderTime, renderCount } = usePerformance('Overview');
+  const { logRenderTime, getMetrics } = usePerformance('Overview');
   const notify = useNotify();
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const alertNotificationShown = useRef(false);
   
-  console.log(`Overview component rendering (render #${renderCount})`);
+  const metrics = getMetrics();
+  console.log(`Overview component rendering (render time: ${metrics.renderTime}ms)`);
   
   const isDevelopment = import.meta.env.DEV;
   const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000/ws/energy-data';
@@ -519,7 +520,7 @@ const Overview = () => {
         {isDevelopment && (
           <div className="fixed bottom-4 left-4 bg-black/90 text-white p-3 rounded-lg text-xs font-mono backdrop-blur-sm border border-slate-700">
             <div className="space-y-1">
-              <div>Renders: <span className="text-emerald-400">{renderCount}</span></div>
+              <div>Render Time: <span className="text-emerald-400">{metrics.renderTime}ms</span></div>
               <div>Connection: <span className={`${
                 connectionState === 'connected' ? 'text-emerald-400' :
                 connectionState === 'error' ? 'text-red-400' : 'text-yellow-400'
