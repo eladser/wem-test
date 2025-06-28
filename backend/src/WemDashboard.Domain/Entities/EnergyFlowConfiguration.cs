@@ -27,8 +27,8 @@ public class EnergyFlowConfiguration
     public string LineStyle { get; set; } = "solid";
     public int LineWidth { get; set; } = 2;
     
-    // Associated Site
-    public int? SiteId { get; set; }
+    // Associated Site - FIXED: Changed from int? to string? to match Site.Id
+    public string? SiteId { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
