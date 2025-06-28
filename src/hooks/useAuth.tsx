@@ -4,7 +4,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user' | 'viewer' | 'administrator';
+  role: 'admin' | 'user' | 'viewer' | 'administrator' | 'operator';
   permissions: string[];
 }
 
@@ -12,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
   isAdmin: boolean;
@@ -20,40 +20,72 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Demo accounts matching your login page
+const demoAccounts = {
+  'admin@energyos.com': {
+    id: '1',
+    email: 'admin@energyos.com',
+    name: 'Administrator',
+    role: 'admin' as const,
+    permissions: ['read', 'write', 'admin', 'delete', 'export']
+  },
+  'operator@energyos.com': {
+    id: '2', 
+    email: 'operator@energyos.com',
+    name: 'Operator',
+    role: 'operator' as const,
+    permissions: ['read', 'write', 'export']
+  },
+  'viewer@energyos.com': {
+    id: '3',
+    email: 'viewer@energyos.com', 
+    name: 'Viewer',
+    role: 'viewer' as const,
+    permissions: ['read']
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user for development - replace with actual auth logic
+  // Check for existing session on app load
   useEffect(() => {
-    // Simulate loading from localStorage or API
-    setTimeout(() => {
-      const mockUser: User = {
-        id: '1',
-        email: 'admin@wem.com',
-        name: 'Admin User',
-        role: 'admin',
-        permissions: ['read', 'write', 'admin', 'delete']
-      };
-      setUser(mockUser);
+    const checkExistingSession = () => {
+      const savedUser = localStorage.getItem('wem_user');
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+        } catch (error) {
+          console.error('Error parsing saved user data:', error);
+          localStorage.removeItem('wem_user');
+        }
+      }
       setIsLoading(false);
-    }, 1000);
+    };
+
+    checkExistingSession();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Mock login - replace with actual API call
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: 'Admin User',
-        role: 'admin',
-        permissions: ['read', 'write', 'admin', 'delete']
-      };
-      setUser(mockUser);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Check credentials
+      if (password === 'password' && email in demoAccounts) {
+        const userData = demoAccounts[email as keyof typeof demoAccounts];
+        setUser(userData);
+        localStorage.setItem('wem_user', JSON.stringify(userData));
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
-      throw new Error('Login failed');
+      console.error('Login error:', error);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('wem_user');
   };
 
   const hasPermission = (permission: string): boolean => {
@@ -85,15 +118,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    // Return a default mock value for development
+    // Return a default mock value for development when AuthProvider is not wrapping the component
     return {
-      user: { id: '1', email: 'admin@wem.com', name: 'Admin User', role: 'admin' as const, permissions: ['read', 'write', 'admin'] },
-      isAuthenticated: true,
+      user: null,
+      isAuthenticated: false,
       isLoading: false,
-      login: async () => {},
+      login: async () => false,
       logout: () => {},
-      hasPermission: () => true,
-      isAdmin: true
+      hasPermission: () => false,
+      isAdmin: false
     };
   }
   return context;
