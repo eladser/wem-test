@@ -4,32 +4,39 @@ export interface Site {
   name: string;
   location: string;
   region: string;
-  subRegion?: string; // New field for sub-region support
-  status: 'online' | 'maintenance' | 'offline';
+  subRegion?: string;
+  status: 'Online' | 'Maintenance' | 'Offline'; // Matching backend enum
   totalCapacity: number;
   currentOutput: number;
   efficiency: number;
   lastUpdate: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Asset {
   id: string;
   name: string;
-  type: 'inverter' | 'battery' | 'solar_panel' | 'wind_turbine';
+  type: 'Inverter' | 'Battery' | 'SolarPanel' | 'WindTurbine'; // Matching backend enum
   siteId: string;
-  status: 'online' | 'charging' | 'warning' | 'maintenance' | 'offline';
+  status: 'Online' | 'Charging' | 'Warning' | 'Maintenance' | 'Offline';
   power: string;
   efficiency: string;
   lastUpdate: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PowerData {
+  id?: string;
+  siteId?: string;
   time: string;
   solar: number;
   battery: number;
   grid: number;
   demand: number;
   wind?: number;
+  timestamp?: string;
 }
 
 export interface EnergyMix {
@@ -49,10 +56,15 @@ export interface Metric {
 
 export interface Alert {
   id: string;
-  type: 'warning' | 'info' | 'success' | 'error';
+  type: 'Critical' | 'Warning' | 'Info'; // Matching backend enum
   message: string;
+  description?: string;
   site: string;
+  siteId?: string;
   timestamp: string;
+  isAcknowledged?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SubRegion {
@@ -64,6 +76,68 @@ export interface SubRegion {
 export interface Region {
   id: string;
   name: string;
-  sites: Site[]; // For backward compatibility - will be flattened from subRegions
-  subRegions?: SubRegion[]; // New field for hierarchical structure
+  sites: Site[];
+  subRegions?: SubRegion[];
+}
+
+// New types for API responses
+export interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
+  errors?: string[];
+}
+
+export interface PagedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// User and Auth types
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'Admin' | 'Manager' | 'Operator' | 'Viewer';
+  isActive: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+  refreshToken: string;
+  expiresAt: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+// Site-specific DTOs
+export interface CreateSiteDto {
+  name: string;
+  location: string;
+  region: string;
+  totalCapacity: number;
+}
+
+export interface UpdateSiteDto {
+  name?: string;
+  location?: string;
+  region?: string;
+  totalCapacity?: number;
+  currentOutput?: number;
+  efficiency?: number;
+}
+
+export interface UpdateSiteStatusDto {
+  status: 'Online' | 'Maintenance' | 'Offline';
 }
