@@ -19,8 +19,7 @@ public class DashboardLayout
     
     public bool IsDefault { get; set; } = false;
     
-    // Store layout configuration as JSON
-    [Column(TypeName = "nvarchar(max)")]
+    // Store layout configuration as JSON - Remove SQL Server specific TypeName
     public string LayoutConfig { get; set; } = "{}";
     
     // Grid-specific settings
@@ -28,8 +27,7 @@ public class DashboardLayout
     public int GridRows { get; set; } = 10;
     public string GridGap { get; set; } = "medium";
     
-    // Widget positions and sizes
-    [Column(TypeName = "nvarchar(max)")]
+    // Widget positions and sizes - Remove SQL Server specific TypeName
     public string WidgetPositions { get; set; } = "[]";
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
