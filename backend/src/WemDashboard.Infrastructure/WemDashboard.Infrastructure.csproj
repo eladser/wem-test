@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WemDashboard.Domain\WemDashboard.Domain.csproj" />
-    <ProjectReference Include="..\WemDashboard.Application\WemDashboard.Application.csproj" />
     <ProjectReference Include="..\WemDashboard.Shared\WemDashboard.Shared.csproj" />
   </ItemGroup>
 
