@@ -19,8 +19,8 @@ public class FilterPreset
     [Required]
     public string ViewType { get; set; } = string.Empty; // e.g., "assets", "alerts", "power-data"
     
-    // Store filter criteria as JSON - Remove SQL Server specific TypeName
-    public string FilterCriteria { get; set; } = "{}";
+    // Store filter criteria as JSON
+    public string FilterConfig { get; set; } = "{}";
     
     public bool IsShared { get; set; } = false;
     public bool IsDefault { get; set; } = false;

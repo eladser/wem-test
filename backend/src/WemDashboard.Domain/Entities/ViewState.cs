@@ -17,8 +17,14 @@ public class ViewState
     [Required]
     public string PageName { get; set; } = string.Empty;
     
-    // Store view state as JSON - Remove SQL Server specific TypeName
-    public string StateData { get; set; } = "{}";
+    [Required]
+    public string StateKey { get; set; } = string.Empty;
+    
+    // Store view state as JSON
+    public string StateValue { get; set; } = "{}";
+    
+    public DateTime? ExpiresAt { get; set; }
+    public bool IsPersistent { get; set; } = true;
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
