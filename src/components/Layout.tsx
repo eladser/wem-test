@@ -13,7 +13,7 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
@@ -83,4 +83,5 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 };
 
+// Also provide default export for compatibility
 export default Layout;
