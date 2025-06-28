@@ -25,7 +25,6 @@ export function ErrorHandlingDemo() {
     toast({
       title: 'Info Log Created',
       description: 'Check the console for the log entry',
-      variant: 'default'
     });
   };
 
@@ -39,7 +38,7 @@ export function ErrorHandlingDemo() {
     toast({
       title: 'Warning Log Created',
       description: 'Check the console and backend logs',
-      variant: 'warning'
+      variant: 'destructive'
     });
   };
 
@@ -110,7 +109,6 @@ export function ErrorHandlingDemo() {
       toast({
         title: 'Performance Test Complete',
         description: 'Check console for timing information',
-        variant: 'success'
       });
     } catch (error) {
       log.error('Performance test failed', { component: 'ErrorHandlingDemo' }, error as Error);
