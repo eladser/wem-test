@@ -33,6 +33,9 @@ import SiteFinances from './components/SiteFinances';
 import SiteTeam from './components/SiteTeam';
 import SiteSettings from './components/SiteSettings';
 
+// Demo component
+import ErrorHandlingDemo from './components/ErrorHandlingDemo';
+
 // Loading component
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-slate-950">
@@ -83,6 +86,9 @@ function AppContent() {
             <Route path="/monitoring" element={<ProtectedRoute><Monitoring /></ProtectedRoute>} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            
+            {/* Demo Route for Testing Error Handling */}
+            <Route path="/demo/error-handling" element={<ErrorHandlingDemo />} />
             
             {/* Region Routes */}
             <Route path="/region/:regionId" element={<RegionOverview />} />
