@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WemDashboard.Application.DTOs;
 using WemDashboard.Application.Interfaces;
@@ -11,10 +10,10 @@ namespace WemDashboard.Application.Services;
 
 public class LogService : ILogService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly WemDashboardDbContext _context;
     private readonly ILogger<LogService> _logger;
 
-    public LogService(ApplicationDbContext context, ILogger<LogService> logger)
+    public LogService(WemDashboardDbContext context, ILogger<LogService> logger)
     {
         _context = context;
         _logger = logger;
@@ -36,7 +35,7 @@ public class LogService : ILogService
                 ErrorName = dto.Error?.Name,
                 ErrorMessage = dto.Error?.Message,
                 StackTrace = dto.Error?.Stack,
-                Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown",
+                Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown",
                 Component = ExtractComponentFromUrl(dto.Url) ?? "Frontend"
             };
 
@@ -81,10 +80,10 @@ public class LogService : ILogService
         }
 
         // Get total count
-        var totalCount = await query.CountAsync();
+        var totalCount = query.Count();
 
         // Apply pagination
-        var items = await query
+        var items = query
             .OrderByDescending(l => l.Timestamp)
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
@@ -105,7 +104,7 @@ public class LogService : ILogService
                     Stack = l.StackTrace
                 } : null
             })
-            .ToListAsync();
+            .ToList();
 
         return new PagedLogResponseDto
         {
@@ -127,10 +126,10 @@ public class LogService : ILogService
         var stats = new ErrorStatisticsDto();
 
         // Count by level
-        var levelCounts = await query
+        var levelCounts = query
             .GroupBy(l => l.Level)
             .Select(g => new { Level = g.Key, Count = g.Count() })
-            .ToListAsync();
+            .ToList();
 
         foreach (var item in levelCounts)
         {
@@ -151,21 +150,21 @@ public class LogService : ILogService
         }
 
         // Count by component
-        stats.ErrorsByComponent = await query
+        stats.ErrorsByComponent = query
             .Where(l => l.Level >= LogLevel.Warning && l.Component != null)
             .GroupBy(l => l.Component!)
             .Select(g => new { Component = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Component, x => x.Count);
+            .ToDictionary(x => x.Component, x => x.Count);
 
         // Count by day
-        stats.ErrorsByDay = await query
+        stats.ErrorsByDay = query
             .Where(l => l.Level >= LogLevel.Warning)
             .GroupBy(l => l.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Date, x => x.Count);
+            .ToDictionary(x => x.Date, x => x.Count);
 
         // Top errors
-        stats.TopErrors = await query
+        stats.TopErrors = query
             .Where(l => l.Level >= LogLevel.Error)
             .GroupBy(l => l.Message)
             .Select(g => new TopErrorDto
@@ -176,7 +175,7 @@ public class LogService : ILogService
             })
             .OrderByDescending(x => x.Count)
             .Take(10)
-            .ToListAsync();
+            .ToList();
 
         return stats;
     }
@@ -188,7 +187,7 @@ public class LogService : ILogService
         var oldLogs = _context.LogEntries
             .Where(l => l.Timestamp < cutoffDate && l.Level < LogLevel.Error); // Keep errors longer
         
-        var count = await oldLogs.CountAsync();
+        var count = oldLogs.Count();
         
         if (count > 0)
         {
@@ -207,7 +206,7 @@ public class LogService : ILogService
             Level = LogLevel.Information,
             Component = "System",
             ContextJson = data != null ? JsonSerializer.Serialize(data) : null,
-            Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
+            Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
         };
 
         _context.LogEntries.Add(logEntry);
@@ -222,7 +221,7 @@ public class LogService : ILogService
             Level = LogLevel.Information,
             Component = "Performance",
             ContextJson = JsonSerializer.Serialize(new { Metric = metricName, Value = value, Unit = unit }),
-            Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
+            Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
         };
 
         _context.LogEntries.Add(logEntry);
@@ -238,7 +237,7 @@ public class LogService : ILogService
             Component = "UserAction",
             UserId = userId,
             ContextJson = details != null ? JsonSerializer.Serialize(new { Action = action, Details = details }) : null,
-            Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
+            Environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
         };
 
         _context.LogEntries.Add(logEntry);
