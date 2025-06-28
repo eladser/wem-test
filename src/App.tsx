@@ -17,6 +17,8 @@ import Settings from "./pages/Settings";
 import Overview from "./pages/Overview";
 import Analytics from "./pages/Analytics";
 import Assets from "./pages/Assets";
+import AdvancedAnalytics from "./pages/AdvancedAnalytics";
+import Monitoring from "./pages/Monitoring";
 import RegionOverview from "./pages/RegionOverview";
 import { RegionDashboard } from "./components/region/RegionDashboard";
 import { SiteDashboard } from "./components/site/SiteDashboard";
@@ -132,6 +134,16 @@ const App: React.FC = () => {
                                 <Route path="/analytics" element={
                                   <ProtectedRoute requiredPermission="read">
                                     <Analytics />
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/advanced-analytics" element={
+                                  <ProtectedRoute requiredPermission="read">
+                                    <AdvancedAnalytics />
+                                  </ProtectedRoute>
+                                } />
+                                <Route path="/monitoring" element={
+                                  <ProtectedRoute requiredPermission="read">
+                                    <Monitoring />
                                   </ProtectedRoute>
                                 } />
                                 <Route path="/assets" element={
