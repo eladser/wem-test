@@ -20,7 +20,7 @@ import NotFound from './pages/NotFound';
 
 // Site components
 import SiteDashboard from './components/SiteDashboard';
-import { SiteGrid } from './components/SiteGrid';
+import SiteGrid from './components/SiteGrid'; // Changed to default import
 import SiteAssets from './components/SiteAssets';
 import SiteReports from './components/SiteReports';
 import SiteFinances from './components/SiteFinances';

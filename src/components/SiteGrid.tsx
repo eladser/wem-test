@@ -2,7 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import InteractiveGrid from "./InteractiveGrid";
 
-const SiteGrid = () => {
+export const SiteGrid = () => {
   const { siteId } = useParams();
 
   return (
@@ -15,4 +15,5 @@ const SiteGrid = () => {
   );
 };
 
+// Also provide default export for compatibility
 export default SiteGrid;
