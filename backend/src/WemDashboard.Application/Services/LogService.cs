@@ -85,29 +85,47 @@ public class LogService : ILogService
         // Get total count
         var totalCount = await query.CountAsync();
 
-        // Apply pagination
-        var items = await query
+        // Apply pagination and get data - Fixed: Move JsonSerializer.Deserialize outside expression tree
+        var logEntries = await query
             .OrderByDescending(l => l.Timestamp)
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
-            .Select(l => new LogEntryResponseDto
+            .Select(l => new
             {
-                Id = l.Id,
-                Message = l.Message,
-                Level = l.Level,
-                Timestamp = l.Timestamp,
-                Component = l.Component,
-                UserId = l.UserId,
-                Url = l.Url,
-                Context = l.ContextJson != null ? JsonSerializer.Deserialize<Dictionary<string, object>>(l.ContextJson) : null,
-                Error = l.ErrorName != null ? new LogErrorDto
-                {
-                    Name = l.ErrorName,
-                    Message = l.ErrorMessage,
-                    Stack = l.StackTrace
-                } : null
+                l.Id,
+                l.Message,
+                l.Level,
+                l.Timestamp,
+                l.Component,
+                l.UserId,
+                l.Url,
+                l.ContextJson,
+                l.ErrorName,
+                l.ErrorMessage,
+                l.StackTrace
             })
             .ToListAsync();
+
+        // Convert to DTOs with JSON deserialization outside the expression tree
+        var items = logEntries.Select(l => new LogEntryResponseDto
+        {
+            Id = l.Id,
+            Message = l.Message,
+            Level = l.Level,
+            Timestamp = l.Timestamp,
+            Component = l.Component,
+            UserId = l.UserId,
+            Url = l.Url,
+            Context = !string.IsNullOrEmpty(l.ContextJson) 
+                ? DeserializeContext(l.ContextJson) 
+                : null,
+            Error = !string.IsNullOrEmpty(l.ErrorName) ? new LogErrorDto
+            {
+                Name = l.ErrorName,
+                Message = l.ErrorMessage,
+                Stack = l.StackTrace
+            } : null
+        }).ToList();
 
         return new PagedLogResponseDto
         {
@@ -274,6 +292,18 @@ public class LogService : ILogService
         catch
         {
             return "Unknown";
+        }
+    }
+
+    private static Dictionary<string, object>? DeserializeContext(string contextJson)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, object>>(contextJson);
+        }
+        catch
+        {
+            return null;
         }
     }
 }
