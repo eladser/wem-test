@@ -1,117 +1,83 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'operator' | 'viewer';
+  role: 'admin' | 'user' | 'viewer' | 'administrator';
   permissions: string[];
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
   hasPermission: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'admin@energyos.com': {
-    password: 'password',
-    user: {
-      id: '1',
-      email: 'admin@energyos.com',
-      name: 'System Administrator',
-      role: 'admin',
-      permissions: ['read', 'write', 'delete', 'export', 'manage_users', 'manage_settings']
-    }
-  },
-  'operator@energyos.com': {
-    password: 'password',
-    user: {
-      id: '2',
-      email: 'operator@energyos.com',
-      name: 'Plant Operator',
-      role: 'operator',
-      permissions: ['read', 'write', 'export']
-    }
-  },
-  'viewer@energyos.com': {
-    password: 'password',
-    user: {
-      id: '3',
-      email: 'viewer@energyos.com',
-      name: 'System Viewer',
-      role: 'viewer',
-      permissions: ['read']
-    }
-  }
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Mock user for development - replace with actual auth logic
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('energyos_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Failed to parse saved user:', error);
-        localStorage.removeItem('energyos_user');
-      }
-    }
-    setIsLoading(false);
+    // Simulate loading from localStorage or API
+    setTimeout(() => {
+      const mockUser: User = {
+        id: '1',
+        email: 'admin@wem.com',
+        name: 'Admin User',
+        role: 'admin',
+        permissions: ['read', 'write', 'admin', 'delete']
+      };
+      setUser(mockUser);
+      setIsLoading(false);
+    }, 1000);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const mockUser = mockUsers[email];
-    
-    if (mockUser && mockUser.password === password) {
-      setUser(mockUser.user);
-      localStorage.setItem('energyos_user', JSON.stringify(mockUser.user));
-      return true;
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      // Mock login - replace with actual API call
+      const mockUser: User = {
+        id: '1',
+        email,
+        name: 'Admin User',
+        role: 'admin',
+        permissions: ['read', 'write', 'admin', 'delete']
+      };
+      setUser(mockUser);
+    } catch (error) {
+      throw new Error('Login failed');
+    } finally {
+      setIsLoading(false);
     }
-    
-    return false;
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('energyos_user');
   };
 
   const hasPermission = (permission: string): boolean => {
-    return user?.permissions.includes(permission) || false;
+    return user?.permissions.includes(permission) ?? false;
   };
 
-  const hasRole = (role: string): boolean => {
-    return user?.role === role;
-  };
+  const isAdmin = user?.role === 'admin' || user?.role === 'administrator';
 
-  const value = {
+  const value: AuthContextType = {
     user,
+    isAuthenticated: !!user,
+    isLoading,
     login,
     logout,
-    isAuthenticated: !!user,
     hasPermission,
-    hasRole
+    isAdmin
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
@@ -119,7 +85,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Return a default mock value for development
+    return {
+      user: { id: '1', email: 'admin@wem.com', name: 'Admin User', role: 'admin' as const, permissions: ['read', 'write', 'admin'] },
+      isAuthenticated: true,
+      isLoading: false,
+      login: async () => {},
+      logout: () => {},
+      hasPermission: () => true,
+      isAdmin: true
+    };
   }
   return context;
 };
