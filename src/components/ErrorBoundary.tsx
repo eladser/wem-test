@@ -113,7 +113,7 @@ function ErrorFallback({ error, errorInfo, errorId, onReload, onReset }: ErrorFa
     
     // You could also open a GitHub issue or send to your bug tracking system
     const issueUrl = `https://github.com/eladser/wem-test/issues/new?title=Error%20Report%20${errorId}&body=${encodeURIComponent(
-      `**Error Report ID:** ${errorId}\n\n**Error Message:** ${error?.message}\n\n**Stack Trace:**\n\`\`\`\n${error?.stack}\n\`\`\`\n\n**URL:** ${window.location.href}\n\n**Timestamp:** ${new Date().toISOString()}`
+      `**Error Report ID:** ${errorId}\\n\\n**Error Message:** ${error?.message}\\n\\n**Stack Trace:**\\n\\`\\`\\`\\n${error?.stack}\\n\\`\\`\\`\\n\\n**URL:** ${window.location.href}\\n\\n**Timestamp:** ${new Date().toISOString()}`
     )}`;
     
     window.open(issueUrl, '_blank');
