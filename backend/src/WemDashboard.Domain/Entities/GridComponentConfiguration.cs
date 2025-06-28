@@ -17,25 +17,32 @@ public class GridComponentConfiguration
     [Required]
     public string ComponentType { get; set; } = string.Empty;
     
-    public string Name { get; set; } = string.Empty;
+    public string ComponentName { get; set; } = string.Empty;
     
-    // Position
-    public double X { get; set; } = 0;
-    public double Y { get; set; } = 0;
+    // Position and Size
+    public int X { get; set; } = 0;
+    public int Y { get; set; } = 0;
+    public int Width { get; set; } = 1;
+    public int Height { get; set; } = 1;
     
-    // Power and Status
-    public double Power { get; set; } = 0;
-    public string Status { get; set; } = "active";
+    // Visual properties
+    public string Color { get; set; } = "#3B82F6";
+    public string BackgroundColor { get; set; } = "transparent";
+    public string BorderStyle { get; set; } = "solid";
+    public int BorderWidth { get; set; } = 1;
     
-    // Component-specific properties
-    public double? Efficiency { get; set; }
-    public double? Capacity { get; set; }
+    // Component-specific configuration as JSON - Remove SQL Server specific TypeName
+    public string ComponentConfig { get; set; } = "{}";
     
-    // Additional settings as JSON
-    [Column(TypeName = "nvarchar(max)")]
-    public string AdditionalSettings { get; set; } = "{}";
+    // Data source configuration
+    public string DataSource { get; set; } = string.Empty;
+    public string DataFilters { get; set; } = "{}";
     
-    // Associated Site - FIXED: Changed from int? to string? to match Site.Id
+    // Display settings
+    public bool IsVisible { get; set; } = true;
+    public bool IsInteractive { get; set; } = true;
+    
+    // Site association - Using string to match Site.Id
     public string? SiteId { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

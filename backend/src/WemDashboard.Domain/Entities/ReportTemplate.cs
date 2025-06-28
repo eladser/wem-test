@@ -12,26 +12,21 @@ public class ReportTemplate
     public string UserId { get; set; } = string.Empty;
     
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public string TemplateName { get; set; } = string.Empty;
     
     public string Description { get; set; } = string.Empty;
     
     [Required]
-    public string ReportType { get; set; } = string.Empty;
+    public string ReportType { get; set; } = string.Empty; // e.g., "energy", "performance", "maintenance"
     
-    // Template configuration as JSON
-    [Column(TypeName = "nvarchar(max)")]
+    // Store template configuration as JSON - Remove SQL Server specific TypeName
     public string TemplateConfig { get; set; } = "{}";
     
-    // Scheduling settings
-    public bool IsScheduled { get; set; } = false;
-    public string ScheduleCron { get; set; } = string.Empty;
-    public string Recipients { get; set; } = string.Empty;
+    // Store report parameters as JSON - Remove SQL Server specific TypeName
+    public string Parameters { get; set; } = "{}";
     
-    // Export settings
-    public string ExportFormat { get; set; } = "pdf";
-    public bool IncludeCharts { get; set; } = true;
-    public bool IncludeData { get; set; } = true;
+    public bool IsShared { get; set; } = false;
+    public bool IsDefault { get; set; } = false;
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

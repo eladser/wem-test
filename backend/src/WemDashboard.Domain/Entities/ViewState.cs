@@ -12,18 +12,13 @@ public class ViewState
     public string UserId { get; set; } = string.Empty;
     
     [Required]
-    public string PageName { get; set; } = string.Empty;
+    public string ViewName { get; set; } = string.Empty;
     
     [Required]
-    public string StateKey { get; set; } = string.Empty;
+    public string PageName { get; set; } = string.Empty;
     
-    // State value as JSON
-    [Column(TypeName = "nvarchar(max)")]
-    public string StateValue { get; set; } = "{}";
-    
-    // Expiration settings
-    public DateTime? ExpiresAt { get; set; }
-    public bool IsPersistent { get; set; } = true;
+    // Store view state as JSON - Remove SQL Server specific TypeName
+    public string StateData { get; set; } = "{}";
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

@@ -12,19 +12,18 @@ public class FilterPreset
     public string UserId { get; set; } = string.Empty;
     
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public string PresetName { get; set; } = string.Empty;
     
     public string Description { get; set; } = string.Empty;
     
     [Required]
-    public string PageName { get; set; } = string.Empty;
+    public string ViewType { get; set; } = string.Empty; // e.g., "assets", "alerts", "power-data"
     
-    // Filter configuration as JSON
-    [Column(TypeName = "nvarchar(max)")]
-    public string FilterConfig { get; set; } = "{}";
+    // Store filter criteria as JSON - Remove SQL Server specific TypeName
+    public string FilterCriteria { get; set; } = "{}";
     
-    public bool IsDefault { get; set; } = false;
     public bool IsShared { get; set; } = false;
+    public bool IsDefault { get; set; } = false;
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
