@@ -111,10 +111,24 @@ function ErrorFallback({ error, errorInfo, errorId, onReload, onReset }: ErrorFa
     // Copy to clipboard
     navigator.clipboard.writeText(JSON.stringify(bugReport, null, 2));
     
-    // You could also open a GitHub issue or send to your bug tracking system
-    const issueUrl = `https://github.com/eladser/wem-test/issues/new?title=Error%20Report%20${errorId}&body=${encodeURIComponent(
-      `**Error Report ID:** ${errorId}\\n\\n**Error Message:** ${error?.message}\\n\\n**Stack Trace:**\\n\\`\\`\\`\\n${error?.stack}\\n\\`\\`\\`\\n\\n**URL:** ${window.location.href}\\n\\n**Timestamp:** ${new Date().toISOString()}`
-    )}`;
+    // Create GitHub issue URL - fix the template string escaping
+    const errorMessage = error?.message || 'Unknown error';
+    const stackTrace = error?.stack || 'No stack trace available';
+    
+    const issueBody = `**Error Report ID:** ${errorId}
+
+**Error Message:** ${errorMessage}
+
+**Stack Trace:**
+\`\`\`
+${stackTrace}
+\`\`\`
+
+**URL:** ${window.location.href}
+
+**Timestamp:** ${new Date().toISOString()}`;
+    
+    const issueUrl = `https://github.com/eladser/wem-test/issues/new?title=${encodeURIComponent(`Error Report ${errorId}`)}&body=${encodeURIComponent(issueBody)}`;
     
     window.open(issueUrl, '_blank');
   };
