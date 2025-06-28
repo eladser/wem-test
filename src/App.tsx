@@ -7,6 +7,11 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
+// Error handling components
+import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster as UIToaster } from './components/Toaster';
+import { logger, useLogger } from './utils/logger';
+
 // Pages
 import Login from './pages/Login';
 import Overview from './pages/Overview';
@@ -20,7 +25,7 @@ import NotFound from './pages/NotFound';
 
 // Site components
 import SiteDashboard from './components/SiteDashboard';
-import SiteGrid from './components/SiteGrid'; // Changed to default import
+import SiteGrid from './components/SiteGrid';
 import SiteAssets from './components/SiteAssets';
 import SiteReports from './components/SiteReports';
 import SiteFinances from './components/SiteFinances';
@@ -40,6 +45,15 @@ const LoadingSpinner = () => (
 // Main App component that uses auth
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+  const log = useLogger();
+
+  React.useEffect(() => {
+    log.info('App started', {
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    });
+  }, []);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -47,41 +61,45 @@ function AppContent() {
 
   if (!isAuthenticated) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </ErrorBoundary>
     );
   }
 
   return (
     <SidebarProvider>
       <Layout>
-        <Routes>
-          {/* Main Routes */}
-          <Route path="/" element={<Overview />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
-          <Route path="/monitoring" element={<ProtectedRoute><Monitoring /></ProtectedRoute>} />
-          <Route path="/assets" element={<Assets />} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          
-          {/* Region Routes */}
-          <Route path="/region/:regionId" element={<RegionOverview />} />
-          
-          {/* Site Routes */}
-          <Route path="/site/:siteId" element={<SiteDashboard />} />
-          <Route path="/site/:siteId/grid" element={<SiteGrid />} />
-          <Route path="/site/:siteId/assets" element={<SiteAssets />} />
-          <Route path="/site/:siteId/reports" element={<SiteReports />} />
-          <Route path="/site/:siteId/finances" element={<SiteFinances />} />
-          <Route path="/site/:siteId/team" element={<SiteTeam />} />
-          <Route path="/site/:siteId/settings" element={<SiteSettings />} />
-          
-          {/* Fallback */}
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            {/* Main Routes */}
+            <Route path="/" element={<Overview />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
+            <Route path="/monitoring" element={<ProtectedRoute><Monitoring /></ProtectedRoute>} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            
+            {/* Region Routes */}
+            <Route path="/region/:regionId" element={<RegionOverview />} />
+            
+            {/* Site Routes */}
+            <Route path="/site/:siteId" element={<SiteDashboard />} />
+            <Route path="/site/:siteId/grid" element={<SiteGrid />} />
+            <Route path="/site/:siteId/assets" element={<SiteAssets />} />
+            <Route path="/site/:siteId/reports" element={<SiteReports />} />
+            <Route path="/site/:siteId/finances" element={<SiteFinances />} />
+            <Route path="/site/:siteId/team" element={<SiteTeam />} />
+            <Route path="/site/:siteId/settings" element={<SiteSettings />} />
+            
+            {/* Fallback */}
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
       </Layout>
     </SidebarProvider>
   );
@@ -89,25 +107,37 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <NotificationProvider>
-          <Router>
-            <AppContent />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                style: {
-                  background: 'rgb(30 41 59)',
-                  border: '1px solid rgb(71 85 105)',
-                  color: 'rgb(226 232 240)',
-                },
-              }}
-            />
-          </Router>
-        </NotificationProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        logger.fatal('Top-level error boundary caught error', {
+          componentStack: errorInfo.componentStack,
+          topLevel: true
+        }, error);
+      }}
+    >
+      <AuthProvider>
+        <ThemeProvider>
+          <NotificationProvider>
+            <Router>
+              <AppContent />
+              {/* Keep existing Sonner toaster for backwards compatibility */}
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: 'rgb(30 41 59)',
+                    border: '1px solid rgb(71 85 105)',
+                    color: 'rgb(226 232 240)',
+                  },
+                }}
+              />
+              {/* Add our new toast system */}
+              <UIToaster />
+            </Router>
+          </NotificationProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
