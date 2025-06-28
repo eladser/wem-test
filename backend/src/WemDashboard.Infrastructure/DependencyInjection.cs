@@ -32,23 +32,27 @@ public static class DependencyInjection
         {
             case "sqlserver":
                 services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseSqlServer(connectionString));
+                    options.UseSqlServer(connectionString, 
+                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
                 Console.WriteLine("✅ Configured SQL Server");
                 break;
             case "postgresql":
                 services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseNpgsql(connectionString));
+                    options.UseNpgsql(connectionString,
+                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
                 Console.WriteLine("✅ Configured PostgreSQL");
                 break;
             case "mysql":
                 services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
+                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
                 Console.WriteLine("✅ Configured MySQL");
                 break;
             case "sqlite":
             default:
                 services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseSqlite(connectionString));
+                    options.UseSqlite(connectionString,
+                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
                 Console.WriteLine("✅ Configured SQLite");
                 break;
         }
