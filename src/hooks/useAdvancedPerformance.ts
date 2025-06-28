@@ -1,2 +1,2 @@
-// This file has been renamed to useAdvancedPerformance.tsx
-// Please use the .tsx version instead.
+// This file is deprecated - use useAdvancedPerformance.tsx instead
+export {};
