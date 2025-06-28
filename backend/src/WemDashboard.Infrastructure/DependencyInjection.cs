@@ -53,13 +53,23 @@ public static class DependencyInjection
                 break;
         }
 
-        // Repository registration
+        // Original repository registration
         services.AddScoped<ISiteRepository, SiteRepository>();
         services.AddScoped<IAssetRepository, AssetRepository>();
         services.AddScoped<IPowerDataRepository, PowerDataRepository>();
         services.AddScoped<IAlertRepository, AlertRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // New settings and configuration repository registration
+        services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
+        services.AddScoped<IDashboardLayoutRepository, DashboardLayoutRepository>();
+        services.AddScoped<IWidgetConfigurationRepository, WidgetConfigurationRepository>();
+        services.AddScoped<IGridComponentConfigurationRepository, GridComponentConfigurationRepository>();
+        services.AddScoped<IEnergyFlowConfigurationRepository, EnergyFlowConfigurationRepository>();
+        services.AddScoped<IFilterPresetRepository, FilterPresetRepository>();
+        services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
+        services.AddScoped<IViewStateRepository, ViewStateRepository>();
 
         // Services
         services.AddScoped<DataSeeder>();
