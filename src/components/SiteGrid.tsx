@@ -1,17 +1,14 @@
-
 import React from "react";
 import { useParams } from "react-router-dom";
-import SiteTopBar from "./SiteTopBar";
 import InteractiveGrid from "./InteractiveGrid";
 
 const SiteGrid = () => {
   const { siteId } = useParams();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
-      <SiteTopBar />
-      
-      <div className="relative h-[calc(100vh-140px)]">
+    <div className="w-full space-y-6">
+      {/* Grid Content - No duplicate header */}
+      <div className="relative h-[calc(100vh-200px)] rounded-lg overflow-hidden border border-slate-700/50 bg-slate-900/50">
         <InteractiveGrid />
       </div>
     </div>
