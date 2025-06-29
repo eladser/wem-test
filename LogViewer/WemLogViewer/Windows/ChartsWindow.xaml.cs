@@ -15,8 +15,8 @@ public partial class ChartsWindow : Window
     private readonly ObservableCollection<LogEntry> _allLogs;
     private List<LogEntry> _filteredLogs;
     
-    public Func<double, string> TimeFormatter { get; set; }
-    public Func<double, string> HourFormatter { get; set; }
+    public Func<double, string> TimeFormatter { get; set; } = value => new DateTime((long)value).ToString("MM/dd HH:mm");
+    public Func<double, string> HourFormatter { get; set; } = value => $"{value:00}:00";
     public string[] ComponentLabels { get; set; } = Array.Empty<string>();
     
     public ChartsWindow(ObservableCollection<LogEntry> logs)
@@ -25,15 +25,8 @@ public partial class ChartsWindow : Window
         _allLogs = logs;
         _filteredLogs = logs.ToList();
         
-        InitializeFormatters();
         DataContext = this;
         LoadCharts();
-    }
-    
-    private void InitializeFormatters()
-    {
-        TimeFormatter = value => new DateTime((long)value).ToString("MM/dd HH:mm");
-        HourFormatter = value => $"{value:00}:00";
     }
     
     private void LoadCharts()
