@@ -63,8 +63,10 @@ export const SettingsForm = () => {
       setIsLoadingInitial(true);
       setError(null);
       
-      // FIXED: Use correct endpoint without double /api/
-      const response = await apiService.get('/api/settings/general');
+      // FIXED: Don't require authentication for general settings - these are public config
+      const response = await apiService.get('/api/settings/general', {
+        requiresAuth: false // Settings don't require auth
+      });
       
       if (response.success && response.data) {
         const settings = {
@@ -90,7 +92,9 @@ export const SettingsForm = () => {
       
       // Provide more specific error messages
       let errorMessage = 'Failed to load settings';
-      if (error.message?.includes('404')) {
+      if (error.message?.includes('401')) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.message?.includes('404')) {
         errorMessage = 'Settings endpoint not found. Using default values.';
       } else if (error.message?.includes('Failed to fetch')) {
         errorMessage = 'Cannot connect to server. Check if backend is running on port 5000.';
@@ -129,12 +133,14 @@ export const SettingsForm = () => {
     try {
       console.log('Saving settings:', formData);
       
-      // FIXED: Use correct endpoint without double /api/
+      // FIXED: Don't require authentication for general settings
       const response = await apiService.put('/api/settings/general', {
         company: formData.company,
         timezone: formData.timezone,
         darkMode: formData.darkMode,
         autoSync: formData.autoSync
+      }, {
+        requiresAuth: false // Settings don't require auth
       });
       
       if (response.success) {
@@ -149,7 +155,9 @@ export const SettingsForm = () => {
       
       // Provide more specific error messages
       let errorMessage = 'Failed to save settings';
-      if (error.message?.includes('404')) {
+      if (error.message?.includes('401')) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.message?.includes('404')) {
         errorMessage = 'Settings save endpoint not found. Backend may not support this operation.';
       } else if (error.message?.includes('Failed to fetch')) {
         errorMessage = 'Cannot connect to server. Check if backend is running.';
