@@ -88,14 +88,14 @@ public partial class SettingsWindow : Window
 
     private void UpdateColorPreviews()
     {
-        ErrorColorPreview.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.ErrorColor));
-        WarningColorPreview.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.WarningColor));
-        InfoColorPreview.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.InfoColor));
+        ErrorColorPreview.Fill = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.ErrorColor));
+        WarningColorPreview.Fill = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.WarningColor));
+        InfoColorPreview.Fill = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.InfoColor));
     }
 
     private void ChangeColor_Click(object sender, RoutedEventArgs e)
     {
-        var button = sender as Button;
+        var button = sender as System.Windows.Controls.Button;
         if (button == null) return;
 
         var dialog = new System.Windows.Forms.ColorDialog();
@@ -140,33 +140,33 @@ public partial class SettingsWindow : Window
         try
         {
             // Clear application cache
-            var result = MessageBox.Show("Are you sure you want to clear the application cache?", 
+            var result = System.Windows.MessageBox.Show("Are you sure you want to clear the application cache?", 
                 "Clear Cache", MessageBoxButton.YesNo, MessageBoxImage.Question);
             
             if (result == MessageBoxResult.Yes)
             {
                 // Implementation would clear cache files
-                MessageBox.Show("Cache cleared successfully.", "Clear Cache", 
+                System.Windows.MessageBox.Show("Cache cleared successfully.", "Clear Cache", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error clearing cache: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error clearing cache: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void ResetSettings_Click(object sender, RoutedEventArgs e)
     {
-        var result = MessageBox.Show("Are you sure you want to reset all settings to default values?", 
+        var result = System.Windows.MessageBox.Show("Are you sure you want to reset all settings to default values?", 
             "Reset Settings", MessageBoxButton.YesNo, MessageBoxImage.Question);
         
         if (result == MessageBoxResult.Yes)
         {
             _settings = new AppSettings();
             LoadSettingsToUI();
-            MessageBox.Show("Settings have been reset to default values.", "Reset Settings", 
+            System.Windows.MessageBox.Show("Settings have been reset to default values.", "Reset Settings", 
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
@@ -192,7 +192,7 @@ public partial class SettingsWindow : Window
         if (SaveSettingsFromUI())
         {
             SaveSettings(_settings);
-            MessageBox.Show("Settings applied successfully.", "Settings", 
+            System.Windows.MessageBox.Show("Settings applied successfully.", "Settings", 
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
@@ -255,7 +255,7 @@ public partial class SettingsWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error saving settings: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error saving settings: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
@@ -273,7 +273,7 @@ public partial class SettingsWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error saving settings to file: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error saving settings to file: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
