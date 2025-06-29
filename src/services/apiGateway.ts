@@ -67,6 +67,37 @@ class ApiGateway {
     return Date.now() - entry.timestamp < entry.ttl;
   }
 
+  // FIXED: Normalize URL construction to prevent double slashes and /api/api/
+  private normalizeUrl(baseUrl: string, endpoint: string): string {
+    // Remove trailing slash from base URL
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+    
+    // Ensure endpoint starts with /
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    
+    // If endpoint already starts with /api and baseUrl already includes /api, remove /api from endpoint
+    if (cleanBaseUrl.endsWith('/api') && cleanEndpoint.startsWith('/api/')) {
+      return `${cleanBaseUrl}${cleanEndpoint.substring(4)}`;
+    }
+    
+    // If baseUrl doesn't include /api but endpoint starts with /api, keep it
+    if (!cleanBaseUrl.includes('/api') && cleanEndpoint.startsWith('/api/')) {
+      return `${cleanBaseUrl}${cleanEndpoint}`;
+    }
+    
+    // If baseUrl includes /api but endpoint doesn't start with /api, add to baseUrl
+    if (cleanBaseUrl.endsWith('/api') && !cleanEndpoint.startsWith('/api/')) {
+      return `${cleanBaseUrl}${cleanEndpoint}`;
+    }
+    
+    // Default case: if no /api in baseUrl and endpoint doesn't start with /api, add /api
+    if (!cleanBaseUrl.includes('/api') && !cleanEndpoint.startsWith('/api/')) {
+      return `${cleanBaseUrl}/api${cleanEndpoint}`;
+    }
+    
+    return `${cleanBaseUrl}${cleanEndpoint}`;
+  }
+
   private async transformRequest(request: GatewayRequest): Promise<RequestInit> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -179,7 +210,17 @@ class ApiGateway {
 
       // Transform request
       const requestInit = await this.transformRequest(gatewayRequest);
-      const fullUrl = `${apiEndpoint.url}${gatewayRequest.endpoint}`;
+      
+      // FIXED: Use normalized URL construction
+      const fullUrl = this.normalizeUrl(apiEndpoint.url, gatewayRequest.endpoint);
+      
+      logger.info('API Gateway: Making request', { 
+        requestId, 
+        fullUrl, 
+        method: gatewayRequest.method,
+        baseUrl: apiEndpoint.url,
+        endpoint: gatewayRequest.endpoint
+      });
 
       // Make the actual request
       const response = await fetch(fullUrl, requestInit);
@@ -259,6 +300,30 @@ class ApiGateway {
 
     if (safeEndpoint.includes('/assets')) {
       return method === 'GET' ? [] : { id: 'new-asset', name: 'New Asset' };
+    }
+
+    // FIXED: Add mock data for settings endpoints
+    if (safeEndpoint.includes('/settings/general')) {
+      if (method === 'GET') {
+        return {
+          company: 'EnergyOS Corp',
+          timezone: 'utc',
+          darkMode: true,
+          autoSync: true
+        };
+      }
+      if (method === 'PUT') {
+        return { 
+          success: true, 
+          message: 'Settings updated successfully',
+          data: {
+            company: 'EnergyOS Corp',
+            timezone: 'utc',
+            darkMode: true,
+            autoSync: true
+          }
+        };
+      }
     }
 
     if (safeEndpoint.includes('/sites') && safeEndpoint.includes('/settings')) {
