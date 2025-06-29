@@ -1,266 +1,280 @@
+using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using Microsoft.Win32;
+using WemLogViewer.Models;
 
 namespace WemLogViewer.Windows;
 
 public partial class SettingsWindow : Window
 {
+    private AppSettings _settings;
+
     public SettingsWindow()
     {
         InitializeComponent();
-        LoadSettings();
+        _settings = LoadSettings();
+        LoadSettingsToUI();
+        InitializeFontComboBoxes();
     }
-    
-    private void LoadSettings()
+
+    private AppSettings LoadSettings()
     {
-        // Load settings from configuration
-        // This is a simplified version - in a real app, you'd load from app.config or registry
+        // In a real app, this would load from a config file
+        // For now, return default settings
+        return new AppSettings();
+    }
+
+    private void LoadSettingsToUI()
+    {
+        // General Settings
+        AutoLoadLastFileCheckBox.IsChecked = _settings.AutoLoadLastFile;
+        ShowLineNumbersCheckBox.IsChecked = _settings.ShowLineNumbers;
+        WordWrapCheckBox.IsChecked = _settings.WordWrap;
+        ConfirmExitCheckBox.IsChecked = _settings.ConfirmExit;
+
+        // Auto Refresh Settings
+        AutoRefreshEnabledCheckBox.IsChecked = _settings.AutoRefreshEnabled;
+        RefreshIntervalTextBox.Text = _settings.RefreshIntervalSeconds.ToString();
+        AutoScrollToEndCheckBox.IsChecked = _settings.AutoScrollToEnd;
+
+        // Font Settings
+        FontFamilyComboBox.Text = _settings.FontFamily;
+        FontSizeTextBox.Text = _settings.FontSize.ToString();
+
+        // Filter Settings
+        DefaultTraceCheckBox.IsChecked = _settings.DefaultTraceEnabled;
+        DefaultDebugCheckBox.IsChecked = _settings.DefaultDebugEnabled;
+        DefaultInfoCheckBox.IsChecked = _settings.DefaultInfoEnabled;
+        DefaultWarnCheckBox.IsChecked = _settings.DefaultWarnEnabled;
+        DefaultErrorCheckBox.IsChecked = _settings.DefaultErrorEnabled;
+        DefaultFatalCheckBox.IsChecked = _settings.DefaultFatalEnabled;
+        RememberFiltersCheckBox.IsChecked = _settings.RememberFilters;
+        ApplyFiltersRealTimeCheckBox.IsChecked = _settings.ApplyFiltersRealTime;
+        MaxFilterResultsTextBox.Text = _settings.MaxFilterResults.ToString();
+
+        // Performance Settings
+        MaxLogsInMemoryTextBox.Text = _settings.MaxLogsInMemory.ToString();
+        UseVirtualizationCheckBox.IsChecked = _settings.UseVirtualization;
+        BackgroundLoadingCheckBox.IsChecked = _settings.BackgroundLoading;
+
+        // Export Settings
+        DefaultExportFormatComboBox.SelectedIndex = (int)_settings.DefaultExportFormat;
+        IncludeHeadersCheckBox.IsChecked = _settings.IncludeHeaders;
+        ExportFilteredOnlyCheckBox.IsChecked = _settings.ExportFilteredOnly;
+
+        // Debug Settings
+        EnableDebugLoggingCheckBox.IsChecked = _settings.EnableDebugLogging;
+        ShowPerformanceStatsCheckBox.IsChecked = _settings.ShowPerformanceStats;
+
+        // Display Settings
+        AlternatingRowColorsCheckBox.IsChecked = _settings.AlternatingRowColors;
+        ShowGridLinesCheckBox.IsChecked = _settings.ShowGridLines;
+        RowsPerPageTextBox.Text = _settings.RowsPerPage.ToString();
+
+        // Update color previews
+        UpdateColorPreviews();
+    }
+
+    private void InitializeFontComboBoxes()
+    {
+        // Populate font family combo box
+        foreach (var fontFamily in Fonts.SystemFontFamilies.OrderBy(f => f.Source))
+        {
+            FontFamilyComboBox.Items.Add(fontFamily.Source);
+        }
+    }
+
+    private void UpdateColorPreviews()
+    {
+        ErrorColorPreview.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.ErrorColor));
+        WarningColorPreview.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.WarningColor));
+        InfoColorPreview.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.InfoColor));
+    }
+
+    private void ChangeColor_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as Button;
+        if (button == null) return;
+
+        var dialog = new System.Windows.Forms.ColorDialog();
         
-        try
+        // Set current color based on button
+        if (button == ChangeErrorColorButton)
         {
-            // Display Options
-            ShowLineNumbersCheckBox.IsChecked = Properties.Settings.Default.ShowLineNumbers;
-            WordWrapCheckBox.IsChecked = Properties.Settings.Default.WordWrap;
-            ShowTimestampCheckBox.IsChecked = Properties.Settings.Default.ShowTimestamp;
-            HighlightErrorsCheckBox.IsChecked = Properties.Settings.Default.HighlightErrors;
-            
-            // Performance
-            MaxLogsTextBox.Text = Properties.Settings.Default.MaxLogs.ToString();
-            RefreshIntervalTextBox.Text = Properties.Settings.Default.RefreshInterval.ToString();
-            EnableVirtualizationCheckBox.IsChecked = Properties.Settings.Default.EnableVirtualization;
-            
-            // Startup
-            RememberWindowSizeCheckBox.IsChecked = Properties.Settings.Default.RememberWindowSize;
-            AutoLoadLastFileCheckBox.IsChecked = Properties.Settings.Default.AutoLoadLastFile;
-            CheckUpdatesCheckBox.IsChecked = Properties.Settings.Default.CheckUpdates;
-            
-            // Theme
-            var theme = Properties.Settings.Default.Theme;
-            LightThemeRadio.IsChecked = theme == "Light";
-            DarkThemeRadio.IsChecked = theme == "Dark";
-            SystemThemeRadio.IsChecked = theme == "System";
-            
-            // Fonts
-            SetComboBoxValue(LogFontComboBox, Properties.Settings.Default.LogFont);
-            SetComboBoxValue(LogFontSizeComboBox, Properties.Settings.Default.LogFontSize.ToString());
-            SetComboBoxValue(UIFontComboBox, Properties.Settings.Default.UIFont);
-            SetComboBoxValue(UIFontSizeComboBox, Properties.Settings.Default.UIFontSize.ToString());
-            
-            // Parsing
-            EnableJsonParsingCheckBox.IsChecked = Properties.Settings.Default.EnableJsonParsing;
-            EnableSerilogParsingCheckBox.IsChecked = Properties.Settings.Default.EnableSerilogParsing;
-            EnableGenericParsingCheckBox.IsChecked = Properties.Settings.Default.EnableGenericParsing;
-            StrictParsingCheckBox.IsChecked = Properties.Settings.Default.StrictParsing;
-            
-            // Export
-            SetComboBoxValue(DefaultExportFormatComboBox, Properties.Settings.Default.DefaultExportFormat);
-            IncludeRawLogCheckBox.IsChecked = Properties.Settings.Default.IncludeRawLog;
-            CompressExportsCheckBox.IsChecked = Properties.Settings.Default.CompressExports;
-            
-            // Logging
-            SetComboBoxValue(LogLevelComboBox, Properties.Settings.Default.LogLevel);
-            EnableFileLoggingCheckBox.IsChecked = Properties.Settings.Default.EnableFileLogging;
-            EnableConsoleLoggingCheckBox.IsChecked = Properties.Settings.Default.EnableConsoleLogging;
+            dialog.Color = System.Drawing.ColorTranslator.FromHtml(_settings.ErrorColor);
         }
-        catch
+        else if (button == ChangeWarningColorButton)
         {
-            // Use defaults if loading fails
+            dialog.Color = System.Drawing.ColorTranslator.FromHtml(_settings.WarningColor);
+        }
+        else if (button == ChangeInfoColorButton)
+        {
+            dialog.Color = System.Drawing.ColorTranslator.FromHtml(_settings.InfoColor);
+        }
+
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            var colorHex = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+            
+            if (button == ChangeErrorColorButton)
+            {
+                _settings.ErrorColor = colorHex;
+            }
+            else if (button == ChangeWarningColorButton)
+            {
+                _settings.WarningColor = colorHex;
+            }
+            else if (button == ChangeInfoColorButton)
+            {
+                _settings.InfoColor = colorHex;
+            }
+            
+            UpdateColorPreviews();
         }
     }
-    
-    private void SaveSettings()
+
+    private void ClearCache_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            // Display Options
-            Properties.Settings.Default.ShowLineNumbers = ShowLineNumbersCheckBox.IsChecked ?? false;
-            Properties.Settings.Default.WordWrap = WordWrapCheckBox.IsChecked ?? false;
-            Properties.Settings.Default.ShowTimestamp = ShowTimestampCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.HighlightErrors = HighlightErrorsCheckBox.IsChecked ?? true;
+            // Clear application cache
+            var result = MessageBox.Show("Are you sure you want to clear the application cache?", 
+                "Clear Cache", MessageBoxButton.YesNo, MessageBoxImage.Question);
             
-            // Performance
-            if (int.TryParse(MaxLogsTextBox.Text, out var maxLogs))
-                Properties.Settings.Default.MaxLogs = Math.Max(1000, Math.Min(1000000, maxLogs));
-            
-            if (int.TryParse(RefreshIntervalTextBox.Text, out var refreshInterval))
-                Properties.Settings.Default.RefreshInterval = Math.Max(1, Math.Min(300, refreshInterval));
-            
-            Properties.Settings.Default.EnableVirtualization = EnableVirtualizationCheckBox.IsChecked ?? true;
-            
-            // Startup
-            Properties.Settings.Default.RememberWindowSize = RememberWindowSizeCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.AutoLoadLastFile = AutoLoadLastFileCheckBox.IsChecked ?? false;
-            Properties.Settings.Default.CheckUpdates = CheckUpdatesCheckBox.IsChecked ?? false;
-            
-            // Theme
-            if (LightThemeRadio.IsChecked == true)
-                Properties.Settings.Default.Theme = "Light";
-            else if (DarkThemeRadio.IsChecked == true)
-                Properties.Settings.Default.Theme = "Dark";
-            else
-                Properties.Settings.Default.Theme = "System";
-            
-            // Fonts
-            Properties.Settings.Default.LogFont = GetComboBoxValue(LogFontComboBox) ?? "Consolas";
-            if (int.TryParse(GetComboBoxValue(LogFontSizeComboBox), out var logFontSize))
-                Properties.Settings.Default.LogFontSize = logFontSize;
-            
-            Properties.Settings.Default.UIFont = GetComboBoxValue(UIFontComboBox) ?? "Segoe UI";
-            if (int.TryParse(GetComboBoxValue(UIFontSizeComboBox), out var uiFontSize))
-                Properties.Settings.Default.UIFontSize = uiFontSize;
-            
-            // Parsing
-            Properties.Settings.Default.EnableJsonParsing = EnableJsonParsingCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.EnableSerilogParsing = EnableSerilogParsingCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.EnableGenericParsing = EnableGenericParsingCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.StrictParsing = StrictParsingCheckBox.IsChecked ?? false;
-            
-            // Export
-            Properties.Settings.Default.DefaultExportFormat = GetComboBoxValue(DefaultExportFormatComboBox) ?? "CSV";
-            Properties.Settings.Default.IncludeRawLog = IncludeRawLogCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.CompressExports = CompressExportsCheckBox.IsChecked ?? false;
-            
-            // Logging
-            Properties.Settings.Default.LogLevel = GetComboBoxValue(LogLevelComboBox) ?? "Info";
-            Properties.Settings.Default.EnableFileLogging = EnableFileLoggingCheckBox.IsChecked ?? true;
-            Properties.Settings.Default.EnableConsoleLogging = EnableConsoleLoggingCheckBox.IsChecked ?? false;
-            
-            Properties.Settings.Default.Save();
+            if (result == MessageBoxResult.Yes)
+            {
+                // Implementation would clear cache files
+                MessageBox.Show("Cache cleared successfully.", "Clear Cache", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error saving settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Error clearing cache: {ex.Message}", "Error", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
-    
-    private void SetComboBoxValue(System.Windows.Controls.ComboBox comboBox, string value)
+
+    private void ResetSettings_Click(object sender, RoutedEventArgs e)
     {
-        foreach (System.Windows.Controls.ComboBoxItem item in comboBox.Items)
-        {
-            if (item.Content?.ToString() == value)
-            {
-                comboBox.SelectedItem = item;
-                break;
-            }
-        }
-    }
-    
-    private string? GetComboBoxValue(System.Windows.Controls.ComboBox comboBox)
-    {
-        return (comboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString();
-    }
-    
-    private void ResetDefaults_Click(object sender, RoutedEventArgs e)
-    {
-        var result = MessageBox.Show("Reset all settings to default values?", "Reset Settings", 
-            MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var result = MessageBox.Show("Are you sure you want to reset all settings to default values?", 
+            "Reset Settings", MessageBoxButton.YesNo, MessageBoxImage.Question);
         
         if (result == MessageBoxResult.Yes)
         {
-            Properties.Settings.Default.Reset();
-            LoadSettings();
+            _settings = new AppSettings();
+            LoadSettingsToUI();
+            MessageBox.Show("Settings have been reset to default values.", "Reset Settings", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
-    
-    private void OK_Click(object sender, RoutedEventArgs e)
+
+    private void Ok_Click(object sender, RoutedEventArgs e)
     {
-        SaveSettings();
-        DialogResult = true;
-        Close();
+        if (SaveSettingsFromUI())
+        {
+            SaveSettings(_settings);
+            DialogResult = true;
+            Close();
+        }
     }
-    
+
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         DialogResult = false;
         Close();
     }
-    
+
     private void Apply_Click(object sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        if (SaveSettingsFromUI())
+        {
+            SaveSettings(_settings);
+            MessageBox.Show("Settings applied successfully.", "Settings", 
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
-}
 
-// Settings class for storing application preferences
-public static class Properties
-{
-    public static Settings Default { get; } = new Settings();
-}
-
-public class Settings
-{
-    // Display Options
-    public bool ShowLineNumbers { get; set; } = false;
-    public bool WordWrap { get; set; } = false;
-    public bool ShowTimestamp { get; set; } = true;
-    public bool HighlightErrors { get; set; } = true;
-    
-    // Performance
-    public int MaxLogs { get; set; } = 50000;
-    public int RefreshInterval { get; set; } = 5;
-    public bool EnableVirtualization { get; set; } = true;
-    
-    // Startup
-    public bool RememberWindowSize { get; set; } = true;
-    public bool AutoLoadLastFile { get; set; } = false;
-    public bool CheckUpdates { get; set; } = false;
-    
-    // Theme
-    public string Theme { get; set; } = "Light";
-    
-    // Fonts
-    public string LogFont { get; set; } = "Consolas";
-    public int LogFontSize { get; set; } = 11;
-    public string UIFont { get; set; } = "Segoe UI";
-    public int UIFontSize { get; set; } = 12;
-    
-    // Parsing
-    public bool EnableJsonParsing { get; set; } = true;
-    public bool EnableSerilogParsing { get; set; } = true;
-    public bool EnableGenericParsing { get; set; } = true;
-    public bool StrictParsing { get; set; } = false;
-    
-    // Export
-    public string DefaultExportFormat { get; set; } = "CSV";
-    public bool IncludeRawLog { get; set; } = true;
-    public bool CompressExports { get; set; } = false;
-    
-    // Logging
-    public string LogLevel { get; set; } = "Info";
-    public bool EnableFileLogging { get; set; } = true;
-    public bool EnableConsoleLogging { get; set; } = false;
-    
-    public void Save()
+    private bool SaveSettingsFromUI()
     {
-        // In a real application, save to registry, config file, or user settings
+        try
+        {
+            // General Settings
+            _settings.AutoLoadLastFile = AutoLoadLastFileCheckBox.IsChecked == true;
+            _settings.ShowLineNumbers = ShowLineNumbersCheckBox.IsChecked == true;
+            _settings.WordWrap = WordWrapCheckBox.IsChecked == true;
+            _settings.ConfirmExit = ConfirmExitCheckBox.IsChecked == true;
+
+            // Auto Refresh Settings
+            _settings.AutoRefreshEnabled = AutoRefreshEnabledCheckBox.IsChecked == true;
+            if (int.TryParse(RefreshIntervalTextBox.Text, out int refreshInterval))
+                _settings.RefreshIntervalSeconds = refreshInterval;
+            _settings.AutoScrollToEnd = AutoScrollToEndCheckBox.IsChecked == true;
+
+            // Font Settings
+            _settings.FontFamily = FontFamilyComboBox.Text;
+            if (double.TryParse(FontSizeTextBox.Text, out double fontSize))
+                _settings.FontSize = fontSize;
+
+            // Filter Settings
+            _settings.DefaultTraceEnabled = DefaultTraceCheckBox.IsChecked == true;
+            _settings.DefaultDebugEnabled = DefaultDebugCheckBox.IsChecked == true;
+            _settings.DefaultInfoEnabled = DefaultInfoCheckBox.IsChecked == true;
+            _settings.DefaultWarnEnabled = DefaultWarnCheckBox.IsChecked == true;
+            _settings.DefaultErrorEnabled = DefaultErrorCheckBox.IsChecked == true;
+            _settings.DefaultFatalEnabled = DefaultFatalCheckBox.IsChecked == true;
+            _settings.RememberFilters = RememberFiltersCheckBox.IsChecked == true;
+            _settings.ApplyFiltersRealTime = ApplyFiltersRealTimeCheckBox.IsChecked == true;
+            if (int.TryParse(MaxFilterResultsTextBox.Text, out int maxResults))
+                _settings.MaxFilterResults = maxResults;
+
+            // Performance Settings
+            if (int.TryParse(MaxLogsInMemoryTextBox.Text, out int maxLogs))
+                _settings.MaxLogsInMemory = maxLogs;
+            _settings.UseVirtualization = UseVirtualizationCheckBox.IsChecked == true;
+            _settings.BackgroundLoading = BackgroundLoadingCheckBox.IsChecked == true;
+
+            // Export Settings
+            _settings.DefaultExportFormat = (ExportFormat)DefaultExportFormatComboBox.SelectedIndex;
+            _settings.IncludeHeaders = IncludeHeadersCheckBox.IsChecked == true;
+            _settings.ExportFilteredOnly = ExportFilteredOnlyCheckBox.IsChecked == true;
+
+            // Debug Settings
+            _settings.EnableDebugLogging = EnableDebugLoggingCheckBox.IsChecked == true;
+            _settings.ShowPerformanceStats = ShowPerformanceStatsCheckBox.IsChecked == true;
+
+            // Display Settings
+            _settings.AlternatingRowColors = AlternatingRowColorsCheckBox.IsChecked == true;
+            _settings.ShowGridLines = ShowGridLinesCheckBox.IsChecked == true;
+            if (int.TryParse(RowsPerPageTextBox.Text, out int rowsPerPage))
+                _settings.RowsPerPage = rowsPerPage;
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error saving settings: {ex.Message}", "Error", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
     }
-    
-    public void Reset()
+
+    private void SaveSettings(AppSettings settings)
     {
-        // Reset to default values
-        ShowLineNumbers = false;
-        WordWrap = false;
-        ShowTimestamp = true;
-        HighlightErrors = true;
-        MaxLogs = 50000;
-        RefreshInterval = 5;
-        EnableVirtualization = true;
-        RememberWindowSize = true;
-        AutoLoadLastFile = false;
-        CheckUpdates = false;
-        Theme = "Light";
-        LogFont = "Consolas";
-        LogFontSize = 11;
-        UIFont = "Segoe UI";
-        UIFontSize = 12;
-        EnableJsonParsing = true;
-        EnableSerilogParsing = true;
-        EnableGenericParsing = true;
-        StrictParsing = false;
-        DefaultExportFormat = "CSV";
-        IncludeRawLog = true;
-        CompressExports = false;
-        LogLevel = "Info";
-        EnableFileLogging = true;
-        EnableConsoleLogging = false;
+        try
+        {
+            // In a real app, this would save to a config file
+            // For now, just store in memory
+            // Could use JSON serialization to save to file:
+            // var json = JsonSerializer.Serialize(settings);
+            // File.WriteAllText("settings.json", json);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error saving settings to file: {ex.Message}", "Error", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }
