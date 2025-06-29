@@ -1,9 +1,9 @@
 {
   "name": "wem-energy-dashboard",
   "private": true,
-  "version": "3.1.0",
+  "version": "3.1.1",
   "type": "module",
-  "description": "A comprehensive energy management dashboard - Clean Single Backend Version",
+  "description": "A comprehensive energy management dashboard - Fixed Backend Issues",
   "keywords": [
     "energy",
     "dashboard",
@@ -107,6 +107,6 @@
     "vite": "^5.4.1"
   },
   "version-info": {
-    "major-cleanup": "v3.1.0 - Unified single backend on port 5000, removed port 7297 confusion"
+    "v3.1.1": "Fixed LogEntry EF model and added missing axios dependency"
   }
 }

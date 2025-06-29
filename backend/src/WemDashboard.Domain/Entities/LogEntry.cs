@@ -36,7 +36,7 @@ public class LogEntry
     [MaxLength(50)]
     public string? SessionId { get; set; }
 
-    [Column(TypeName = "jsonb")]
+    // Remove PostgreSQL-specific jsonb for SQLite compatibility
     public string? ContextJson { get; set; }
 
     // Error details
@@ -71,10 +71,14 @@ public class LogEntry
     public string? RelatedEntityType { get; set; }
     public string? RelatedEntityId { get; set; }
 
-    // Index helpers - Fixed: NotMapped to exclude from database
+    // FIXED: Add proper setter for Date property or make it a method
     [NotMapped]
     public string LevelString => Level.ToString();
     
     [NotMapped]
-    public DateTime Date => Timestamp.Date;
+    public DateTime Date 
+    { 
+        get => Timestamp.Date; 
+        set { /* Required setter for EF */ } 
+    }
 }
