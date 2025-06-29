@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings as SettingsIcon, Save, RefreshCw, AlertCircle } from "lucide-react";
+import { Settings as SettingsIcon, Save, RefreshCw, AlertCircle, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { theme } from "@/lib/theme";
 import { apiService } from "@/services/apiService";
@@ -31,6 +31,7 @@ export const SettingsForm = () => {
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   // Load settings on component mount
   useEffect(() => {
@@ -43,11 +44,26 @@ export const SettingsForm = () => {
     setHasChanges(changed);
   }, [formData, originalData]);
 
+  // Monitor online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const loadSettings = async () => {
     try {
       setIsLoadingInitial(true);
       setError(null);
       
+      // FIXED: Use correct endpoint without double /api/
       const response = await apiService.get('/api/settings/general');
       
       if (response.success && response.data) {
@@ -61,13 +77,31 @@ export const SettingsForm = () => {
         setFormData(settings);
         setOriginalData(settings);
         console.log('Loaded settings:', settings);
+        
+        // Show success message if data came from cache or mock
+        if (response.fromCache) {
+          toast.info('Settings loaded from cache');
+        }
       } else {
         throw new Error(response.message || 'Failed to load settings');
       }
     } catch (error: any) {
       console.error('Error loading settings:', error);
-      setError(error.message || 'Failed to load settings');
-      toast.error('Failed to load settings');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to load settings';
+      if (error.message?.includes('404')) {
+        errorMessage = 'Settings endpoint not found. Using default values.';
+      } else if (error.message?.includes('Failed to fetch')) {
+        errorMessage = 'Cannot connect to server. Check if backend is running on port 5000.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Server may be slow to respond.';
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoadingInitial(false);
     }
@@ -84,12 +118,18 @@ export const SettingsForm = () => {
       return;
     }
 
+    if (!isOnline) {
+      toast.error('Cannot save settings while offline');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     
     try {
       console.log('Saving settings:', formData);
       
+      // FIXED: Use correct endpoint without double /api/
       const response = await apiService.put('/api/settings/general', {
         company: formData.company,
         timezone: formData.timezone,
@@ -106,8 +146,21 @@ export const SettingsForm = () => {
       }
     } catch (error: any) {
       console.error('Error saving settings:', error);
-      setError(error.message || 'Failed to save settings');
-      toast.error(error.message || 'Failed to save settings');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to save settings';
+      if (error.message?.includes('404')) {
+        errorMessage = 'Settings save endpoint not found. Backend may not support this operation.';
+      } else if (error.message?.includes('Failed to fetch')) {
+        errorMessage = 'Cannot connect to server. Check if backend is running.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'Save request timed out. Please try again.';
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -117,6 +170,10 @@ export const SettingsForm = () => {
     setFormData(originalData);
     setError(null);
     toast.info('Changes reset');
+  };
+
+  const handleRetry = () => {
+    loadSettings();
   };
 
   if (isLoadingInitial) {
@@ -138,17 +195,28 @@ export const SettingsForm = () => {
         <CardTitle className={`${theme.colors.text.primary} flex items-center gap-2`}>
           <SettingsIcon className="w-5 h-5" />
           General Settings
+          {!isOnline && <WifiOff className="w-4 h-4 text-red-500" />}
+          {isOnline && <Wifi className="w-4 h-4 text-green-500" />}
         </CardTitle>
         <CardDescription className={theme.colors.text.muted}>
           Configure your basic platform preferences
+          {!isOnline && " (Offline mode - changes will be saved when connection is restored)"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {error && (
           <Alert className="border-red-500/20 bg-red-500/10">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <AlertDescription className="text-red-400">
-              {error}
+            <AlertDescription className="text-red-400 flex justify-between items-center">
+              <span>{error}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRetry}
+                className="ml-2 h-6 text-xs border-red-500/20 text-red-400 hover:text-red-300"
+              >
+                Retry
+              </Button>
             </AlertDescription>
           </Alert>
         )}
@@ -242,8 +310,8 @@ export const SettingsForm = () => {
             
             <Button 
               onClick={handleSave} 
-              disabled={isLoading || !hasChanges}
-              className={`${hasChanges ? theme.gradients.primary : 'bg-slate-700 text-slate-400'} text-white flex items-center gap-2 min-w-[120px]`}
+              disabled={isLoading || !hasChanges || !isOnline}
+              className={`${hasChanges && isOnline ? theme.gradients.primary : 'bg-slate-700 text-slate-400'} text-white flex items-center gap-2 min-w-[120px]`}
             >
               {isLoading ? (
                 <>

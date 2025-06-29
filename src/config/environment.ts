@@ -7,9 +7,9 @@ export const config = {
     environment: import.meta.env.MODE || 'development',
   },
   
-  // API configuration - FIXED to use port 5000 by default
+  // API configuration - FIXED: Remove /api from base URL to prevent double /api/api/
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
     timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
     retryAttempts: parseInt(import.meta.env.VITE_API_RETRY_ATTEMPTS || '3'),
     fallbackUrls: [
