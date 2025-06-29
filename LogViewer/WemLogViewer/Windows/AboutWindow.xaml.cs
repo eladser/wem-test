@@ -78,7 +78,7 @@ Current Directory: {Environment.CurrentDirectory}
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Could not open link: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Could not open link: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

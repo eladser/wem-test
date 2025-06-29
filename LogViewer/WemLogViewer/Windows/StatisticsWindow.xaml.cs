@@ -91,7 +91,7 @@ public partial class StatisticsWindow : Window
         {
             var percentage = total > 0 ? (levelStat.Count * 100.0 / total) : 0;
             
-            var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+            var panel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
             
             // Level name
             var levelText = new TextBlock 
@@ -104,7 +104,7 @@ public partial class StatisticsWindow : Window
             panel.Children.Add(levelText);
             
             // Progress bar
-            var progressBar = new ProgressBar 
+            var progressBar = new System.Windows.Controls.ProgressBar 
             { 
                 Value = percentage, 
                 Maximum = 100, 
@@ -191,12 +191,12 @@ public partial class StatisticsWindow : Window
             var count = hourlyData[hour];
             var barHeight = maxCount > 0 ? (count * (chartHeight - 20) / maxCount) : 0;
             
-            var rect = new Rectangle
+            var rect = new System.Windows.Shapes.Rectangle
             {
                 Width = barWidth - 2,
                 Height = barHeight,
-                Fill = Brushes.SteelBlue,
-                Stroke = Brushes.DarkBlue,
+                Fill = System.Windows.Media.Brushes.SteelBlue,
+                Stroke = System.Windows.Media.Brushes.DarkBlue,
                 StrokeThickness = 1
             };
             
@@ -209,7 +209,7 @@ public partial class StatisticsWindow : Window
             {
                 Text = hour.ToString("00"),
                 FontSize = 9,
-                Foreground = Brushes.Gray
+                Foreground = System.Windows.Media.Brushes.Gray
             };
             
             Canvas.SetLeft(label, hour * barWidth + barWidth/2 - 8);
@@ -222,13 +222,13 @@ public partial class StatisticsWindow : Window
     {
         return level?.ToLower() switch
         {
-            "error" => Brushes.Red,
-            "fatal" => Brushes.DarkRed,
-            "warning" => Brushes.Orange,
-            "information" => Brushes.Blue,
-            "debug" => Brushes.Gray,
-            "trace" => Brushes.LightGray,
-            _ => Brushes.Black
+            "error" => System.Windows.Media.Brushes.Red,
+            "fatal" => System.Windows.Media.Brushes.DarkRed,
+            "warning" => System.Windows.Media.Brushes.Orange,
+            "information" => System.Windows.Media.Brushes.Blue,
+            "debug" => System.Windows.Media.Brushes.Gray,
+            "trace" => System.Windows.Media.Brushes.LightGray,
+            _ => System.Windows.Media.Brushes.Black
         };
     }
     

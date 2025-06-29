@@ -84,7 +84,7 @@ public partial class DatabaseConnectionWindow : Window
 
     private void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog
+        var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Title = "Select SQLite Database File",
             Filter = "SQLite Database Files (*.db)|*.db|All Files (*.*)|*.*",
@@ -111,18 +111,18 @@ public partial class DatabaseConnectionWindow : Window
             
             if (success)
             {
-                MessageBox.Show("Connection successful!", "Test Connection", 
+                System.Windows.MessageBox.Show("Connection successful!", "Test Connection", 
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                MessageBox.Show("Connection failed. Please check your settings.", "Test Connection", 
+                System.Windows.MessageBox.Show("Connection failed. Please check your settings.", "Test Connection", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Connection test failed: {ex.Message}", "Test Connection", 
+            System.Windows.MessageBox.Show($"Connection test failed: {ex.Message}", "Test Connection", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -143,7 +143,7 @@ public partial class DatabaseConnectionWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error creating connection: {ex.Message}", "Connection Error", 
+            System.Windows.MessageBox.Show($"Error creating connection: {ex.Message}", "Connection Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }

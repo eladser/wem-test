@@ -57,7 +57,7 @@ public partial class MainWindow : Window
 
     private async void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
     {
-        var openFileDialog = new OpenFileDialog
+        var openFileDialog = new Microsoft.Win32.OpenFileDialog
         {
             Filter = "Log Files (*.log;*.txt)|*.log;*.txt|All Files (*.*)|*.*",
             Title = "Open Log File",
@@ -75,11 +75,11 @@ public partial class MainWindow : Window
         var filteredLogs = _logsViewSource.View.Cast<LogEntry>().ToList();
         if (!filteredLogs.Any())
         {
-            MessageBox.Show("No logs to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+            System.Windows.MessageBox.Show("No logs to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        var saveFileDialog = new SaveFileDialog
+        var saveFileDialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "CSV Files (*.csv)|*.csv|JSON Files (*.json)|*.json|Text Files (*.txt)|*.txt",
             Title = "Export Filtered Logs",
@@ -131,7 +131,7 @@ public partial class MainWindow : Window
         var dbConnectionWindow = new DatabaseConnectionWindow();
         if (dbConnectionWindow.ShowDialog() == true)
         {
-            _ = LoadDatabaseLogs(dbConnectionWindow.ConnectionString);
+            _ = LoadDatabaseLogs(dbConnectionWindow.DatabaseConfig?.ConnectionString ?? "");
         }
     }
 
@@ -279,7 +279,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             LoggingService.Logger?.Error(ex, "Error loading log file: {FilePath}", filePath);
-            MessageBox.Show($"Error loading log file: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error loading log file: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
             UpdateStatus("Error loading log file");
         }
@@ -316,7 +316,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             LoggingService.Logger?.Error(ex, "Error loading log directory: {DirectoryPath}", directoryPath);
-            MessageBox.Show($"Error loading log directory: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error loading log directory: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
             UpdateStatus("Error loading log directory");
         }
@@ -353,7 +353,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             LoggingService.Logger?.Error(ex, "Error loading database logs");
-            MessageBox.Show($"Error connecting to database: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error connecting to database: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
             UpdateStatus("Error loading database logs");
         }
@@ -381,13 +381,13 @@ public partial class MainWindow : Window
             await Task.Run(() => _exportService.ExportLogs(logs, filePath));
             
             UpdateStatus($"Exported {logs.Count} logs to {Path.GetFileName(filePath)}");
-            MessageBox.Show($"Successfully exported {logs.Count} logs to {filePath}", 
+            System.Windows.MessageBox.Show($"Successfully exported {logs.Count} logs to {filePath}", 
                 "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             LoggingService.Logger?.Error(ex, "Error exporting logs");
-            MessageBox.Show($"Error exporting logs: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Error exporting logs: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
             UpdateStatus("Error exporting logs");
         }
