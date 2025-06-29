@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:WemLogViewer"
         xmlns:behaviors="clr-namespace:WemLogViewer.Behaviors"
+        xmlns:commands="clr-namespace:WemLogViewer"
         Title="WEM Log Viewer" 
         Height="900" 
         Width="1400" 
@@ -18,9 +19,9 @@
                         Executed="SaveCommand_Executed"/>
         <CommandBinding Command="ApplicationCommands.Find" 
                         Executed="FindCommand_Executed"/>
-        <CommandBinding Command="local:CustomCommands.Refresh" 
+        <CommandBinding Command="commands:CustomCommands.Refresh" 
                         Executed="RefreshCommand_Executed"/>
-        <CommandBinding Command="local:CustomCommands.ClearFilter" 
+        <CommandBinding Command="commands:CustomCommands.ClearFilter" 
                         Executed="ClearFilterCommand_Executed"/>
     </Window.CommandBindings>
     
@@ -52,7 +53,7 @@
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="_Refresh" 
-                          Command="local:CustomCommands.Refresh" 
+                          Command="commands:CustomCommands.Refresh" 
                           InputGestureText="F5"/>
                 <MenuItem Header="_Auto Refresh" 
                           IsCheckable="True" 
@@ -69,7 +70,7 @@
                           Command="ApplicationCommands.Find" 
                           InputGestureText="Ctrl+F"/>
                 <MenuItem Header="_Clear Filters" 
-                          Command="local:CustomCommands.ClearFilter"/>
+                          Command="commands:CustomCommands.ClearFilter"/>
                 <Separator/>
                 <MenuItem Header="_Settings" 
                           Click="Settings_Click"/>
@@ -85,14 +86,14 @@
             <Button Command="ApplicationCommands.Open" 
                     Content="Open" 
                     ToolTip="Open log file (Ctrl+O)"/>
-            <Button Command="local:CustomCommands.Refresh" 
+            <Button Command="commands:CustomCommands.Refresh" 
                     Content="Refresh" 
                     ToolTip="Refresh logs (F5)"/>
             <Separator/>
             <Button Command="ApplicationCommands.Find" 
                     Content="Find" 
                     ToolTip="Find in logs (Ctrl+F)"/>
-            <Button Command="local:CustomCommands.ClearFilter" 
+            <Button Command="commands:CustomCommands.ClearFilter" 
                     Content="Clear Filters" 
                     ToolTip="Clear all filters"/>
             <Separator/>
