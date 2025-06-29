@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -24,7 +25,18 @@ public partial class AboutWindow : Window
             BuildDateTextBlock.Text = buildDate.ToString("yyyy-MM-dd HH:mm:ss");
             
             // System information
-            var systemInfo = $"""\nOperating System: {Environment.OSVersion}\nProcessor Architecture: {RuntimeInformation.ProcessArchitecture}\nFramework: {RuntimeInformation.FrameworkDescription}\nCLR Version: {Environment.Version}\nMachine Name: {Environment.MachineName}\nUser Domain: {Environment.UserDomainName}\nUser Name: {Environment.UserName}\nWorking Set: {Environment.WorkingSet / 1024 / 1024:N0} MB\nSystem Directory: {Environment.SystemDirectory}\nCurrent Directory: {Environment.CurrentDirectory}\n""";
+            var systemInfo = $"""
+Operating System: {Environment.OSVersion}
+Processor Architecture: {RuntimeInformation.ProcessArchitecture}
+Framework: {RuntimeInformation.FrameworkDescription}
+CLR Version: {Environment.Version}
+Machine Name: {Environment.MachineName}
+User Domain: {Environment.UserDomainName}
+User Name: {Environment.UserName}
+Working Set: {Environment.WorkingSet / 1024 / 1024:N0} MB
+System Directory: {Environment.SystemDirectory}
+Current Directory: {Environment.CurrentDirectory}
+""";
             
             SystemInfoTextBlock.Text = systemInfo;
         }
