@@ -125,7 +125,12 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <NotificationProvider>
-            <Router>
+            <Router 
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
               <AppContent />
               {/* Keep existing Sonner toaster for backwards compatibility */}
               <Toaster

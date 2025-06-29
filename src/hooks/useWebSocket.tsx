@@ -57,8 +57,8 @@ class WebSocketManager {
     this.config = {
       protocols: undefined,
       reconnect: true,
-      reconnectAttempts: 3, // Reduced from 5
-      reconnectInterval: 5000, // Increased from 3000
+      reconnectAttempts: 3,
+      reconnectInterval: 5000,
       heartbeatInterval: 30000,
       heartbeatMessage: JSON.stringify({ type: 'ping', timestamp: Date.now() }),
       onOpen: () => {},
@@ -229,7 +229,7 @@ class WebSocketManager {
       this.urlIndex = 0;
       this.isReconnecting = false;
       
-      // Mark connection as stable after 3 seconds (reduced from 5)
+      // Mark connection as stable after 3 seconds
       this.connectionStabilityTimeout = setTimeout(() => {
         if (!this.isDestroyed) {
           this.isConnectionStable = true;
@@ -242,7 +242,15 @@ class WebSocketManager {
       this.notifyStateChange('connected');
       this.startHeartbeat();
       this.sendQueuedMessages();
-      this.config.onOpen(event);
+      
+      // FIXED: Safely call onOpen callback
+      try {
+        if (this.config.onOpen && typeof this.config.onOpen === 'function') {
+          this.config.onOpen(event);
+        }
+      } catch (error) {
+        this.log('Error in onOpen callback:', error);
+      }
     };
 
     this.ws.onmessage = (event) => {
@@ -257,7 +265,15 @@ class WebSocketManager {
           return;
         }
 
-        this.config.onMessage(message);
+        // FIXED: Safely call onMessage callback
+        try {
+          if (this.config.onMessage && typeof this.config.onMessage === 'function') {
+            this.config.onMessage(message);
+          }
+        } catch (error) {
+          this.log('Error in onMessage callback:', error);
+        }
+        
         this.notifyMessageReceived(message);
       } catch (error) {
         this.log('Failed to parse message:', error);
@@ -283,7 +299,14 @@ class WebSocketManager {
         this.heartbeatTimeout = null;
       }
 
-      this.config.onClose(event);
+      // FIXED: Safely call onClose callback
+      try {
+        if (this.config.onClose && typeof this.config.onClose === 'function') {
+          this.config.onClose(event);
+        }
+      } catch (error) {
+        this.log('Error in onClose callback:', error);
+      }
 
       // Only reconnect if it wasn't a manual disconnect and we should reconnect
       if (this.config.reconnect && !this.isReconnecting && event.code !== 1000) {
@@ -297,7 +320,16 @@ class WebSocketManager {
       if (this.isDestroyed) return;
       
       this.log(`[${this.connectionId}] WebSocket error:`, event);
-      this.config.onError(event);
+      
+      // FIXED: Safely call onError callback
+      try {
+        if (this.config.onError && typeof this.config.onError === 'function') {
+          this.config.onError(event);
+        }
+      } catch (error) {
+        this.log('Error in onError callback:', error);
+      }
+      
       this.handleConnectionError(notify);
     };
   }
@@ -358,7 +390,7 @@ class WebSocketManager {
     if (this.isDestroyed) return;
     
     this.messageQueue.push(message);
-    if (this.messageQueue.length > 50) { // Reduced queue size
+    if (this.messageQueue.length > 50) {
       this.messageQueue.shift();
     }
   }
@@ -383,12 +415,24 @@ class WebSocketManager {
 
   private notifyStateChange(state: ConnectionState): void {
     if (this.isDestroyed) return;
-    this.subscribers.forEach(callback => callback(state));
+    this.subscribers.forEach(callback => {
+      try {
+        callback(state);
+      } catch (error) {
+        this.log('Error in state change callback:', error);
+      }
+    });
   }
 
   private notifyMessageReceived(message: WebSocketMessage): void {
     if (this.isDestroyed) return;
-    this.messageSubscribers.forEach(callback => callback(message));
+    this.messageSubscribers.forEach(callback => {
+      try {
+        callback(message);
+      } catch (error) {
+        this.log('Error in message callback:', error);
+      }
+    });
   }
 
   subscribeToState(callback: (state: ConnectionState) => void): () => void {
@@ -426,7 +470,6 @@ export const useWebSocket = (config: WebSocketConfig) => {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const managerRef = useRef<WebSocketManager | null>(null);
   const notify = useNotify();
-  const configRef = useRef(config);
   
   // Stable config reference to prevent unnecessary re-connections
   const stableConfig = useRef({
@@ -450,7 +493,13 @@ export const useWebSocket = (config: WebSocketConfig) => {
         ...stableConfig.current,
         onMessage: (message) => {
           setLastMessage(message);
-          config.onMessage?.(message);
+          if (config.onMessage && typeof config.onMessage === 'function') {
+            try {
+              config.onMessage(message);
+            } catch (error) {
+              console.error('Error in onMessage callback:', error);
+            }
+          }
         },
         onOpen: config.onOpen,
         onClose: config.onClose,
@@ -593,7 +642,13 @@ export const useRealTimeData = <T,>(
         setData(message.data);
         setLastUpdated(message.timestamp);
       }
-      websocketConfig.onMessage?.(message);
+      if (websocketConfig.onMessage && typeof websocketConfig.onMessage === 'function') {
+        try {
+          websocketConfig.onMessage(message);
+        } catch (error) {
+          console.error('Error in websocketConfig.onMessage:', error);
+        }
+      }
     }
   });
 
