@@ -4,7 +4,6 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
@@ -14,6 +13,8 @@
     <AssemblyProduct>WEM Log Viewer</AssemblyProduct>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+    <!-- Suppress warnings for packages not explicitly supporting net8.0-windows -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,8 @@
     <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
     <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
+    <!-- Add System.Windows.Forms for color dialog only -->
+    <PackageReference Include="System.Windows.Forms" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
