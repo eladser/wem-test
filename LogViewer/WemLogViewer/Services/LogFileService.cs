@@ -148,21 +148,21 @@ public class LogFileService
                 root.TryGetProperty("level", out level) ||
                 root.TryGetProperty("Level", out level))
             {
-                logEntry.Level = level.GetString();
+                logEntry.Level = level.GetString() ?? "Unknown";
             }
 
             if (root.TryGetProperty("@m", out var message) ||
                 root.TryGetProperty("message", out message) ||
                 root.TryGetProperty("Message", out message))
             {
-                logEntry.Message = message.GetString();
+                logEntry.Message = message.GetString() ?? "";
             }
 
             if (root.TryGetProperty("@x", out var exception) ||
                 root.TryGetProperty("exception", out exception) ||
                 root.TryGetProperty("Exception", out exception))
             {
-                logEntry.StackTrace = exception.GetString();
+                logEntry.StackTrace = exception.GetString() ?? "";
             }
 
             // Extract additional properties
