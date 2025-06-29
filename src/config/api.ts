@@ -62,14 +62,33 @@ export class ApiConfiguration {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      // Health check endpoints your .NET backend supports
-      const healthEndpoints = ['/health', '/api/hello', '/api/health', '/'];
+      // FIXED: Updated health check endpoints to match .NET backend structure
+      const healthEndpoints = [
+        '/api/health',        // Standard API health endpoint
+        '/health',            // Simple health endpoint
+        '/api/hello',         // Your current hello endpoint
+        '/weatherforecast',   // Default .NET template endpoint
+        '/'                   // Root endpoint as fallback
+      ];
       
       for (const healthPath of healthEndpoints) {
         try {
-          const response = await fetch(`${endpoint.url.replace('/api', '')}${healthPath}`, {
-            method: 'GET',
+          // FIXED: Construct URL properly without double slashes
+          const baseUrl = endpoint.url.replace(/\/api$/, ''); // Remove /api suffix if present
+          const fullUrl = `${baseUrl}${healthPath}`;
+          
+          logger.info('Checking endpoint health', { 
+            baseUrl: endpoint.url,
+            healthPath,
+            fullUrl
+          });
+          
+          const response = await fetch(fullUrl, {
+            method: 'HEAD', // Use HEAD for health checks to reduce bandwidth
             signal: controller.signal,
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
           });
 
           clearTimeout(timeoutId);
@@ -79,12 +98,18 @@ export class ApiConfiguration {
             endpoint.lastChecked = new Date();
             logger.info('Backend health check successful', { 
               endpoint: endpoint.url,
-              healthPath
+              healthPath,
+              status: response.status
             });
             return true;
           }
         } catch (err) {
           // Continue to next health endpoint
+          logger.debug('Health check failed for path', { 
+            endpoint: endpoint.url,
+            healthPath,
+            error: err instanceof Error ? err.message : String(err)
+          });
           continue;
         }
       }
@@ -108,6 +133,17 @@ export class ApiConfiguration {
   }
 
   async findHealthyEndpoint(): Promise<ApiEndpoint> {
+    // If mock data is enabled, return mock endpoint
+    if (config.features.useMockData) {
+      logger.info('Using mock data as configured');
+      return {
+        url: 'mock://api',
+        timeout: config.api.timeout,
+        retryAttempts: config.api.retryAttempts,
+        isHealthy: true
+      };
+    }
+
     // Check current endpoint first
     const current = this.getCurrentEndpoint();
     if (await this.checkEndpointHealth(current)) {
@@ -126,8 +162,19 @@ export class ApiConfiguration {
       }
     }
 
-    // If no endpoints are healthy, return current (frontend will fall back to mock data)
-    logger.warn('No healthy endpoints available, using primary endpoint');
+    // If no endpoints are healthy and mock data is not explicitly disabled, fall back to mock
+    if (config.app.environment === 'development') {
+      logger.warn('No healthy endpoints available, falling back to mock data');
+      return {
+        url: 'mock://api',
+        timeout: config.api.timeout,
+        retryAttempts: config.api.retryAttempts,
+        isHealthy: true
+      };
+    }
+
+    // In production, return current (frontend will show error)
+    logger.error('No healthy endpoints available in production');
     return current;
   }
 
@@ -140,6 +187,16 @@ export class ApiConfiguration {
   // Method to check if we should use mock data
   shouldUseMockData(): boolean {
     return config.features.useMockData;
+  }
+
+  // Get endpoint status for debugging
+  getEndpointStatus() {
+    return this.endpoints.map(endpoint => ({
+      url: endpoint.url,
+      isHealthy: endpoint.isHealthy,
+      lastChecked: endpoint.lastChecked,
+      isCurrent: endpoint === this.getCurrentEndpoint()
+    }));
   }
 }
 
