@@ -235,4 +235,10 @@ public class DatabaseService
             return false;
         }
     }
+    
+    // Overload method that takes DatabaseConfig as expected by DatabaseConnectionWindow
+    public bool TestConnection(DatabaseConfig config)
+    {
+        return TestConnection(config.ConnectionString);
+    }
 }
