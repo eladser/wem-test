@@ -1,0 +1,317 @@
+<Window x:Class="WemLogViewer.Windows.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings" 
+        Height="600" 
+        Width="800" 
+        MinHeight="500" 
+        MinWidth="600"
+        WindowStartupLocation="CenterOwner" 
+        ResizeMode="CanResize">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Settings Content -->
+        <TabControl Grid.Row="0" Name="SettingsTabControl">
+            
+            <!-- General Settings -->
+            <TabItem Header="General">
+                <ScrollViewer>
+                    <StackPanel Margin="20">
+                        <GroupBox Header="Application Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <CheckBox Name="AutoLoadLastFileCheckBox" 
+                                          Content="Auto-load last opened file on startup" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="ShowLineNumbersCheckBox" 
+                                          Content="Show line numbers in log display" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="WordWrapCheckBox" 
+                                          Content="Enable word wrap in message details" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="ConfirmExitCheckBox" 
+                                          Content="Confirm before exiting application" 
+                                          Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <GroupBox Header="Auto Refresh Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <CheckBox Name="AutoRefreshEnabledCheckBox" 
+                                          Content="Enable auto refresh" 
+                                          Margin="0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Refresh interval (seconds):" 
+                                               VerticalAlignment="Center" 
+                                               Margin="0,0,10,0"/>
+                                    <TextBox Name="RefreshIntervalTextBox" 
+                                             Width="100" 
+                                             Text="5"/>
+                                </StackPanel>
+                                <CheckBox Name="AutoScrollToEndCheckBox" 
+                                          Content="Auto-scroll to end when new logs arrive" 
+                                          Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Display Settings -->
+            <TabItem Header="Display">
+                <ScrollViewer>
+                    <StackPanel Margin="20">
+                        <GroupBox Header="Font Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Font Family:" 
+                                               VerticalAlignment="Center" 
+                                               Width="120"/>
+                                    <ComboBox Name="FontFamilyComboBox" 
+                                              Width="200"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Font Size:" 
+                                               VerticalAlignment="Center" 
+                                               Width="120"/>
+                                    <TextBox Name="FontSizeTextBox" 
+                                             Width="100" 
+                                             Text="12"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <GroupBox Header="Color Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Error Level Color:" 
+                                               VerticalAlignment="Center" 
+                                               Width="150"/>
+                                    <Rectangle Name="ErrorColorPreview" 
+                                               Width="50" 
+                                               Height="20" 
+                                               Fill="Red" 
+                                               Stroke="Black" 
+                                               StrokeThickness="1"/>
+                                    <Button Name="ChangeErrorColorButton" 
+                                            Content="Change" 
+                                            Margin="10,0,0,0" 
+                                            Click="ChangeColor_Click"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Warning Level Color:" 
+                                               VerticalAlignment="Center" 
+                                               Width="150"/>
+                                    <Rectangle Name="WarningColorPreview" 
+                                               Width="50" 
+                                               Height="20" 
+                                               Fill="Orange" 
+                                               Stroke="Black" 
+                                               StrokeThickness="1"/>
+                                    <Button Name="ChangeWarningColorButton" 
+                                            Content="Change" 
+                                            Margin="10,0,0,0" 
+                                            Click="ChangeColor_Click"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Info Level Color:" 
+                                               VerticalAlignment="Center" 
+                                               Width="150"/>
+                                    <Rectangle Name="InfoColorPreview" 
+                                               Width="50" 
+                                               Height="20" 
+                                               Fill="Blue" 
+                                               Stroke="Black" 
+                                               StrokeThickness="1"/>
+                                    <Button Name="ChangeInfoColorButton" 
+                                            Content="Change" 
+                                            Margin="10,0,0,0" 
+                                            Click="ChangeColor_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <GroupBox Header="Grid Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <CheckBox Name="AlternatingRowColorsCheckBox" 
+                                          Content="Use alternating row colors" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="ShowGridLinesCheckBox" 
+                                          Content="Show grid lines" 
+                                          Margin="0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Rows per page:" 
+                                               VerticalAlignment="Center" 
+                                               Width="120"/>
+                                    <TextBox Name="RowsPerPageTextBox" 
+                                             Width="100" 
+                                             Text="1000"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Filter Settings -->
+            <TabItem Header="Filters">
+                <ScrollViewer>
+                    <StackPanel Margin="20">
+                        <GroupBox Header="Default Filter Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <TextBlock Text="Default log levels to show:" 
+                                           FontWeight="Bold" 
+                                           Margin="0,0,0,10"/>
+                                <CheckBox Name="DefaultTraceCheckBox" 
+                                          Content="Trace" 
+                                          Margin="0,2"/>
+                                <CheckBox Name="DefaultDebugCheckBox" 
+                                          Content="Debug" 
+                                          Margin="0,2"/>
+                                <CheckBox Name="DefaultInfoCheckBox" 
+                                          Content="Information" 
+                                          IsChecked="True" 
+                                          Margin="0,2"/>
+                                <CheckBox Name="DefaultWarnCheckBox" 
+                                          Content="Warning" 
+                                          IsChecked="True" 
+                                          Margin="0,2"/>
+                                <CheckBox Name="DefaultErrorCheckBox" 
+                                          Content="Error" 
+                                          IsChecked="True" 
+                                          Margin="0,2"/>
+                                <CheckBox Name="DefaultFatalCheckBox" 
+                                          Content="Fatal" 
+                                          IsChecked="True" 
+                                          Margin="0,2"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <GroupBox Header="Filter Behavior" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <CheckBox Name="RememberFiltersCheckBox" 
+                                          Content="Remember filters between sessions" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="ApplyFiltersRealTimeCheckBox" 
+                                          Content="Apply filters in real-time" 
+                                          IsChecked="True" 
+                                          Margin="0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Max filter results:" 
+                                               VerticalAlignment="Center" 
+                                               Width="150"/>
+                                    <TextBox Name="MaxFilterResultsTextBox" 
+                                             Width="100" 
+                                             Text="10000"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Advanced Settings -->
+            <TabItem Header="Advanced">
+                <ScrollViewer>
+                    <StackPanel Margin="20">
+                        <GroupBox Header="Performance Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Max logs in memory:" 
+                                               VerticalAlignment="Center" 
+                                               Width="150"/>
+                                    <TextBox Name="MaxLogsInMemoryTextBox" 
+                                             Width="100" 
+                                             Text="100000"/>
+                                </StackPanel>
+                                <CheckBox Name="UseVirtualizationCheckBox" 
+                                          Content="Enable UI virtualization" 
+                                          IsChecked="True" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="BackgroundLoadingCheckBox" 
+                                          Content="Load files in background" 
+                                          IsChecked="True" 
+                                          Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <GroupBox Header="Export Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Default export format:" 
+                                               VerticalAlignment="Center" 
+                                               Width="150"/>
+                                    <ComboBox Name="DefaultExportFormatComboBox" 
+                                              Width="150">
+                                        <ComboBoxItem Content="CSV" IsSelected="True"/>
+                                        <ComboBoxItem Content="JSON"/>
+                                        <ComboBoxItem Content="XML"/>
+                                        <ComboBoxItem Content="Text"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <CheckBox Name="IncludeHeadersCheckBox" 
+                                          Content="Include headers in export" 
+                                          IsChecked="True" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="ExportFilteredOnlyCheckBox" 
+                                          Content="Export filtered logs only by default" 
+                                          IsChecked="True" 
+                                          Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+                        
+                        <GroupBox Header="Debug Settings" Margin="0,0,0,20">
+                            <StackPanel Margin="10">
+                                <CheckBox Name="EnableDebugLoggingCheckBox" 
+                                          Content="Enable debug logging" 
+                                          Margin="0,5"/>
+                                <CheckBox Name="ShowPerformanceStatsCheckBox" 
+                                          Content="Show performance statistics" 
+                                          Margin="0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Name="ClearCacheButton" 
+                                            Content="Clear Cache" 
+                                            Margin="0,0,10,0" 
+                                            Click="ClearCache_Click"/>
+                                    <Button Name="ResetSettingsButton" 
+                                            Content="Reset to Defaults" 
+                                            Click="ResetSettings_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+        
+        <!-- Dialog Buttons -->
+        <StackPanel Grid.Row="1" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,20,0,0">
+            <Button Name="OkButton" 
+                    Content="OK" 
+                    Width="80" 
+                    Height="30" 
+                    Margin="0,0,10,0" 
+                    IsDefault="True" 
+                    Click="Ok_Click"/>
+            <Button Name="CancelButton" 
+                    Content="Cancel" 
+                    Width="80" 
+                    Height="30" 
+                    Margin="0,0,10,0" 
+                    IsCancel="True" 
+                    Click="Cancel_Click"/>
+            <Button Name="ApplyButton" 
+                    Content="Apply" 
+                    Width="80" 
+                    Height="30" 
+                    Click="Apply_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
