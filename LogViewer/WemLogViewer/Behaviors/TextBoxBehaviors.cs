@@ -72,17 +72,17 @@ public static class TextBoxBehaviors
         
         if (string.IsNullOrEmpty(textBox.Text) && !textBox.IsFocused)
         {
-            textBox.Foreground = Brushes.Gray;
+            textBox.Foreground = System.Windows.Media.Brushes.Gray;
             textBox.Text = watermark;
         }
         else if (textBox.Text == watermark && textBox.IsFocused)
         {
-            textBox.Foreground = SystemColors.ControlTextBrush;
+            textBox.Foreground = System.Windows.SystemColors.ControlTextBrush;
             textBox.Text = string.Empty;
         }
         else if (!string.IsNullOrEmpty(textBox.Text) && textBox.Text != watermark)
         {
-            textBox.Foreground = SystemColors.ControlTextBrush;
+            textBox.Foreground = System.Windows.SystemColors.ControlTextBrush;
         }
     }
 }
