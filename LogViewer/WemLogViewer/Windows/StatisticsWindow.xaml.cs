@@ -218,7 +218,7 @@ public partial class StatisticsWindow : Window
         }
     }
     
-    private static Brush GetLevelBrush(string level)
+    private static System.Windows.Media.Brush GetLevelBrush(string level)
     {
         return level?.ToLower() switch
         {
