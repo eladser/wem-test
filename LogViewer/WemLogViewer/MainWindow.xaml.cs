@@ -195,11 +195,6 @@ public partial class MainWindow : Window
         ApplyFilters();
     }
 
-    private void Filter_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        ApplyFilters();
-    }
-
     #endregion
 
     #region Quick Action Handlers
@@ -564,15 +559,4 @@ public partial class MainWindow : Window
     }
 
     #endregion
-}
-
-// Custom Commands
-public static class CustomCommands
-{
-    public static readonly RoutedUICommand Refresh = new(
-        "Refresh", "Refresh", typeof(CustomCommands),
-        new InputGestureCollection { new KeyGesture(Key.F5) });
-        
-    public static readonly RoutedUICommand ClearFilter = new(
-        "Clear Filter", "ClearFilter", typeof(CustomCommands));
 }
