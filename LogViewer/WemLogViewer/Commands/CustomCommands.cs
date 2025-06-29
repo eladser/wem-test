@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace WemLogViewer;
+namespace WemLogViewer.Commands;
 
 public static class CustomCommands
 {
