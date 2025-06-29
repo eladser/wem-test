@@ -16,7 +16,7 @@ public partial class App : System.Windows.Application
         DispatcherUnhandledException += (s, ex) =>
         {
             LoggingService.Logger?.Error(ex.Exception, "Unhandled exception in LogViewer");
-            MessageBox.Show($"An unexpected error occurred: {ex.Exception.Message}", 
+            System.Windows.MessageBox.Show($"An unexpected error occurred: {ex.Exception.Message}", 
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             ex.Handled = true;
         };
