@@ -25,7 +25,7 @@ public static class TextBoxBehaviors
 
     private static void OnWatermarkChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is TextBox textBox)
+        if (d is System.Windows.Controls.TextBox textBox)
         {
             textBox.GotFocus -= TextBox_GotFocus;
             textBox.LostFocus -= TextBox_LostFocus;
@@ -44,7 +44,7 @@ public static class TextBoxBehaviors
 
     private static void TextBox_GotFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is TextBox textBox)
+        if (sender is System.Windows.Controls.TextBox textBox)
         {
             UpdateWatermark(textBox);
         }
@@ -52,7 +52,7 @@ public static class TextBoxBehaviors
 
     private static void TextBox_LostFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is TextBox textBox)
+        if (sender is System.Windows.Controls.TextBox textBox)
         {
             UpdateWatermark(textBox);
         }
@@ -60,13 +60,13 @@ public static class TextBoxBehaviors
 
     private static void TextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (sender is TextBox textBox)
+        if (sender is System.Windows.Controls.TextBox textBox)
         {
             UpdateWatermark(textBox);
         }
     }
 
-    private static void UpdateWatermark(TextBox textBox)
+    private static void UpdateWatermark(System.Windows.Controls.TextBox textBox)
     {
         var watermark = GetWatermark(textBox);
         
