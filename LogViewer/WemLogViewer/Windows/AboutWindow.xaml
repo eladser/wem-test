@@ -73,7 +73,7 @@
                         </Hyperlink>
                     </TextBlock>
                     <TextBlock Margin="0,2">
-                        <Run Text="Issues & Feedback: "/>
+                        <Run Text="Issues &amp; Feedback: "/>
                         <Hyperlink NavigateUri="https://github.com/eladser/wem-test/issues" RequestNavigate="Hyperlink_RequestNavigate">
                             <Run Text="GitHub Issues"/>
                         </Hyperlink>
@@ -99,7 +99,7 @@
                 
                 <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="11" Foreground="#666">
                     <Run Text="© 2025 WEM Solutions. Built with "/>
-                    <Run Text="❤️" Foreground="Red"/>
+                    <Run Text="♥" Foreground="Red"/>
                     <Run Text=" for log analysis."/>
                 </TextBlock>
                 
