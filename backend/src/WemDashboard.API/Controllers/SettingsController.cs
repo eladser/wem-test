@@ -8,7 +8,7 @@ namespace WemDashboard.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+// REMOVED: [Authorize] - General settings don't require authentication
 public class SettingsController : BaseController
 {
     private readonly ILogger<SettingsController> _logger;
@@ -29,14 +29,15 @@ public class SettingsController : BaseController
     }
 
     /// <summary>
-    /// Get all general settings
+    /// Get all general settings - NO AUTHENTICATION REQUIRED
     /// </summary>
     [HttpGet("general")]
+    [AllowAnonymous] // Explicitly allow anonymous access
     public IActionResult GetGeneralSettings()
     {
         try
         {
-            _logger.LogInformation("Retrieving general settings");
+            _logger.LogInformation("Retrieving general settings (no auth required)");
             
             var settings = new
             {
@@ -66,14 +67,15 @@ public class SettingsController : BaseController
     }
 
     /// <summary>
-    /// Update general settings
+    /// Update general settings - NO AUTHENTICATION REQUIRED
     /// </summary>
     [HttpPut("general")]
+    [AllowAnonymous] // Explicitly allow anonymous access
     public IActionResult UpdateGeneralSettings([FromBody] GeneralSettingsDto settings)
     {
         try
         {
-            _logger.LogInformation("Updating general settings: {@Settings}", settings);
+            _logger.LogInformation("Updating general settings (no auth required): {@Settings}", settings);
             
             if (settings == null)
             {
@@ -134,14 +136,15 @@ public class SettingsController : BaseController
     }
 
     /// <summary>
-    /// Get all settings
+    /// Get all settings - REQUIRES AUTHENTICATION
     /// </summary>
     [HttpGet]
+    [Authorize] // This still requires auth
     public IActionResult GetAllSettings()
     {
         try
         {
-            _logger.LogInformation("Retrieving all settings");
+            _logger.LogInformation("Retrieving all settings (auth required)");
             
             return Ok(new ApiResponse<Dictionary<string, object>>
             {
@@ -163,14 +166,15 @@ public class SettingsController : BaseController
     }
 
     /// <summary>
-    /// Reset settings to defaults
+    /// Reset settings to defaults - REQUIRES AUTHENTICATION
     /// </summary>
     [HttpPost("reset")]
+    [Authorize] // This still requires auth
     public IActionResult ResetSettings()
     {
         try
         {
-            _logger.LogInformation("Resetting settings to defaults");
+            _logger.LogInformation("Resetting settings to defaults (auth required)");
             
             _settingsStore.Clear();
             _settingsStore["company"] = "EnergyOS Corp";
