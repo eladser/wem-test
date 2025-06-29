@@ -46,6 +46,16 @@ public static class LoggingService
     public static void Shutdown()
     {
         Logger?.Information("WEM Log Viewer shutting down");
-        Logger?.Dispose();
+        
+        // Properly dispose of the logger if it's disposable
+        if (Logger is IDisposable disposableLogger)
+        {
+            disposableLogger.Dispose();
+        }
+        
+        // Close and flush all sinks
+        Log.CloseAndFlush();
+        
+        Logger = null;
     }
 }
