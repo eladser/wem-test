@@ -62,10 +62,9 @@ export class ApiConfiguration {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      // FIXED: Updated health check endpoints to match .NET backend structure
+      // FIXED: Updated health check endpoints to match your .NET backend
       const healthEndpoints = [
-        '/api/health',        // Standard API health endpoint
-        '/health',            // Simple health endpoint
+        '/health',            // ✅ Your backend has this at root level
         '/api/hello',         // Your current hello endpoint
         '/weatherforecast',   // Default .NET template endpoint
         '/'                   // Root endpoint as fallback
