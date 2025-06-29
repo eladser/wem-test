@@ -1,9 +1,9 @@
-
 import { useEffect, useRef } from 'react';
 import { PerformanceMetrics, PerformanceConfig } from '@/types/performance';
 
 const defaultConfig: PerformanceConfig = {
-  enableLogging: true,
+  // Disable performance logging by default in development to reduce console noise
+  enableLogging: import.meta.env.PROD || import.meta.env.VITE_ENABLE_PERFORMANCE_LOGS === 'true',
   threshold: 100,
   logLevel: 'info'
 };
@@ -55,4 +55,15 @@ export const usePerformance = (
     mountTime: mountTime.current,
     getMetrics
   };
+};
+
+// Export a function to enable performance logging manually when needed
+export const enablePerformanceLogging = () => {
+  defaultConfig.enableLogging = true;
+  console.log('[Performance] Performance logging enabled');
+};
+
+export const disablePerformanceLogging = () => {
+  defaultConfig.enableLogging = false;
+  console.log('[Performance] Performance logging disabled');
 };
