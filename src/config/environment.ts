@@ -1,16 +1,15 @@
-
 // Environment configuration for production readiness
 export const config = {
   // App configuration
   app: {
     name: import.meta.env.VITE_APP_NAME || 'WEM Dashboard',
-    version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+    version: import.meta.env.VITE_APP_VERSION || '3.0.0',
     environment: import.meta.env.MODE || 'development',
   },
   
-  // API configuration
+  // API configuration - FIXED to use port 5000 by default
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
     timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
     retryAttempts: parseInt(import.meta.env.VITE_API_RETRY_ATTEMPTS || '3'),
     fallbackUrls: [
@@ -19,23 +18,34 @@ export const config = {
     ].filter(Boolean) as string[],
   },
   
+  // WebSocket configuration
+  websocket: {
+    url: import.meta.env.VITE_WS_URL || 'ws://localhost:5000/ws/energy-data',
+    reconnectInterval: parseInt(import.meta.env.VITE_WS_RECONNECT_INTERVAL || '5000'),
+    maxReconnectAttempts: parseInt(import.meta.env.VITE_WS_MAX_RECONNECT_ATTEMPTS || '10'),
+  },
+  
   // Feature flags
   features: {
     enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
     enableNotifications: import.meta.env.VITE_ENABLE_NOTIFICATIONS !== 'false',
     enableErrorReporting: import.meta.env.VITE_ENABLE_ERROR_REPORTING === 'true',
+    enableRealTime: import.meta.env.VITE_ENABLE_REAL_TIME !== 'false',
+    useMockData: import.meta.env.VITE_USE_MOCK_DATA === 'true',
   },
   
   // Performance settings
   performance: {
     enableLazyLoading: import.meta.env.VITE_ENABLE_LAZY_LOADING !== 'false',
     cacheTimeout: parseInt(import.meta.env.VITE_CACHE_TIMEOUT || '300000'), // 5 minutes
+    realtimeInterval: parseInt(import.meta.env.VITE_REALTIME_INTERVAL || '5000'),
   },
   
   // Development settings
   development: {
     enableDebugLogs: import.meta.env.MODE === 'development' || import.meta.env.VITE_ENABLE_DEBUG_LOGS === 'true',
     mockApiDelay: parseInt(import.meta.env.VITE_MOCK_API_DELAY || '1000'),
+    debug: import.meta.env.VITE_DEBUG === 'true',
   },
 
   // Security settings
@@ -89,5 +99,16 @@ const validateProductionConfig = () => {
 
 // Run validation
 validateProductionConfig();
+
+// Log current configuration in development
+if (config.development.enableDebugLogs) {
+  console.log('🔧 WEM Dashboard Configuration:', {
+    environment: config.app.environment,
+    apiBaseUrl: config.api.baseUrl,
+    websocketUrl: config.websocket.url,
+    mockData: config.features.useMockData,
+    realTime: config.features.enableRealTime
+  });
+}
 
 export default config;
