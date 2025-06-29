@@ -17,6 +17,9 @@ public class LogEntry
     public string RawLogLine { get; set; } = string.Empty;
     public Dictionary<string, object>? Properties { get; set; }
     
+    // Computed property for formatted timestamps
+    public string FormattedTimestamp => Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff");
+    
     public LogEntry()
     {
         Timestamp = DateTime.Now;
