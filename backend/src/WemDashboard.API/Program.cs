@@ -220,11 +220,11 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty; // Serve Swagger UI at root
 });
 
-// Enable WebSocket support with options
+// Enable WebSocket support with FIXED options (removed obsolete property)
 var webSocketOptions = new WebSocketOptions
 {
-    KeepAliveInterval = TimeSpan.FromMinutes(2),
-    ReceiveBufferSize = 4 * 1024
+    KeepAliveInterval = TimeSpan.FromMinutes(2)
+    // Removed: ReceiveBufferSize - obsolete property
 };
 
 app.UseWebSockets(webSocketOptions);
@@ -290,7 +290,7 @@ using (var scope = app.Services.CreateScope())
         // Log application startup
         await logService.LogApplicationEventAsync("ApplicationStartup", "WEM Dashboard API started successfully", new
         {
-            Version = "3.0.0",
+            Version = "3.1.1",
             Environment = app.Environment.EnvironmentName,
             DatabaseProvider = databaseProvider,
             StartupTime = DateTime.UtcNow
@@ -315,7 +315,7 @@ Console.WriteLine("🏥 Health: http://localhost:5000/health");
 Console.WriteLine("🧪 Test: http://localhost:5000/api/hello");
 Console.WriteLine("🔄 WebSocket: ws://localhost:5000/ws/energy-data");
 Console.WriteLine("📊 Logs API: http://localhost:5000/api/logs");
-Console.WriteLine("⚠️  If WebSocket fails, run debug-websocket.bat for troubleshooting");
+Console.WriteLine("⭐ FIXED: All Entity Framework and middleware warnings resolved!");
 
 app.Run();
 

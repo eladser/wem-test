@@ -30,8 +30,8 @@ public class RequestLoggingMiddleware
         var stopwatch = Stopwatch.StartNew();
         var requestId = Guid.NewGuid().ToString("N")[..8];
         
-        // Add request ID to response headers
-        context.Response.Headers.Add("X-Request-Id", requestId);
+        // FIXED: Use proper method to set response headers
+        context.Response.Headers["X-Request-Id"] = requestId;
         
         // Log request
         await LogRequestAsync(context, requestId);
