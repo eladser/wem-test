@@ -1,4 +1,3 @@
-
 import { apiGateway, type GatewayRequest } from './apiGateway';
 import { logger } from '@/utils/logging';
 
@@ -17,8 +16,36 @@ export class ApiError extends Error {
 }
 
 class ApiService {
+  // FIXED: Method to set authentication token from useAuth hook
+  private getAuthToken(): string | null {
+    // Try to get from localStorage (where useAuth stores it)
+    const savedUser = localStorage.getItem('wem_user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        // Generate a mock JWT token for the user
+        return `Bearer mock_jwt_token_${userData.id}_${userData.email}`;
+      } catch (error) {
+        logger.error('Error parsing user data for auth token:', error);
+        return null;
+      }
+    }
+    return null;
+  }
+
   private async makeRequest<T>(request: GatewayRequest): Promise<ApiResponse<T>> {
     try {
+      // FIXED: Automatically add auth token if available and required
+      if (request.requiresAuth !== false) {
+        const token = this.getAuthToken();
+        if (token) {
+          request.headers = {
+            ...request.headers,
+            'Authorization': token
+          };
+        }
+      }
+
       const response = await apiGateway.request<T>(request);
       
       if (!response.success) {
@@ -134,6 +161,25 @@ class ApiService {
 
   clearAuthToken(): void {
     apiGateway.clearAuthToken();
+  }
+
+  // FIXED: Get current user info from localStorage
+  getCurrentUser() {
+    const savedUser = localStorage.getItem('wem_user');
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch (error) {
+        logger.error('Error parsing current user:', error);
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // FIXED: Check if user is authenticated
+  isAuthenticated(): boolean {
+    return !!this.getCurrentUser();
   }
 
   // Cache management
