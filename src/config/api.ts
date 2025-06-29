@@ -26,7 +26,7 @@ export class ApiConfiguration {
   }
 
   private initializeEndpoints(): void {
-    // Primary endpoint from config
+    // Primary endpoint - your .NET backend on port 5000
     this.endpoints.push({
       url: config.api.baseUrl,
       timeout: config.api.timeout,
@@ -34,7 +34,7 @@ export class ApiConfiguration {
       isHealthy: true
     });
 
-    // Fallback endpoints for production
+    // Only add fallback endpoints in production (remove mock endpoints)
     if (config.app.environment === 'production') {
       config.api.fallbackUrls.forEach(url => {
         this.endpoints.push({
@@ -46,19 +46,10 @@ export class ApiConfiguration {
       });
     }
 
-    // Mock endpoint for development/testing
-    if (config.app.environment === 'development' || this.endpoints.length === 1) {
-      this.endpoints.push({
-        url: 'mock://api',
-        timeout: 1000,
-        retryAttempts: 1,
-        isHealthy: true
-      });
-    }
-
     logger.info('API endpoints initialized', { 
       endpointCount: this.endpoints.length,
-      primary: this.endpoints[0]?.url 
+      primary: this.endpoints[0]?.url,
+      useMockData: config.features.useMockData
     });
   }
 
@@ -67,21 +58,17 @@ export class ApiConfiguration {
   }
 
   async checkEndpointHealth(endpoint: ApiEndpoint): Promise<boolean> {
-    if (endpoint.url === 'mock://api') {
-      return true; // Mock endpoint is always healthy
-    }
-
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      // Try different health check endpoints that your backend might have
-      const healthEndpoints = ['/health', '/api/health', '/', '/status'];
+      // Health check endpoints your .NET backend supports
+      const healthEndpoints = ['/health', '/api/hello', '/api/health', '/'];
       
       for (const healthPath of healthEndpoints) {
         try {
-          const response = await fetch(`${endpoint.url}${healthPath}`, {
-            method: 'GET', // Changed from HEAD to GET for better compatibility
+          const response = await fetch(`${endpoint.url.replace('/api', '')}${healthPath}`, {
+            method: 'GET',
             signal: controller.signal,
           });
 
@@ -112,7 +99,6 @@ export class ApiConfiguration {
       endpoint.isHealthy = false;
       endpoint.lastChecked = new Date();
       
-      // Only log as warning, not error, since this is expected when backend is down
       logger.warn('Backend endpoint health check failed', { 
         endpoint: endpoint.url, 
         error: error instanceof Error ? error.message : String(error) 
@@ -140,14 +126,7 @@ export class ApiConfiguration {
       }
     }
 
-    // If no endpoints are healthy, return mock endpoint or current
-    const mockEndpoint = this.endpoints.find(e => e.url === 'mock://api');
-    if (mockEndpoint) {
-      this.currentEndpointIndex = this.endpoints.indexOf(mockEndpoint);
-      logger.info('Backend unavailable, using mock endpoint');
-      return mockEndpoint;
-    }
-
+    // If no endpoints are healthy, return current (frontend will fall back to mock data)
     logger.warn('No healthy endpoints available, using primary endpoint');
     return current;
   }
@@ -156,6 +135,11 @@ export class ApiConfiguration {
     const nextIndex = (this.currentEndpointIndex + 1) % this.endpoints.length;
     this.currentEndpointIndex = nextIndex;
     logger.info('Rotated to next endpoint', { url: this.getCurrentEndpoint().url });
+  }
+
+  // Method to check if we should use mock data
+  shouldUseMockData(): boolean {
+    return config.features.useMockData;
   }
 }
 
