@@ -107,13 +107,13 @@ public partial class LogDetailWindow : Window
                 {_logEntry.RawLogLine}
                 """;
 
-            Clipboard.SetText(details);
-            MessageBox.Show("Log details copied to clipboard.", "Copy to Clipboard", 
+            System.Windows.Clipboard.SetText(details);
+            System.Windows.MessageBox.Show("Log details copied to clipboard.", "Copy to Clipboard", 
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to copy to clipboard: {ex.Message}", "Error", 
+            System.Windows.MessageBox.Show($"Failed to copy to clipboard: {ex.Message}", "Error", 
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
