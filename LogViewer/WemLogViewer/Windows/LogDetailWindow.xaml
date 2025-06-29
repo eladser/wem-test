@@ -1,0 +1,145 @@
+<Window x:Class="WemLogViewer.Windows.LogDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Log Entry Details" 
+        Height="600" 
+        Width="800" 
+        WindowStartupLocation="CenterOwner">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#f8f9fa" BorderBrush="#dee2e6" BorderThickness="0,0,0,1" Padding="15">
+            <StackPanel>
+                <TextBlock Name="TitleTextBlock" 
+                           FontSize="16" 
+                           FontWeight="Bold" 
+                           Text="Log Entry Details"/>
+                <TextBlock Name="SubtitleTextBlock" 
+                           FontSize="12" 
+                           Foreground="#666" 
+                           Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Content -->
+        <TabControl Grid.Row="1" Margin="0">
+            <TabItem Header="Overview">
+                <ScrollViewer Padding="20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Timestamp:" FontWeight="Bold" Margin="0,5,15,5"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Name="TimestampTextBlock" Margin="0,5"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Level:" FontWeight="Bold" Margin="0,5,15,5"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Name="LevelTextBlock" Margin="0,5"/>
+                        
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Component:" FontWeight="Bold" Margin="0,5,15,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Name="ComponentTextBlock" Margin="0,5"/>
+                        
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="User ID:" FontWeight="Bold" Margin="0,5,15,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Name="UserIdTextBlock" Margin="0,5"/>
+                        
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="URL:" FontWeight="Bold" Margin="0,5,15,5"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Name="UrlTextBlock" Margin="0,5"/>
+                        
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Message:" FontWeight="Bold" Margin="0,5,15,5" VerticalAlignment="Top"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" 
+                                 Name="MessageTextBox" 
+                                 IsReadOnly="True" 
+                                 TextWrapping="Wrap" 
+                                 Margin="0,5" 
+                                 MinHeight="60"
+                                 Background="Transparent"
+                                 BorderThickness="0"/>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Stack Trace">
+                <ScrollViewer>
+                    <TextBox Name="StackTraceTextBox" 
+                             IsReadOnly="True" 
+                             TextWrapping="Wrap" 
+                             FontFamily="Consolas" 
+                             FontSize="11" 
+                             Background="#f8f9fa"
+                             Margin="10"/>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Context">
+                <ScrollViewer>
+                    <TextBox Name="ContextTextBox" 
+                             IsReadOnly="True" 
+                             TextWrapping="Wrap" 
+                             FontFamily="Consolas" 
+                             FontSize="11" 
+                             Background="#f8f9fa"
+                             Margin="10"/>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Properties">
+                <ScrollViewer>
+                    <DataGrid Name="PropertiesDataGrid" 
+                              AutoGenerateColumns="False" 
+                              IsReadOnly="True" 
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              Margin="10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Property" Binding="{Binding Key}" Width="200"/>
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </ScrollViewer>
+            </TabItem>
+            
+            <TabItem Header="Raw Log">
+                <ScrollViewer>
+                    <TextBox Name="RawLogTextBox" 
+                             IsReadOnly="True" 
+                             TextWrapping="Wrap" 
+                             FontFamily="Consolas" 
+                             FontSize="10" 
+                             Background="#f8f9fa"
+                             Margin="10"/>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+        
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="#f8f9fa" BorderBrush="#dee2e6" BorderThickness="0,1,0,0" Padding="15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Copy to Clipboard" 
+                        Width="120" 
+                        Margin="0,0,10,0" 
+                        Click="CopyToClipboard_Click"/>
+                <Button Content="Close" 
+                        Width="80" 
+                        IsDefault="True" 
+                        Click="Close_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
