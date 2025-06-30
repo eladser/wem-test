@@ -29,6 +29,16 @@ public class LogFileService
         @"\b(?<level>TRACE|DEBUG|INFO|INFORMATION|WARN|WARNING|ERROR|FATAL|CRITICAL)\b",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    // Pattern to detect stack traces
+    private static readonly Regex StackTraceRegex = new(
+        @"^\s*at\s+.*\sin\s+.*:\d+|\^\s*at\s+.*\.\w+\(.*\)|\s+---> .*Exception:",
+        RegexOptions.Compiled | RegexOptions.Multiline);
+
+    // Pattern to detect SQL statements or structured data
+    private static readonly Regex SqlRegex = new(
+        @"^\s*(CREATE|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|EXEC|EXECUTE)\s+",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
     public List<LogEntry> ReadLogFile(string filePath)
     {
         if (!File.Exists(filePath))
@@ -197,8 +207,7 @@ public class LogFileService
             var logEntry = new LogEntry
             {
                 Id = entryNumber,
-                RawLogLine = fullContent,
-                Message = fullContent // Full multi-line content as message
+                RawLogLine = fullContent
             };
 
             // Extract common properties
@@ -246,6 +255,9 @@ public class LogFileService
 
             // Extract additional properties
             ExtractAdditionalProperties(root, logEntry);
+
+            // Analyze content for context and stack trace
+            AnalyzeLogContent(logEntry, fullContent);
 
             return logEntry;
         }
@@ -297,6 +309,9 @@ public class LogFileService
             logEntry.Properties["Location"] = match.Groups["location"].Value;
         }
 
+        // Analyze content for context and stack trace
+        AnalyzeLogContent(logEntry, fullContent);
+
         return logEntry;
     }
 
@@ -336,7 +351,84 @@ public class LogFileService
             logEntry.Level = "Information";
         }
 
+        // Analyze content for context and stack trace
+        AnalyzeLogContent(logEntry, fullContent);
+
         return logEntry;
+    }
+
+    private void AnalyzeLogContent(LogEntry logEntry, string fullContent)
+    {
+        var lines = fullContent.Split(Environment.NewLine);
+        
+        // Check for stack traces
+        if (StackTraceRegex.IsMatch(fullContent))
+        {
+            var stackTraceLines = lines.Where(line => 
+                line.Trim().StartsWith("at ") || 
+                line.Contains("Exception:") ||
+                line.Trim().StartsWith("---> ")).ToList();
+            
+            if (stackTraceLines.Any())
+            {
+                logEntry.StackTrace = string.Join(Environment.NewLine, stackTraceLines);
+            }
+        }
+
+        // Check for SQL or structured content that could be context
+        if (SqlRegex.IsMatch(fullContent) && lines.Length > 1)
+        {
+            // For SQL logs, put the formatted SQL in context
+            var sqlLines = lines.Skip(1).ToList(); // Skip the first line with timestamp/level
+            if (sqlLines.Any())
+            {
+                logEntry.Context = string.Join(Environment.NewLine, sqlLines);
+            }
+        }
+        else if (lines.Length > 2)
+        {
+            // For other multi-line logs, put continuation lines in context
+            var contextLines = lines.Skip(1).ToList();
+            if (contextLines.Any() && contextLines.Any(line => !string.IsNullOrWhiteSpace(line)))
+            {
+                logEntry.Context = string.Join(Environment.NewLine, contextLines);
+            }
+        }
+
+        // If we have JSON or structured data, put it in context
+        if (fullContent.Contains("{") && fullContent.Contains("}"))
+        {
+            try
+            {
+                // Try to find JSON-like structures and format them
+                var jsonStart = fullContent.IndexOf('{');
+                var jsonEnd = fullContent.LastIndexOf('}');
+                if (jsonStart >= 0 && jsonEnd > jsonStart)
+                {
+                    var jsonPart = fullContent.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                    if (jsonPart.Length > 10) // Only if it's substantial
+                    {
+                        logEntry.Context = jsonPart;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore JSON parsing errors for context extraction
+            }
+        }
+
+        // Look for key-value pairs or structured information
+        var structuredLines = lines.Where(line => 
+            line.Contains("=") || 
+            line.Contains(":") || 
+            line.Trim().StartsWith("\"") ||
+            line.Trim().StartsWith("'")).ToList();
+        
+        if (structuredLines.Count > 1 && string.IsNullOrEmpty(logEntry.Context))
+        {
+            logEntry.Context = string.Join(Environment.NewLine, structuredLines);
+        }
     }
 
     private void ExtractAdditionalProperties(JsonElement root, LogEntry logEntry)
