@@ -12,6 +12,7 @@ using WemLogViewer.Models;
 using WemLogViewer.Services;
 using WemLogViewer.Windows;
 using Ookii.Dialogs.Wpf;
+using WemLogViewer.Behaviors;
 
 namespace WemLogViewer;
 
@@ -26,8 +27,8 @@ public partial class MainWindow : Window
     
     private string? _currentLogPath;
     private bool _isLoading;
-    private readonly HashSet<string> _logEntryHashes = new(); // Use HashSet for better performance
-    private DateTime _lastFileModified = DateTime.MinValue; // Track file modification time
+    private readonly HashSet<string> _logEntryHashes = new();
+    private DateTime _lastFileModified = DateTime.MinValue;
 
     public MainWindow()
     {
@@ -64,6 +65,24 @@ public partial class MainWindow : Window
         // Clear date filters to show all dates
         FromDatePicker.SelectedDate = null;
         ToDatePicker.SelectedDate = null;
+        
+        // Clear search box
+        SearchTextBox.Text = "";
+    }
+
+    private string GetActualSearchText()
+    {
+        // Get the watermark text for comparison
+        var watermark = TextBoxBehaviors.GetWatermark(SearchTextBox);
+        var searchText = SearchTextBox.Text?.Trim() ?? "";
+        
+        // If the text equals the watermark or is empty, return empty string
+        if (string.IsNullOrEmpty(searchText) || searchText == watermark)
+        {
+            return "";
+        }
+        
+        return searchText;
     }
 
     #region Command Handlers
@@ -220,7 +239,6 @@ public partial class MainWindow : Window
 
     private void Filter_Changed(object sender, RoutedEventArgs e)
     {
-        // Debounce the filter to avoid excessive calls
         Dispatcher.BeginInvoke(new Action(ApplyFilters), DispatcherPriority.Background);
     }
 
@@ -231,7 +249,6 @@ public partial class MainWindow : Window
 
     private void Filter_Changed(object sender, TextChangedEventArgs e)
     {
-        // Debounce text changes to avoid filtering on every keystroke
         Dispatcher.BeginInvoke(new Action(ApplyFilters), DispatcherPriority.Background);
     }
 
@@ -329,17 +346,9 @@ public partial class MainWindow : Window
             }
             
             LoadComponentsAndUsers();
+            ApplyFilters();
             
-            // TEMPORARILY DISABLE FILTERING TO DEBUG
-            _logsViewSource.View.Filter = null;
-            
-            UpdateStatus($"Loaded {_allLogs.Count} logs from {Path.GetFileName(filePath)} - FILTER DISABLED FOR DEBUG");
-            
-            // Re-enable filtering after a short delay
-            Dispatcher.BeginInvoke(new Action(() => {
-                ApplyFilters();
-                UpdateStatus($"Loaded {_allLogs.Count} logs from {Path.GetFileName(filePath)}");
-            }), DispatcherPriority.Background);
+            UpdateStatus($"Loaded {_allLogs.Count} logs from {Path.GetFileName(filePath)}");
         }
         catch (Exception ex)
         {
@@ -539,14 +548,6 @@ public partial class MainWindow : Window
         
         try
         {
-            // DEBUG: Log what's happening
-            var sampleLog = _allLogs.FirstOrDefault();
-            if (sampleLog != null)
-            {
-                var testResult = FilterPredicate(sampleLog);
-                UpdateStatus($"DEBUG: Sample log passes filter: {testResult}, Level: '{sampleLog.Level}', Message: '{sampleLog.Message?.Substring(0, Math.Min(50, sampleLog.Message.Length ?? 0))}'");
-            }
-            
             _logsViewSource.View.Filter = FilterPredicate;
             
             var filteredCount = _logsViewSource.View.Cast<LogEntry>().Count();
@@ -566,31 +567,22 @@ public partial class MainWindow : Window
         
         try
         {
-            // DEBUG: Add detailed logging for first few logs
-            static bool debugLog = true;
-            if (debugLog)
-            {
-                System.Diagnostics.Debug.WriteLine($"Filtering log: Level='{log.Level}', Time={log.Timestamp}, Message='{log.Message?.Substring(0, Math.Min(30, log.Message?.Length ?? 0))}'");
-            }
-            
-            // Level filter - Show all if no specific levels selected
+            // Level filter
             var selectedLevels = GetSelectedLevels();
             if (selectedLevels.Count > 0)
             {
                 var logLevel = log.Level ?? "Unknown";
                 if (!selectedLevels.Contains(logLevel))
                 {
-                    System.Diagnostics.Debug.WriteLine($"FILTERED OUT by level: '{logLevel}' not in [{string.Join(", ", selectedLevels)}]");
                     return false;
                 }
             }
             
-            // Date filter - Only filter if dates are set
+            // Date filter
             if (FromDatePicker.SelectedDate.HasValue)
             {
                 if (log.Timestamp.Date < FromDatePicker.SelectedDate.Value.Date)
                 {
-                    System.Diagnostics.Debug.WriteLine($"FILTERED OUT by FROM date: {log.Timestamp.Date} < {FromDatePicker.SelectedDate.Value.Date}");
                     return false;
                 }
             }
@@ -599,13 +591,12 @@ public partial class MainWindow : Window
             {
                 if (log.Timestamp.Date > ToDatePicker.SelectedDate.Value.Date)
                 {
-                    System.Diagnostics.Debug.WriteLine($"FILTERED OUT by TO date: {log.Timestamp.Date} > {ToDatePicker.SelectedDate.Value.Date}");
                     return false;
                 }
             }
             
-            // Search filter - Only filter if search text exists
-            var searchText = SearchTextBox.Text?.Trim();
+            // Search filter - Use the proper method to get actual search text
+            var searchText = GetActualSearchText();
             if (!string.IsNullOrWhiteSpace(searchText))
             {
                 var stringComparison = CaseSensitiveCheckBox.IsChecked == true ? 
@@ -623,7 +614,6 @@ public partial class MainWindow : Window
                             !regex.IsMatch(log.Component ?? "") &&
                             !regex.IsMatch(log.UserId ?? ""))
                         {
-                            System.Diagnostics.Debug.WriteLine($"FILTERED OUT by regex search: '{searchText}'");
                             return false;
                         }
                     }
@@ -634,7 +624,6 @@ public partial class MainWindow : Window
                               log.Component?.Contains(searchText, stringComparison) == true ||
                               log.UserId?.Contains(searchText, stringComparison) == true))
                         {
-                            System.Diagnostics.Debug.WriteLine($"FILTERED OUT by fallback search: '{searchText}'");
                             return false;
                         }
                     }
@@ -645,30 +634,27 @@ public partial class MainWindow : Window
                           log.Component?.Contains(searchText, stringComparison) == true ||
                           log.UserId?.Contains(searchText, stringComparison) == true))
                     {
-                        System.Diagnostics.Debug.WriteLine($"FILTERED OUT by text search: '{searchText}'");
                         return false;
                     }
                 }
             }
             
-            // Component filter - Only filter if component is selected
+            // Component filter
             var selectedComponent = ComponentComboBox.SelectedItem?.ToString();
             if (!string.IsNullOrEmpty(selectedComponent) && selectedComponent != "")
             {
                 if (log.Component != selectedComponent)
                 {
-                    System.Diagnostics.Debug.WriteLine($"FILTERED OUT by component: '{log.Component}' != '{selectedComponent}'");
                     return false;
                 }
             }
             
-            // User filter - Only filter if user is selected
+            // User filter
             var selectedUser = UserComboBox.SelectedItem?.ToString();
             if (!string.IsNullOrEmpty(selectedUser) && selectedUser != "")
             {
                 if (log.UserId != selectedUser)
                 {
-                    System.Diagnostics.Debug.WriteLine($"FILTERED OUT by user: '{log.UserId}' != '{selectedUser}'");
                     return false;
                 }
             }
@@ -678,7 +664,6 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             LoggingService.Logger?.Error(ex, "Error in filter predicate");
-            System.Diagnostics.Debug.WriteLine($"FILTER ERROR: {ex.Message}");
             return true; // Show the log if there's an error in filtering
         }
     }
@@ -692,8 +677,6 @@ public partial class MainWindow : Window
         if (WarnCheckBox.IsChecked == true) levels.Add("Warning");
         if (ErrorCheckBox.IsChecked == true) levels.Add("Error");
         if (FatalCheckBox.IsChecked == true) levels.Add("Fatal");
-        
-        System.Diagnostics.Debug.WriteLine($"Selected levels: [{string.Join(", ", levels)}]");
         return levels;
     }
 
