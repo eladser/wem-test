@@ -13,7 +13,12 @@ public class LogFileService
         RegexOptions.Compiled | RegexOptions.Multiline);
 
     private static readonly Regex JsonLogRegex = new(
-        @"^\{.*\}$",
+        @"^\\{.*\\}$",
+        RegexOptions.Compiled);
+
+    // Pattern to detect start of a new log entry (timestamp at beginning of line)
+    private static readonly Regex LogStartRegex = new(
+        @"^(?<timestamp>\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:?\d{2})?)",
         RegexOptions.Compiled);
 
     private static readonly Regex TimestampRegex = new(
@@ -34,30 +39,32 @@ public class LogFileService
         
         LoggingService.Logger?.Information("Reading log file: {FilePath} ({LineCount} lines)", filePath, lines.Length);
 
-        for (int i = 0; i < lines.Length; i++)
+        // Group lines into complete log entries
+        var logEntries = GroupLogLines(lines);
+        
+        int entryNumber = 1;
+        foreach (var logLines in logEntries)
         {
             try
             {
-                var line = lines[i];
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                var logEntry = ParseLogLine(line, i + 1);
+                var logEntry = ParseLogEntry(logLines, entryNumber);
                 if (logEntry != null)
                 {
                     logs.Add(logEntry);
+                    entryNumber++;
                 }
             }
             catch (Exception ex)
             {
-                LoggingService.Logger?.Warning(ex, "Error parsing log line {LineNumber} in file {FilePath}", i + 1, filePath);
-                // Create a basic log entry for unparseable lines
+                LoggingService.Logger?.Warning(ex, "Error parsing log entry starting at line {LineNumber}", logLines.FirstLineNumber);
+                // Create a basic log entry for unparseable entries
                 logs.Add(new LogEntry
                 {
-                    Id = i + 1,
+                    Id = entryNumber++,
                     Timestamp = DateTime.Now,
                     Level = "Unknown",
-                    Message = lines[i],
-                    RawLogLine = lines[i]
+                    Message = logLines.Content,
+                    RawLogLine = logLines.Content
                 });
             }
         }
@@ -101,36 +108,97 @@ public class LogFileService
         return allLogs.OrderBy(l => l.Timestamp).ToList();
     }
 
-    private LogEntry? ParseLogLine(string line, int lineNumber)
+    private List<LogEntryLines> GroupLogLines(string[] lines)
     {
-        // Try JSON format first
-        if (JsonLogRegex.IsMatch(line.Trim()))
+        var logEntries = new List<LogEntryLines>();
+        var currentEntry = new LogEntryLines();
+        
+        for (int i = 0; i < lines.Length; i++)
         {
-            return ParseJsonLog(line, lineNumber);
+            var line = lines[i];
+            
+            // Skip empty lines
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            
+            // Check if this line starts a new log entry
+            if (LogStartRegex.IsMatch(line))
+            {
+                // If we have a current entry, save it
+                if (!string.IsNullOrEmpty(currentEntry.Content))
+                {
+                    logEntries.Add(currentEntry);
+                }
+                
+                // Start a new entry
+                currentEntry = new LogEntryLines
+                {
+                    Content = line,
+                    FirstLineNumber = i + 1
+                };
+            }
+            else
+            {
+                // This is a continuation line - append to current entry
+                if (!string.IsNullOrEmpty(currentEntry.Content))
+                {
+                    currentEntry.Content += Environment.NewLine + line;
+                }
+                else
+                {
+                    // This shouldn't happen, but handle orphaned lines
+                    currentEntry = new LogEntryLines
+                    {
+                        Content = line,
+                        FirstLineNumber = i + 1
+                    };
+                }
+            }
+        }
+        
+        // Add the last entry if it exists
+        if (!string.IsNullOrEmpty(currentEntry.Content))
+        {
+            logEntries.Add(currentEntry);
+        }
+        
+        return logEntries;
+    }
+
+    private LogEntry? ParseLogEntry(LogEntryLines logLines, int entryNumber)
+    {
+        var content = logLines.Content;
+        var firstLine = content.Split(Environment.NewLine)[0];
+        
+        // Try JSON format first
+        if (JsonLogRegex.IsMatch(firstLine.Trim()))
+        {
+            return ParseJsonLog(firstLine, entryNumber, content);
         }
 
         // Try Serilog format
-        var serilogMatch = SerilogRegex.Match(line);
+        var serilogMatch = SerilogRegex.Match(firstLine);
         if (serilogMatch.Success)
         {
-            return ParseSerilogEntry(serilogMatch, line, lineNumber);
+            return ParseSerilogEntry(serilogMatch, entryNumber, content);
         }
 
         // Try generic format
-        return ParseGenericLog(line, lineNumber);
+        return ParseGenericLog(content, entryNumber, logLines.FirstLineNumber);
     }
 
-    private LogEntry? ParseJsonLog(string line, int lineNumber)
+    private LogEntry? ParseJsonLog(string firstLine, int entryNumber, string fullContent)
     {
         try
         {
-            using var document = JsonDocument.Parse(line);
+            using var document = JsonDocument.Parse(firstLine);
             var root = document.RootElement;
 
             var logEntry = new LogEntry
             {
-                Id = lineNumber,
-                RawLogLine = line
+                Id = entryNumber,
+                RawLogLine = fullContent,
+                Message = fullContent // Full multi-line content as message
             };
 
             // Extract common properties
@@ -155,7 +223,18 @@ public class LogFileService
                 root.TryGetProperty("message", out message) ||
                 root.TryGetProperty("Message", out message))
             {
-                logEntry.Message = message.GetString() ?? "";
+                // For multi-line entries, combine JSON message with continuation lines
+                var jsonMessage = message.GetString() ?? "";
+                var lines = fullContent.Split(Environment.NewLine);
+                if (lines.Length > 1)
+                {
+                    var continuationLines = string.Join(Environment.NewLine, lines.Skip(1));
+                    logEntry.Message = jsonMessage + Environment.NewLine + continuationLines;
+                }
+                else
+                {
+                    logEntry.Message = jsonMessage;
+                }
             }
 
             if (root.TryGetProperty("@x", out var exception) ||
@@ -172,17 +251,17 @@ public class LogFileService
         }
         catch (JsonException ex)
         {
-            LoggingService.Logger?.Warning(ex, "Failed to parse JSON log line {LineNumber}", lineNumber);
+            LoggingService.Logger?.Warning(ex, "Failed to parse JSON log entry {EntryNumber}", entryNumber);
             return null;
         }
     }
 
-    private LogEntry ParseSerilogEntry(Match match, string line, int lineNumber)
+    private LogEntry ParseSerilogEntry(Match match, int entryNumber, string fullContent)
     {
         var logEntry = new LogEntry
         {
-            Id = lineNumber,
-            RawLogLine = line
+            Id = entryNumber,
+            RawLogLine = fullContent
         };
 
         // Extract timestamp
@@ -196,8 +275,20 @@ public class LogFileService
         // Extract level
         logEntry.Level = match.Groups["level"].Value;
 
-        // Extract message
-        logEntry.Message = match.Groups["message"].Value.Trim();
+        // For multi-line entries, use the full content as message
+        var firstLineMessage = match.Groups["message"].Value.Trim();
+        var lines = fullContent.Split(Environment.NewLine);
+        
+        if (lines.Length > 1)
+        {
+            // Combine first line message with continuation lines
+            var continuationLines = string.Join(Environment.NewLine, lines.Skip(1));
+            logEntry.Message = firstLineMessage + Environment.NewLine + continuationLines;
+        }
+        else
+        {
+            logEntry.Message = firstLineMessage;
+        }
 
         // Extract location (if available)
         if (match.Groups["location"].Success)
@@ -209,17 +300,19 @@ public class LogFileService
         return logEntry;
     }
 
-    private LogEntry ParseGenericLog(string line, int lineNumber)
+    private LogEntry ParseGenericLog(string fullContent, int entryNumber, int lineNumber)
     {
+        var firstLine = fullContent.Split(Environment.NewLine)[0];
+        
         var logEntry = new LogEntry
         {
-            Id = lineNumber,
-            RawLogLine = line,
-            Message = line
+            Id = entryNumber,
+            RawLogLine = fullContent,
+            Message = fullContent // Use full multi-line content
         };
 
-        // Try to extract timestamp
-        var timestampMatch = TimestampRegex.Match(line);
+        // Try to extract timestamp from first line
+        var timestampMatch = TimestampRegex.Match(firstLine);
         if (timestampMatch.Success)
         {
             if (DateTime.TryParse(timestampMatch.Groups["timestamp"].Value, out var timestamp))
@@ -232,8 +325,8 @@ public class LogFileService
             logEntry.Timestamp = DateTime.Now;
         }
 
-        // Try to extract level
-        var levelMatch = LevelRegex.Match(line);
+        // Try to extract level from first line
+        var levelMatch = LevelRegex.Match(firstLine);
         if (levelMatch.Success)
         {
             logEntry.Level = NormalizeLevel(levelMatch.Groups["level"].Value);
@@ -314,5 +407,11 @@ public class LogFileService
             "CRITICAL" => "Fatal",
             _ => "Information"
         };
+    }
+
+    private class LogEntryLines
+    {
+        public string Content { get; set; } = "";
+        public int FirstLineNumber { get; set; }
     }
 }
