@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     
     private string? _currentLogPath;
     private bool _isLoading;
+    private readonly Dictionary<string, LogEntry> _logEntryCache = new(); // Cache to prevent timestamp changes
 
     public MainWindow()
     {
@@ -154,14 +155,39 @@ public partial class MainWindow : Window
 
     private void ShowStatistics_Click(object sender, RoutedEventArgs e)
     {
-        var statsWindow = new StatisticsWindow(_allLogs);
-        statsWindow.Show();
+        try
+        {
+            var statsWindow = new StatisticsWindow(_allLogs);
+            statsWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error opening statistics window");
+            System.Windows.MessageBox.Show($"Error opening statistics: {ex.Message}", "Error", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ShowCharts_Click(object sender, RoutedEventArgs e)
     {
-        var chartsWindow = new ChartsWindow(_allLogs);
-        chartsWindow.Show();
+        try
+        {
+            if (_allLogs == null || _allLogs.Count == 0)
+            {
+                System.Windows.MessageBox.Show("No logs available for charting. Please load some log data first.", "No Data", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            
+            var chartsWindow = new ChartsWindow(_allLogs);
+            chartsWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error opening charts window");
+            System.Windows.MessageBox.Show($"Error opening charts: {ex.Message}", "Error", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e)
@@ -182,17 +208,19 @@ public partial class MainWindow : Window
 
     private void Filter_Changed(object sender, RoutedEventArgs e)
     {
-        ApplyFilters();
+        // Debounce the filter to avoid excessive calls
+        Dispatcher.BeginInvoke(new Action(ApplyFilters), DispatcherPriority.Background);
     }
 
     private void Filter_Changed(object sender, SelectionChangedEventArgs e)
     {
-        ApplyFilters();
+        Dispatcher.BeginInvoke(new Action(ApplyFilters), DispatcherPriority.Background);
     }
 
     private void Filter_Changed(object sender, TextChangedEventArgs e)
     {
-        ApplyFilters();
+        // Debounce text changes to avoid filtering on every keystroke
+        Dispatcher.BeginInvoke(new Action(ApplyFilters), DispatcherPriority.Background);
     }
 
     #endregion
@@ -265,9 +293,14 @@ public partial class MainWindow : Window
             _currentLogPath = filePath;
             var logs = await Task.Run(() => _logFileService.ReadLogFile(filePath));
             
+            // Clear cache and load new logs
+            _logEntryCache.Clear();
             _allLogs.Clear();
+            
             foreach (var log in logs)
             {
+                var cacheKey = GenerateLogCacheKey(log);
+                _logEntryCache[cacheKey] = log;
                 _allLogs.Add(log);
             }
             
@@ -302,9 +335,13 @@ public partial class MainWindow : Window
             
             var logs = await Task.Run(() => _logFileService.ReadLogDirectory(directoryPath));
             
+            _logEntryCache.Clear();
             _allLogs.Clear();
+            
             foreach (var log in logs.OrderBy(l => l.Timestamp))
             {
+                var cacheKey = GenerateLogCacheKey(log);
+                _logEntryCache[cacheKey] = log;
                 _allLogs.Add(log);
             }
             
@@ -339,9 +376,13 @@ public partial class MainWindow : Window
             
             var logs = await Task.Run(() => _databaseService.GetLogs(connectionString));
             
+            _logEntryCache.Clear();
             _allLogs.Clear();
+            
             foreach (var log in logs.OrderBy(l => l.Timestamp))
             {
+                var cacheKey = GenerateLogCacheKey(log);
+                _logEntryCache[cacheKey] = log;
                 _allLogs.Add(log);
             }
             
@@ -368,7 +409,55 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrEmpty(_currentLogPath) || _isLoading) return;
         
-        await LoadLogFile(_currentLogPath);
+        try
+        {
+            _isLoading = true;
+            UpdateStatus("Refreshing logs...");
+            ShowLoading(true);
+            
+            var newLogs = await Task.Run(() => _logFileService.ReadLogFile(_currentLogPath));
+            
+            // Only add truly new logs to prevent timestamp changes
+            var newLogCount = 0;
+            foreach (var log in newLogs)
+            {
+                var cacheKey = GenerateLogCacheKey(log);
+                if (!_logEntryCache.ContainsKey(cacheKey))
+                {
+                    _logEntryCache[cacheKey] = log;
+                    _allLogs.Add(log);
+                    newLogCount++;
+                }
+            }
+            
+            if (newLogCount > 0)
+            {
+                LoadComponentsAndUsers();
+                ApplyFilters();
+                UpdateStatus($"Refreshed - Added {newLogCount} new logs");
+            }
+            else
+            {
+                UpdateStatus("Refreshed - No new logs found");
+            }
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error refreshing logs");
+            UpdateStatus("Error refreshing logs");
+        }
+        finally
+        {
+            _isLoading = false;
+            ShowLoading(false);
+        }
+    }
+
+    private string GenerateLogCacheKey(LogEntry log)
+    {
+        // Create a unique key based on timestamp, level, component, and message hash
+        var messageHash = log.Message?.GetHashCode() ?? 0;
+        return $"{log.Timestamp:yyyy-MM-dd-HH-mm-ss-fff}_{log.Level}_{log.Component}_{messageHash}";
     }
 
     private async Task ExportLogs(List<LogEntry> logs, string filePath)
@@ -401,75 +490,100 @@ public partial class MainWindow : Window
     {
         if (_logsViewSource.View == null) return;
         
-        _logsViewSource.View.Filter = FilterPredicate;
-        
-        var filteredCount = _logsViewSource.View.Cast<LogEntry>().Count();
-        LogCountTextBlock.Text = $"{_allLogs.Count} total logs";
-        FilteredCountTextBlock.Text = $"{filteredCount} shown";
+        try
+        {
+            _logsViewSource.View.Filter = FilterPredicate;
+            
+            var filteredCount = _logsViewSource.View.Cast<LogEntry>().Count();
+            LogCountTextBlock.Text = $"{_allLogs.Count:N0} total logs";
+            FilteredCountTextBlock.Text = $"{filteredCount:N0} shown";
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error applying filters");
+            UpdateStatus("Error applying filters");
+        }
     }
 
     private bool FilterPredicate(object obj)
     {
         if (obj is not LogEntry log) return false;
         
-        // Level filter
-        var levelFilter = GetSelectedLevels();
-        if (!levelFilter.Contains(log.Level)) return false;
-        
-        // Date filter
-        if (FromDatePicker.SelectedDate.HasValue && log.Timestamp < FromDatePicker.SelectedDate.Value)
-            return false;
-        if (ToDatePicker.SelectedDate.HasValue && log.Timestamp > ToDatePicker.SelectedDate.Value)
-            return false;
-        
-        // Search filter
-        if (!string.IsNullOrWhiteSpace(SearchTextBox.Text))
+        try
         {
-            var searchText = SearchTextBox.Text;
-            var stringComparison = CaseSensitiveCheckBox.IsChecked == true ? 
-                StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            // Level filter
+            var levelFilter = GetSelectedLevels();
+            if (levelFilter.Count > 0 && !levelFilter.Contains(log.Level ?? "")) return false;
             
-            if (RegexCheckBox.IsChecked == true)
+            // Date filter
+            if (FromDatePicker.SelectedDate.HasValue && log.Timestamp < FromDatePicker.SelectedDate.Value)
+                return false;
+            if (ToDatePicker.SelectedDate.HasValue && log.Timestamp > ToDatePicker.SelectedDate.Value)
+                return false;
+            
+            // Search filter
+            var searchText = SearchTextBox.Text?.Trim();
+            if (!string.IsNullOrWhiteSpace(searchText))
             {
-                try
+                var stringComparison = CaseSensitiveCheckBox.IsChecked == true ? 
+                    StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                
+                if (RegexCheckBox.IsChecked == true)
                 {
-                    var regex = new Regex(searchText, CaseSensitiveCheckBox.IsChecked == true ? 
-                        RegexOptions.None : RegexOptions.IgnoreCase);
-                    if (!regex.IsMatch(log.Message ?? "") && 
-                        !regex.IsMatch(log.Component ?? ""))
-                        return false;
+                    try
+                    {
+                        var regexOptions = CaseSensitiveCheckBox.IsChecked == true ? 
+                            RegexOptions.None : RegexOptions.IgnoreCase;
+                        var regex = new Regex(searchText, regexOptions);
+                        
+                        if (!regex.IsMatch(log.Message ?? "") && 
+                            !regex.IsMatch(log.Component ?? "") &&
+                            !regex.IsMatch(log.UserId ?? ""))
+                            return false;
+                    }
+                    catch
+                    {
+                        // Invalid regex, fall back to simple search
+                        if (!(log.Message?.Contains(searchText, stringComparison) == true ||
+                              log.Component?.Contains(searchText, stringComparison) == true ||
+                              log.UserId?.Contains(searchText, stringComparison) == true))
+                            return false;
+                    }
                 }
-                catch
+                else
                 {
-                    // Invalid regex, fall back to simple search
-                    if (!log.Message?.Contains(searchText, stringComparison) == true &&
-                        !log.Component?.Contains(searchText, stringComparison) == true)
+                    if (!(log.Message?.Contains(searchText, stringComparison) == true ||
+                          log.Component?.Contains(searchText, stringComparison) == true ||
+                          log.UserId?.Contains(searchText, stringComparison) == true))
                         return false;
                 }
             }
-            else
+            
+            // Component filter
+            if (ComponentComboBox.SelectedItem != null && 
+                !string.IsNullOrEmpty(ComponentComboBox.SelectedItem.ToString()) &&
+                ComponentComboBox.SelectedItem.ToString() != "")
             {
-                if (!log.Message?.Contains(searchText, stringComparison) == true &&
-                    !log.Component?.Contains(searchText, stringComparison) == true)
+                if (log.Component != ComponentComboBox.SelectedItem.ToString())
                     return false;
             }
+            
+            // User filter
+            if (UserComboBox.SelectedItem != null && 
+                !string.IsNullOrEmpty(UserComboBox.SelectedItem.ToString()) &&
+                UserComboBox.SelectedItem.ToString() != "")
+            {
+                if (log.UserId != UserComboBox.SelectedItem.ToString())
+                    return false;
+            }
+            
+            return true;
         }
-        
-        // Component filter
-        if (ComponentComboBox.SelectedItem != null && !string.IsNullOrEmpty(ComponentComboBox.SelectedItem.ToString()))
+        catch (Exception ex)
         {
-            if (log.Component != ComponentComboBox.SelectedItem.ToString())
-                return false;
+            LoggingService.Logger?.Error(ex, "Error in filter predicate");
+            return true; // Show the log if there's an error in filtering
         }
-        
-        // User filter
-        if (UserComboBox.SelectedItem != null && !string.IsNullOrEmpty(UserComboBox.SelectedItem.ToString()))
-        {
-            if (log.UserId != UserComboBox.SelectedItem.ToString())
-                return false;
-        }
-        
-        return true;
     }
 
     private List<string> GetSelectedLevels()
@@ -486,71 +600,106 @@ public partial class MainWindow : Window
 
     private void LoadComponentsAndUsers()
     {
-        var components = _allLogs.Where(l => !string.IsNullOrEmpty(l.Component))
-            .Select(l => l.Component)
-            .Distinct()
-            .OrderBy(c => c)
-            .ToList();
-        
-        var users = _allLogs.Where(l => !string.IsNullOrEmpty(l.UserId))
-            .Select(l => l.UserId)
-            .Distinct()
-            .OrderBy(u => u)
-            .ToList();
-        
-        ComponentComboBox.Items.Clear();
-        ComponentComboBox.Items.Add(""); // Empty option
-        foreach (var component in components)
+        try
         {
-            ComponentComboBox.Items.Add(component);
+            var components = _allLogs.Where(l => !string.IsNullOrEmpty(l.Component))
+                .Select(l => l.Component!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+            
+            var users = _allLogs.Where(l => !string.IsNullOrEmpty(l.UserId))
+                .Select(l => l.UserId!)
+                .Distinct()
+                .OrderBy(u => u)
+                .ToList();
+            
+            ComponentComboBox.Items.Clear();
+            ComponentComboBox.Items.Add(""); // Empty option
+            foreach (var component in components)
+            {
+                ComponentComboBox.Items.Add(component);
+            }
+            
+            UserComboBox.Items.Clear();
+            UserComboBox.Items.Add(""); // Empty option
+            foreach (var user in users)
+            {
+                UserComboBox.Items.Add(user);
+            }
         }
-        
-        UserComboBox.Items.Clear();
-        UserComboBox.Items.Add(""); // Empty option
-        foreach (var user in users)
+        catch (Exception ex)
         {
-            UserComboBox.Items.Add(user);
+            LoggingService.Logger?.Error(ex, "Error loading components and users");
         }
     }
 
     private void ShowLogDetails(LogEntry log)
     {
-        MessageDetailsTextBox.Text = log.Message ?? "";
-        ContextTextBox.Text = log.Context ?? "";
-        StackTraceTextBox.Text = log.StackTrace ?? "";
-        RawLogTextBox.Text = log.RawLogLine ?? "";
+        try
+        {
+            MessageDetailsTextBox.Text = log.Message ?? "";
+            ContextTextBox.Text = log.Context ?? "";
+            StackTraceTextBox.Text = log.StackTrace ?? "";
+            RawLogTextBox.Text = log.RawLogLine ?? "";
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error showing log details");
+        }
     }
 
     private void ClearAllFilters()
     {
-        TraceCheckBox.IsChecked = true;
-        DebugCheckBox.IsChecked = true;
-        InfoCheckBox.IsChecked = true;
-        WarnCheckBox.IsChecked = true;
-        ErrorCheckBox.IsChecked = true;
-        FatalCheckBox.IsChecked = true;
-        
-        FromDatePicker.SelectedDate = null;
-        ToDatePicker.SelectedDate = null;
-        
-        SearchTextBox.Text = "";
-        RegexCheckBox.IsChecked = false;
-        CaseSensitiveCheckBox.IsChecked = false;
-        
-        ComponentComboBox.SelectedIndex = 0;
-        UserComboBox.SelectedIndex = 0;
+        try
+        {
+            TraceCheckBox.IsChecked = true;
+            DebugCheckBox.IsChecked = true;
+            InfoCheckBox.IsChecked = true;
+            WarnCheckBox.IsChecked = true;
+            ErrorCheckBox.IsChecked = true;
+            FatalCheckBox.IsChecked = true;
+            
+            FromDatePicker.SelectedDate = null;
+            ToDatePicker.SelectedDate = null;
+            
+            SearchTextBox.Text = "";
+            RegexCheckBox.IsChecked = false;
+            CaseSensitiveCheckBox.IsChecked = false;
+            
+            ComponentComboBox.SelectedIndex = 0;
+            UserComboBox.SelectedIndex = 0;
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error clearing filters");
+        }
     }
 
     private void UpdateStatus(string message)
     {
-        StatusTextBlock.Text = message;
-        LoggingService.Logger?.Information("UI Status: {Message}", message);
+        try
+        {
+            StatusTextBlock.Text = message;
+            LoggingService.Logger?.Information("UI Status: {Message}", message);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating status: {ex.Message}");
+        }
     }
 
     private void ShowLoading(bool show)
     {
-        LoadingProgressBar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        LoadingProgressBar.IsIndeterminate = show;
+        try
+        {
+            LoadingProgressBar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            LoadingProgressBar.IsIndeterminate = show;
+        }
+        catch (Exception ex)
+        {
+            LoggingService.Logger?.Error(ex, "Error showing loading indicator");
+        }
     }
 
     private void AutoRefreshTimer_Tick(object? sender, EventArgs e)
