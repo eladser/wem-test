@@ -17,6 +17,90 @@ out/
 coverage/
 *.tsbuildinfo
 
+# .NET Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Entity Framework Migrations
+**/Migrations/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Visual Studio
+.vs/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+*.JustCode
+.teamcity/
+_TeamCity*
+*.dotCover
+*.tgitconfig
+*.njsproj
+*.sln
+*.sw?
+
+# Rider
+.idea/
+*.sln.iml
+
+# Debug files
+*.dbg
+*.trace
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!packages/build/
+!packages/repositories.config
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# CodeChunks and other VS temp files
+**/CopilotIndices/
+**/CodeChunks.db*
+**/SemanticSymbols.db*
+**/DesignTimeBuild/
+**/FileContentIndex/
+
 # Environment variables
 .env
 .env.local
@@ -43,17 +127,6 @@ pids/
 .parcel-cache/
 .vite/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-.idea/
-*.swp
-*.swo
-*~
-
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -70,15 +143,6 @@ Desktop.ini
 *.bak
 *.backup
 *~
-
-# IDEs
-*.sublime-project
-*.sublime-workspace
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 
 # Testing
 test-results/
