@@ -26,7 +26,8 @@ public partial class MainWindow : Window
     
     private string? _currentLogPath;
     private bool _isLoading;
-    private readonly Dictionary<string, LogEntry> _logEntryCache = new(); // Cache to prevent timestamp changes
+    private readonly HashSet<string> _logEntryHashes = new(); // Use HashSet for better performance
+    private DateTime _lastFileModified = DateTime.MinValue; // Track file modification time
 
     public MainWindow()
     {
@@ -44,14 +45,25 @@ public partial class MainWindow : Window
         _autoRefreshTimer.Interval = TimeSpan.FromSeconds(5);
         _autoRefreshTimer.Tick += AutoRefreshTimer_Tick;
         
-        // Load recent files to component filter
-        LoadComponentsAndUsers();
-        
         // Set initial date filters
         FromDatePicker.SelectedDate = DateTime.Today.AddDays(-7);
         ToDatePicker.SelectedDate = DateTime.Today.AddDays(1);
         
+        // Initialize filters to show all logs by default
+        InitializeFilters();
+        
         UpdateStatus("Ready - Open a log file or connect to database to begin");
+    }
+
+    private void InitializeFilters()
+    {
+        // Set all log level checkboxes to checked by default
+        TraceCheckBox.IsChecked = true;
+        DebugCheckBox.IsChecked = true;
+        InfoCheckBox.IsChecked = true;
+        WarnCheckBox.IsChecked = true;
+        ErrorCheckBox.IsChecked = true;
+        FatalCheckBox.IsChecked = true;
     }
 
     #region Command Handlers
@@ -73,7 +85,7 @@ public partial class MainWindow : Window
 
     private async void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
     {
-        var filteredLogs = _logsViewSource.View.Cast<LogEntry>().ToList();
+        var filteredLogs = _logsViewSource.View?.Cast<LogEntry>().ToList() ?? new List<LogEntry>();
         if (!filteredLogs.Any())
         {
             System.Windows.MessageBox.Show("No logs to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -231,12 +243,14 @@ public partial class MainWindow : Window
     {
         FromDatePicker.SelectedDate = DateTime.Now.AddHours(-1);
         ToDatePicker.SelectedDate = DateTime.Now;
+        ApplyFilters();
     }
 
     private void Today_Click(object sender, RoutedEventArgs e)
     {
         FromDatePicker.SelectedDate = DateTime.Today;
         ToDatePicker.SelectedDate = DateTime.Today.AddDays(1);
+        ApplyFilters();
     }
 
     private void ErrorsOnly_Click(object sender, RoutedEventArgs e)
@@ -248,6 +262,7 @@ public partial class MainWindow : Window
         WarnCheckBox.IsChecked = false;
         ErrorCheckBox.IsChecked = true;
         FatalCheckBox.IsChecked = true;
+        ApplyFilters();
     }
 
     private void ClearFilters_Click(object sender, RoutedEventArgs e)
@@ -291,23 +306,32 @@ public partial class MainWindow : Window
             ShowLoading(true);
             
             _currentLogPath = filePath;
+            
+            // Get file modification time
+            if (File.Exists(filePath))
+            {
+                _lastFileModified = File.GetLastWriteTime(filePath);
+            }
+            
             var logs = await Task.Run(() => _logFileService.ReadLogFile(filePath));
             
-            // Clear cache and load new logs
-            _logEntryCache.Clear();
+            // Clear existing data
+            _logEntryHashes.Clear();
             _allLogs.Clear();
             
             foreach (var log in logs)
             {
-                var cacheKey = GenerateLogCacheKey(log);
-                _logEntryCache[cacheKey] = log;
-                _allLogs.Add(log);
+                var logHash = GenerateLogHash(log);
+                if (_logEntryHashes.Add(logHash)) // Add returns true if item was added (not duplicate)
+                {
+                    _allLogs.Add(log);
+                }
             }
             
             LoadComponentsAndUsers();
             ApplyFilters();
             
-            UpdateStatus($"Loaded {logs.Count} logs from {Path.GetFileName(filePath)}");
+            UpdateStatus($"Loaded {_allLogs.Count} logs from {Path.GetFileName(filePath)}");
         }
         catch (Exception ex)
         {
@@ -335,20 +359,22 @@ public partial class MainWindow : Window
             
             var logs = await Task.Run(() => _logFileService.ReadLogDirectory(directoryPath));
             
-            _logEntryCache.Clear();
+            _logEntryHashes.Clear();
             _allLogs.Clear();
             
             foreach (var log in logs.OrderBy(l => l.Timestamp))
             {
-                var cacheKey = GenerateLogCacheKey(log);
-                _logEntryCache[cacheKey] = log;
-                _allLogs.Add(log);
+                var logHash = GenerateLogHash(log);
+                if (_logEntryHashes.Add(logHash))
+                {
+                    _allLogs.Add(log);
+                }
             }
             
             LoadComponentsAndUsers();
             ApplyFilters();
             
-            UpdateStatus($"Loaded {logs.Count} logs from {directoryPath}");
+            UpdateStatus($"Loaded {_allLogs.Count} logs from {directoryPath}");
         }
         catch (Exception ex)
         {
@@ -376,20 +402,22 @@ public partial class MainWindow : Window
             
             var logs = await Task.Run(() => _databaseService.GetLogs(connectionString));
             
-            _logEntryCache.Clear();
+            _logEntryHashes.Clear();
             _allLogs.Clear();
             
             foreach (var log in logs.OrderBy(l => l.Timestamp))
             {
-                var cacheKey = GenerateLogCacheKey(log);
-                _logEntryCache[cacheKey] = log;
-                _allLogs.Add(log);
+                var logHash = GenerateLogHash(log);
+                if (_logEntryHashes.Add(logHash))
+                {
+                    _allLogs.Add(log);
+                }
             }
             
             LoadComponentsAndUsers();
             ApplyFilters();
             
-            UpdateStatus($"Loaded {logs.Count} logs from database");
+            UpdateStatus($"Loaded {_allLogs.Count} logs from database");
         }
         catch (Exception ex)
         {
@@ -412,19 +440,30 @@ public partial class MainWindow : Window
         try
         {
             _isLoading = true;
-            UpdateStatus("Refreshing logs...");
+            UpdateStatus("Checking for new logs...");
             ShowLoading(true);
+            
+            // Check if file was modified
+            if (File.Exists(_currentLogPath))
+            {
+                var currentModified = File.GetLastWriteTime(_currentLogPath);
+                if (currentModified <= _lastFileModified)
+                {
+                    UpdateStatus("No new logs - file unchanged");
+                    return;
+                }
+                _lastFileModified = currentModified;
+            }
             
             var newLogs = await Task.Run(() => _logFileService.ReadLogFile(_currentLogPath));
             
-            // Only add truly new logs to prevent timestamp changes
+            // Only add truly new logs
             var newLogCount = 0;
             foreach (var log in newLogs)
             {
-                var cacheKey = GenerateLogCacheKey(log);
-                if (!_logEntryCache.ContainsKey(cacheKey))
+                var logHash = GenerateLogHash(log);
+                if (_logEntryHashes.Add(logHash)) // Add returns true if item was added (not duplicate)
                 {
-                    _logEntryCache[cacheKey] = log;
                     _allLogs.Add(log);
                     newLogCount++;
                 }
@@ -434,11 +473,11 @@ public partial class MainWindow : Window
             {
                 LoadComponentsAndUsers();
                 ApplyFilters();
-                UpdateStatus($"Refreshed - Added {newLogCount} new logs");
+                UpdateStatus($"Added {newLogCount} new logs");
             }
             else
             {
-                UpdateStatus("Refreshed - No new logs found");
+                UpdateStatus("No new logs found");
             }
         }
         catch (Exception ex)
@@ -453,11 +492,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private string GenerateLogCacheKey(LogEntry log)
+    private string GenerateLogHash(LogEntry log)
     {
-        // Create a unique key based on timestamp, level, component, and message hash
-        var messageHash = log.Message?.GetHashCode() ?? 0;
-        return $"{log.Timestamp:yyyy-MM-dd-HH-mm-ss-fff}_{log.Level}_{log.Component}_{messageHash}";
+        // Create a more robust hash using multiple properties
+        var hashInput = $"{log.Timestamp:yyyy-MM-dd HH:mm:ss.fff}|{log.Level ?? ""}|{log.Component ?? ""}|{log.Message ?? ""}|{log.UserId ?? ""}";
+        return hashInput.GetHashCode().ToString();
     }
 
     private async Task ExportLogs(List<LogEntry> logs, string filePath)
@@ -511,15 +550,25 @@ public partial class MainWindow : Window
         
         try
         {
-            // Level filter
-            var levelFilter = GetSelectedLevels();
-            if (levelFilter.Count > 0 && !levelFilter.Contains(log.Level ?? "")) return false;
+            // Level filter - if no levels are selected, show all
+            var selectedLevels = GetSelectedLevels();
+            if (selectedLevels.Count > 0 && !selectedLevels.Contains(log.Level ?? "Unknown"))
+            {
+                return false;
+            }
             
             // Date filter
-            if (FromDatePicker.SelectedDate.HasValue && log.Timestamp < FromDatePicker.SelectedDate.Value)
-                return false;
-            if (ToDatePicker.SelectedDate.HasValue && log.Timestamp > ToDatePicker.SelectedDate.Value)
-                return false;
+            if (FromDatePicker.SelectedDate.HasValue)
+            {
+                if (log.Timestamp.Date < FromDatePicker.SelectedDate.Value.Date)
+                    return false;
+            }
+            
+            if (ToDatePicker.SelectedDate.HasValue)
+            {
+                if (log.Timestamp.Date > ToDatePicker.SelectedDate.Value.Date)
+                    return false;
+            }
             
             // Search filter
             var searchText = SearchTextBox.Text?.Trim();
@@ -560,20 +609,18 @@ public partial class MainWindow : Window
             }
             
             // Component filter
-            if (ComponentComboBox.SelectedItem != null && 
-                !string.IsNullOrEmpty(ComponentComboBox.SelectedItem.ToString()) &&
-                ComponentComboBox.SelectedItem.ToString() != "")
+            var selectedComponent = ComponentComboBox.SelectedItem?.ToString();
+            if (!string.IsNullOrEmpty(selectedComponent) && selectedComponent != "")
             {
-                if (log.Component != ComponentComboBox.SelectedItem.ToString())
+                if (log.Component != selectedComponent)
                     return false;
             }
             
             // User filter
-            if (UserComboBox.SelectedItem != null && 
-                !string.IsNullOrEmpty(UserComboBox.SelectedItem.ToString()) &&
-                UserComboBox.SelectedItem.ToString() != "")
+            var selectedUser = UserComboBox.SelectedItem?.ToString();
+            if (!string.IsNullOrEmpty(selectedUser) && selectedUser != "")
             {
-                if (log.UserId != UserComboBox.SelectedItem.ToString())
+                if (log.UserId != selectedUser)
                     return false;
             }
             
@@ -620,6 +667,7 @@ public partial class MainWindow : Window
             {
                 ComponentComboBox.Items.Add(component);
             }
+            ComponentComboBox.SelectedIndex = 0; // Select empty option by default
             
             UserComboBox.Items.Clear();
             UserComboBox.Items.Add(""); // Empty option
@@ -627,6 +675,7 @@ public partial class MainWindow : Window
             {
                 UserComboBox.Items.Add(user);
             }
+            UserComboBox.SelectedIndex = 0; // Select empty option by default
         }
         catch (Exception ex)
         {
@@ -669,6 +718,8 @@ public partial class MainWindow : Window
             
             ComponentComboBox.SelectedIndex = 0;
             UserComboBox.SelectedIndex = 0;
+            
+            ApplyFilters();
         }
         catch (Exception ex)
         {
