@@ -1,283 +1,213 @@
-import React from 'react';
 import { cn } from '@/lib/utils';
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-  className?: string;
-}
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-// Base skeleton component
-export const Skeleton: React.FC<SkeletonProps> = ({ className, ...props }) => {
+export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-slate-800/50",
+        'animate-pulse rounded-md bg-muted',
         className
       )}
       {...props}
     />
   );
-};
+}
 
-// Card skeleton
-export const CardSkeleton: React.FC<{ lines?: number; hasHeader?: boolean }> = ({ 
-  lines = 3, 
-  hasHeader = true 
-}) => {
+// Dashboard-specific skeletons
+export function DashboardSkeleton() {
   return (
-    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-lg p-6 space-y-4">
-      {hasHeader && (
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-4 w-2/3" />
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-lg border p-6 space-y-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        ))}
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="rounded-lg border p-6 space-y-4">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-64 w-full" />
         </div>
-      )}
-      <div className="space-y-3">
-        {Array.from({ length: lines }, (_, i) => (
-          <Skeleton key={i} className={`h-4 ${i === lines - 1 ? 'w-1/2' : 'w-full'}`} />
+        <div className="rounded-lg border p-6 space-y-4">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border">
+        <div className="p-6 space-y-4">
+          <Skeleton className="h-6 w-32" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SiteCardSkeleton() {
+  return (
+    <div className="rounded-lg border p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-6 w-16" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+      <div className="flex justify-between">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-8 w-24" />
+      </div>
+    </div>
+  );
+}
+
+export function ChartSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-6 w-48" />
+      <div className="flex items-end space-x-2 h-64">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <Skeleton
+            key={i}
+            className="flex-1"
+            style={{ height: `${Math.random() * 200 + 50}px` }}
+          />
         ))}
       </div>
     </div>
   );
-};
+}
 
-// Chart skeleton
-export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = "h-64" }) => {
+export function SidebarSkeleton() {
   return (
-    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-lg p-6">
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-6 w-1/4" />
-          <Skeleton className="h-8 w-20" />
-        </div>
-        <div className={cn("relative", height)}>
-          <Skeleton className="absolute inset-0" />
-          {/* Fake chart elements */}
-          <div className="absolute bottom-4 left-6 right-6">
-            <div className="flex justify-between">
-              {Array.from({ length: 6 }, (_, i) => (
-                <Skeleton key={i} className="h-2 w-12" />
+    <div className="flex flex-col space-y-4 p-4">
+      {/* Logo */}
+      <Skeleton className="h-8 w-32 mx-auto" />
+      
+      {/* Site List Header */}
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-16" />
+        {/* Site Items */}
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex items-center space-x-2 p-2">
+              <Skeleton className="h-4 w-4 rounded-full" />
+              <Skeleton className="h-4 flex-1" />
+            </div>
+            {/* Sub-items */}
+            <div className="ml-6 space-y-1">
+              {Array.from({ length: 4 }).map((_, j) => (
+                <Skeleton key={j} className="h-3 w-24" />
               ))}
             </div>
           </div>
-          <div className="absolute top-4 left-4 space-y-4">
-            {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-2 w-8" />
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
-    </div>
-  );
-};
-
-// Table skeleton
-export const TableSkeleton: React.FC<{ 
-  rows?: number; 
-  columns?: number; 
-  hasHeader?: boolean 
-}> = ({ 
-  rows = 5, 
-  columns = 4, 
-  hasHeader = true 
-}) => {
-  return (
-    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-lg overflow-hidden">
-      {hasHeader && (
-        <div className="border-b border-slate-700/50 p-4">
-          <div className="grid grid-cols-4 gap-4">
-            {Array.from({ length: columns }, (_, i) => (
-              <Skeleton key={i} className="h-5 w-full" />
-            ))}
-          </div>
-        </div>
-      )}
-      <div className="p-4 space-y-4">
-        {Array.from({ length: rows }, (_, rowIndex) => (
-          <div key={rowIndex} className="grid grid-cols-4 gap-4">
-            {Array.from({ length: columns }, (_, colIndex) => (
-              <Skeleton key={colIndex} className="h-4 w-full" />
-            ))}
+      
+      {/* Other Navigation */}
+      <div className="space-y-2 mt-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center space-x-2 p-2">
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-20" />
           </div>
         ))}
       </div>
     </div>
   );
-};
+}
 
-// Metrics card skeleton
-export const MetricsCardSkeleton: React.FC = () => {
+export function AssetListSkeleton() {
   return (
-    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-lg p-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-8 w-16" />
-        </div>
-        <Skeleton className="h-12 w-12 rounded-full" />
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-8 w-24" />
       </div>
-      <div className="mt-4">
-        <Skeleton className="h-2 w-full" />
-      </div>
-    </div>
-  );
-};
-
-// Dashboard skeleton
-export const DashboardSkeleton: React.FC = () => {
-  return (
-    <div className="space-y-6">
-      {/* Header skeleton */}
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-5 w-96" />
-      </div>
-
-      {/* Metrics cards skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 4 }, (_, i) => (
-          <MetricsCardSkeleton key={i} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="border rounded-lg p-4 space-y-3">
+            <div className="flex justify-between items-start">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          </div>
         ))}
       </div>
-
-      {/* Main chart skeleton */}
-      <ChartSkeleton height="h-96" />
-
-      {/* Secondary content skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <CardSkeleton lines={4} />
-        <CardSkeleton lines={6} />
-        <CardSkeleton lines={3} />
-      </div>
-
-      {/* Table skeleton */}
-      <TableSkeleton rows={8} columns={5} />
     </div>
   );
-};
+}
 
-// Site list skeleton
-export const SiteListSkeleton: React.FC<{ count?: number }> = ({ count = 6 }) => {
+export function AlertListSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-lg p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-            <Skeleton className="h-6 w-16 rounded-full" />
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex items-start space-x-3 p-3 border rounded-lg">
+          <Skeleton className="h-4 w-4 rounded-full mt-1" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
           </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-12" />
-            </div>
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-16" />
-            </div>
-            <Skeleton className="h-2 w-full mt-4" />
-          </div>
+          <Skeleton className="h-6 w-16" />
         </div>
       ))}
     </div>
   );
-};
-
-// Navigation skeleton
-export const NavigationSkeleton: React.FC = () => {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: 5 }, (_, i) => (
-        <div key={i} className="flex items-center space-x-3 p-2">
-          <Skeleton className="h-5 w-5" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Form skeleton
-export const FormSkeleton: React.FC<{ fields?: number }> = ({ fields = 4 }) => {
-  return (
-    <div className="space-y-6">
-      {Array.from({ length: fields }, (_, i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      ))}
-      <div className="flex space-x-4">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-20" />
-      </div>
-    </div>
-  );
-};
+}
 
 // Loading wrapper component
 interface LoadingWrapperProps {
   isLoading: boolean;
   skeleton: React.ReactNode;
   children: React.ReactNode;
-  error?: Error | null;
-  errorFallback?: React.ReactNode;
-  loadingDelay?: number;
+  error?: string | null;
 }
 
-export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
-  isLoading,
-  skeleton,
-  children,
-  error,
-  errorFallback,
-  loadingDelay = 0
-}) => {
-  const [showLoading, setShowLoading] = React.useState(loadingDelay === 0);
-
-  React.useEffect(() => {
-    if (loadingDelay > 0 && isLoading) {
-      const timer = setTimeout(() => setShowLoading(true), loadingDelay);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, loadingDelay]);
-
-  if (error && errorFallback) {
-    return <>{errorFallback}</>;
+export function LoadingWrapper({ isLoading, skeleton, children, error }: LoadingWrapperProps) {
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8 text-center">
+        <div className="space-y-2">
+          <p className="text-destructive font-medium">Error loading data</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
   }
 
-  if (isLoading && showLoading) {
+  if (isLoading) {
     return <>{skeleton}</>;
   }
 
   return <>{children}</>;
-};
-
-// Shimmer effect skeleton
-export const ShimmerSkeleton: React.FC<SkeletonProps> = ({ className, ...props }) => {
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden bg-slate-800/50 rounded-md",
-        "before:absolute before:inset-0 before:-translate-x-full",
-        "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
-        "before:animate-[shimmer_2s_infinite]",
-        className
-      )}
-      {...props}
-    />
-  );
-};
-
-// Progressive loading skeleton (loads in stages)
-export const ProgressiveLoadingSkeleton: React.FC<{
-  stages: React.ReactNode[];
-  currentStage: number;
-}> = ({ stages, currentStage }) => {
-  return <>{stages[Math.min(currentStage, stages.length - 1)]}</>;
-};
-
-export default Skeleton;
+}
