@@ -1,115 +1,68 @@
-import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, ChevronRight, Bell, Activity, Gauge, Filter, X, TrendingUp, Monitor } from "lucide-react";
+import { Home, MapPin, Users, Settings, BarChart3, Zap, Package, Search, ChevronDown, Bell, Activity, Gauge, Filter, X, TrendingUp, Monitor, Building2 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState, useMemo, useCallback } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { mockRegions } from "@/services/mockDataService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useSites } from "@/hooks/useRealTimeData";
+import { LoadingWrapper, SidebarSkeleton } from "@/components/ui/skeleton";
+
+// Site sub-navigation items
+const siteSubNav = [
+  { title: "Dashboard", path: "" },
+  { title: "Assets", path: "/assets" },
+  { title: "Analytics", path: "/analytics" },
+  { title: "Team", path: "/team" },
+  { title: "Reports", path: "/reports" },
+  { title: "Settings", path: "/settings" },
+  { title: "Finances", path: "/finances" },
+];
+
+// Secondary navigation items (moved below sites)
+const secondaryNavItems = [
+  { title: "Overview", url: "/", icon: Home },
+  { title: "Global Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Advanced Analytics", url: "/advanced-analytics", icon: TrendingUp },
+  { title: "Real-time Monitoring", url: "/monitoring", icon: Monitor },
+  { title: "All Assets", url: "/assets", icon: Package },
+  { title: "System Settings", url: "/settings", icon: Settings },
+];
 
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set(mockRegions.map(r => r.id)));
-  const [expandedSubRegions, setExpandedSubRegions] = useState<Set<string>>(new Set());
+  const [expandedSites, setExpandedSites] = useState<Set<string>>(new Set());
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  
+  // Fetch sites using the real-time hook
+  const { data: sites = [], isLoading, error } = useSites();
 
-  const mainNavItems = [
-    { title: "Overview", url: "/", icon: Home },
-    { title: "Analytics", url: "/analytics", icon: BarChart3 },
-    { title: "Advanced Analytics", url: "/advanced-analytics", icon: TrendingUp },
-    { title: "Real-time Monitoring", url: "/monitoring", icon: Monitor },
-    { title: "Assets", url: "/assets", icon: Package },
-    { title: "Settings", url: "/settings", icon: Settings },
-  ];
-
-  // Enhanced filtering logic for sub-regions
-  const filteredData = useMemo(() => {
+  // Enhanced filtering logic for sites
+  const filteredSites = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     
-    return mockRegions.map(region => {
-      const matchingRegion = region.name.toLowerCase().includes(searchLower);
-      
-      // Process sub-regions if they exist
-      const filteredSubRegions = region.subRegions?.map(subRegion => {
-        const matchingSubRegion = subRegion.name.toLowerCase().includes(searchLower);
-        
-        const filteredSites = subRegion.sites.filter(site => {
-          const matchesSearch = site.name.toLowerCase().includes(searchLower) ||
-                              site.id.toLowerCase().includes(searchLower) ||
-                              site.location.toLowerCase().includes(searchLower);
-          const matchesStatus = !showOnlineOnly || site.status === 'online';
-          return matchesSearch && matchesStatus;
-        });
-
-        return {
-          ...subRegion,
-          sites: filteredSites,
-          visible: matchingSubRegion || filteredSites.length > 0
-        };
-      }).filter(subRegion => subRegion.visible) || [];
-
-      // Also filter direct sites for backward compatibility
-      const filteredDirectSites = region.sites.filter(site => {
-        const matchesSearch = site.name.toLowerCase().includes(searchLower) ||
-                            site.id.toLowerCase().includes(searchLower) ||
-                            site.location.toLowerCase().includes(searchLower);
-        const matchesStatus = !showOnlineOnly || site.status === 'online';
-        return matchesSearch && matchesStatus;
-      });
-
-      const hasVisibleContent = matchingRegion || 
-                                filteredSubRegions.length > 0 || 
-                                filteredDirectSites.length > 0;
-
-      return {
-        ...region,
-        sites: filteredDirectSites,
-        subRegions: filteredSubRegions,
-        visible: hasVisibleContent
-      };
-    }).filter(region => region.visible);
-  }, [searchTerm, showOnlineOnly]);
-
-  const totalSites = useMemo(() => 
-    filteredData.reduce((acc, region) => {
-      const directSites = region.sites.length;
-      const subRegionSites = region.subRegions?.reduce((subAcc, subRegion) => 
-        subAcc + subRegion.sites.length, 0) || 0;
-      return acc + directSites + subRegionSites;
-    }, 0), 
-    [filteredData]
-  );
+    return sites.filter(site => {
+      const matchesSearch = site.name.toLowerCase().includes(searchLower) ||
+                          site.id.toLowerCase().includes(searchLower) ||
+                          site.location.toLowerCase().includes(searchLower);
+      const matchesStatus = !showOnlineOnly || site.status === 'Active';
+      return matchesSearch && matchesStatus;
+    });
+  }, [sites, searchTerm, showOnlineOnly]);
 
   const onlineSites = useMemo(() => 
-    filteredData.reduce((acc, region) => {
-      const directOnline = region.sites.filter(site => site.status === 'online').length;
-      const subRegionOnline = region.subRegions?.reduce((subAcc, subRegion) => 
-        subAcc + subRegion.sites.filter(site => site.status === 'online').length, 0) || 0;
-      return acc + directOnline + subRegionOnline;
-    }, 0), 
-    [filteredData]
+    filteredSites.filter(site => site.status === 'Active').length,
+    [filteredSites]
   );
 
-  const toggleRegion = useCallback((regionId: string) => {
-    setExpandedRegions(prev => {
+  const toggleSiteExpansion = useCallback((siteId: string) => {
+    setExpandedSites(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(regionId)) {
-        newSet.delete(regionId);
+      if (newSet.has(siteId)) {
+        newSet.delete(siteId);
       } else {
-        newSet.add(regionId);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const toggleSubRegion = useCallback((subRegionId: string) => {
-    setExpandedSubRegions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(subRegionId)) {
-        newSet.delete(subRegionId);
-      } else {
-        newSet.add(subRegionId);
+        newSet.add(siteId);
       }
       return newSet;
     });
@@ -123,6 +76,14 @@ export function AppSidebar() {
     setSearchTerm("");
     setShowOnlineOnly(false);
   }, []);
+
+  // Check if current path is a site page
+  const getCurrentSiteId = () => {
+    const siteMatch = currentPath.match(/^\/site\/([^\/]+)/);
+    return siteMatch ? siteMatch[1] : null;
+  };
+
+  const currentSiteId = getCurrentSiteId();
 
   return (
     <div className="w-full h-full bg-slate-900 border-r border-slate-700 flex flex-col">
@@ -144,7 +105,7 @@ export function AppSidebar() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
             <input 
               type="text" 
-              placeholder="Search regions & sites..." 
+              placeholder="Search sites..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
@@ -174,7 +135,7 @@ export function AppSidebar() {
               }`}
             >
               <Filter className="w-3 h-3 mr-1" />
-              Online Only
+              Active Only
             </Button>
             
             {(searchTerm || showOnlineOnly) && (
@@ -192,26 +153,153 @@ export function AppSidebar() {
           {/* Stats */}
           <div className="flex justify-between text-xs pt-1">
             <span className="text-slate-400">
-              {totalSites} sites total
+              {filteredSites.length} sites total
             </span>
             <span className="text-emerald-400">
-              {onlineSites} online
+              {onlineSites} active
             </span>
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content with smooth animations */}
+      {/* Scrollable Content */}
       <div className="bg-slate-900 flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
-          {/* Navigation Section - Fixed */}
-          <div className="shrink-0 p-3 pb-0">
+          
+          {/* Sites Section - PRIMARY NAVIGATION */}
+          <div className="flex-1 overflow-hidden flex flex-col p-3">
+            <div className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
+              <Building2 className="w-3 h-3 mr-2" />
+              MY SITES
+              {(searchTerm || showOnlineOnly) && (
+                <Badge variant="secondary" className="ml-auto text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30 px-2 py-1">
+                  {filteredSites.length}
+                </Badge>
+              )}
+            </div>
+            
+            {/* Sites List - Scrollable */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 scrollbar-smooth">
+              <LoadingWrapper
+                isLoading={isLoading}
+                skeleton={<SidebarSkeleton />}
+                error={error?.message}
+              >
+                {filteredSites.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <div className="w-10 h-10 bg-slate-800/50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <Building2 className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <p className="text-slate-400 text-sm font-medium">No sites found</p>
+                    <p className="text-slate-500 text-xs mt-1">Try adjusting your filters</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 pb-4">
+                    {filteredSites.map((site, index) => {
+                      const isSiteActive = currentPath.includes(`/site/${site.id}`);
+                      const isExpanded = expandedSites.has(site.id) || currentSiteId === site.id;
+                      const efficiencyPercentage = Math.round((site.currentUsage / site.totalCapacity) * 100);
+                      
+                      return (
+                        <div key={site.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                          <Collapsible open={isExpanded} onOpenChange={() => toggleSiteExpansion(site.id)}>
+                            <div className="space-y-1">
+                              {/* Site Header */}
+                              <div className="flex items-stretch gap-1">
+                                <NavLink
+                                  to={`/site/${site.id}`}
+                                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
+                                    isSiteActive
+                                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
+                                  }`}
+                                >
+                                  {/* Status Indicator */}
+                                  <div className={`w-3 h-3 rounded-full shrink-0 transition-all duration-200 ${
+                                    site.status === 'Active' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
+                                    site.status === 'Maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
+                                    'bg-red-400 shadow-red-400/50 shadow-sm'
+                                  }`} />
+                                  
+                                  <div className="flex items-center justify-between w-full min-w-0">
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-semibold text-sm text-white leading-tight truncate" title={site.name}>
+                                        {site.name}
+                                      </h4>
+                                      <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
+                                        {site.location}
+                                      </p>
+                                    </div>
+                                    <div className="text-right shrink-0 ml-2">
+                                      <p className="text-xs font-medium text-slate-300">
+                                        {site.currentUsage}MW
+                                      </p>
+                                      <p className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                                        site.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' :
+                                        site.status === 'Maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                        'bg-red-500/20 text-red-400'
+                                      }`}>
+                                        {efficiencyPercentage}%
+                                      </p>
+                                    </div>
+                                  </div>
+                                </NavLink>
+                                
+                                <CollapsibleTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="p-3 text-slate-400 hover:text-white transition-all duration-200 rounded-lg hover:bg-slate-800/50 shrink-0"
+                                  >
+                                    <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+                                      <ChevronDown className="w-4 h-4" />
+                                    </div>
+                                  </Button>
+                                </CollapsibleTrigger>
+                              </div>
+                              
+                              {/* Site Sub-navigation */}
+                              <CollapsibleContent className="ml-4 overflow-hidden">
+                                <div className="space-y-1 animate-slide-in-down">
+                                  {siteSubNav.map((subItem) => {
+                                    const subPath = `/site/${site.id}${subItem.path}`;
+                                    const isSubActive = currentPath === subPath;
+                                    
+                                    return (
+                                      <NavLink
+                                        key={subItem.title}
+                                        to={subPath}
+                                        className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
+                                          isSubActive
+                                            ? "bg-emerald-500/10 text-emerald-400 border-l-2 border-emerald-400"
+                                            : "text-slate-400 hover:text-white hover:bg-slate-800/30"
+                                        }`}
+                                      >
+                                        <span className="truncate">{subItem.title}</span>
+                                      </NavLink>
+                                    );
+                                  })}
+                                </div>
+                              </CollapsibleContent>
+                            </div>
+                          </Collapsible>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </LoadingWrapper>
+            </div>
+          </div>
+
+          {/* Secondary Navigation Section - BELOW SITES */}
+          <div className="shrink-0 p-3 pt-0 border-t border-slate-700/50">
             <div className="text-slate-400 font-medium mb-3 text-xs uppercase tracking-wider px-3 flex items-center">
               <BarChart3 className="w-3 h-3 mr-2" />
-              NAVIGATION
+              SYSTEM
             </div>
             <div className="space-y-1 px-3">
-              {mainNavItems.map((item) => {
+              {secondaryNavItems.map((item) => {
                 const isActive = currentPath === item.url || (item.url !== "/" && currentPath.startsWith(item.url));
                 return (
                   <NavLink
@@ -219,257 +307,22 @@ export function AppSidebar() {
                     to={item.url}
                     className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full ${
                       isActive
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
                         : "text-slate-300 hover:text-white hover:bg-slate-800/60"
                     }`}
                   >
                     <div className={`p-1.5 rounded-md transition-colors duration-200 shrink-0 ${
-                      isActive ? 'bg-emerald-500/20' : 'bg-slate-700/50'
+                      isActive ? 'bg-violet-500/20' : 'bg-slate-700/50'
                     }`}>
                       <item.icon className="w-4 h-4" />
                     </div>
                     <span className="font-medium text-sm truncate">{item.title}</span>
                     {isActive && (
-                      <div className="ml-auto w-2 h-2 bg-emerald-400 rounded-full shrink-0" />
+                      <div className="ml-auto w-2 h-2 bg-violet-400 rounded-full shrink-0" />
                     )}
                   </NavLink>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Regions & Sites Section - Scrollable */}
-          <div className="flex-1 overflow-hidden flex flex-col p-3">
-            <div className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
-              <MapPin className="w-3 h-3 mr-2" />
-              REGIONS & SITES
-              {(searchTerm || showOnlineOnly) && (
-                <Badge variant="secondary" className="ml-auto text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30 px-2 py-1">
-                  {totalSites}
-                </Badge>
-              )}
-            </div>
-            
-            {/* Scrollable container with enhanced styling */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 scrollbar-smooth">
-              {filteredData.length === 0 ? (
-                <div className="py-8 text-center">
-                  <div className="w-10 h-10 bg-slate-800/50 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Search className="w-5 h-5 text-slate-500" />
-                  </div>
-                  <p className="text-slate-400 text-sm font-medium">No sites found</p>
-                  <p className="text-slate-500 text-xs mt-1">Try adjusting your filters</p>
-                </div>
-              ) : (
-                <div className="space-y-2 pb-4">
-                  {filteredData.map((region) => {
-                    const isRegionActive = currentPath.includes(`/region/${region.id}`);
-                    const isExpanded = expandedRegions.has(region.id);
-                    
-                    return (
-                      <div key={region.id} className="animate-fade-in">
-                        <Collapsible open={isExpanded} onOpenChange={() => toggleRegion(region.id)}>
-                          <div className="space-y-1">
-                            {/* Region Header - Clean styling */}
-                            <div className="flex items-stretch gap-1">
-                              <NavLink
-                                to={`/region/${region.id}`}
-                                className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 flex-1 min-w-0 ${
-                                  isRegionActive
-                                    ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                                    : "text-slate-300 hover:text-white hover:bg-slate-800/50"
-                                }`}
-                              >
-                                <div className="p-1.5 rounded-md bg-slate-700/50 shrink-0">
-                                  <MapPin className="w-4 h-4" />
-                                </div>
-                                <div className="flex items-center justify-between w-full min-w-0">
-                                  <span className="font-semibold text-sm truncate text-white" title={region.name}>
-                                    {region.name}
-                                  </span>
-                                  <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 px-2 py-0.5 shrink-0 ml-2 bg-slate-800/50">
-                                    {(region.subRegions?.reduce((acc, sub) => acc + sub.sites.length, 0) || 0) + region.sites.length}
-                                  </Badge>
-                                </div>
-                              </NavLink>
-                              
-                              <CollapsibleTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="p-3 text-slate-400 hover:text-white transition-all duration-200 rounded-lg hover:bg-slate-800/50 shrink-0"
-                                >
-                                  <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
-                                    <ChevronDown className="w-4 h-4" />
-                                  </div>
-                                </Button>
-                              </CollapsibleTrigger>
-                            </div>
-                            
-                            {/* Region Content - Sub-regions and Sites */}
-                            <CollapsibleContent className="ml-4 overflow-hidden">
-                              <div className="space-y-1 animate-slide-in-down">
-                                {/* Sub-regions */}
-                                {region.subRegions?.map((subRegion, subIndex) => {
-                                  const isSubRegionExpanded = expandedSubRegions.has(subRegion.id);
-                                  
-                                  return (
-                                    <div key={subRegion.id}>
-                                      <Collapsible open={isSubRegionExpanded} onOpenChange={() => toggleSubRegion(subRegion.id)}>
-                                        {/* Sub-region Header */}
-                                        <div className="flex items-stretch gap-1 ml-2">
-                                          <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-800/30 flex-1 min-w-0">
-                                            <div className="p-1 rounded bg-slate-700/50 shrink-0">
-                                              <MapPin className="w-3 h-3 text-slate-500" />
-                                            </div>
-                                            <span className="font-medium text-xs text-slate-300 truncate" title={subRegion.name}>
-                                              {subRegion.name}
-                                            </span>
-                                            <Badge variant="outline" className="text-xs border-slate-600 text-slate-500 px-1.5 py-0.5 shrink-0 ml-auto bg-slate-800/50">
-                                              {subRegion.sites.length}
-                                            </Badge>
-                                          </div>
-                                          
-                                          <CollapsibleTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="p-2 text-slate-500 hover:text-slate-300 transition-all duration-200 rounded-lg hover:bg-slate-800/50 shrink-0"
-                                            >
-                                              <div className={`transition-transform duration-200 ${isSubRegionExpanded ? 'rotate-180' : 'rotate-0'}`}>
-                                                <ChevronDown className="w-3 h-3" />
-                                              </div>
-                                            </Button>
-                                          </CollapsibleTrigger>
-                                        </div>
-                                        
-                                        {/* Sub-region Sites */}
-                                        <CollapsibleContent className="ml-6 overflow-hidden">
-                                          <div className="space-y-1 animate-slide-in-down">
-                                            {subRegion.sites.map((site, siteIndex) => {
-                                              const isSiteActive = currentPath.includes(`/site/${site.id}`);
-                                              const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
-                                              
-                                              return (
-                                                <NavLink
-                                                  key={site.id}
-                                                  to={`/site/${site.id}`}
-                                                  className={`flex items-start px-3 py-2.5 rounded-lg transition-all duration-200 w-full block animate-fade-in ${
-                                                    isSiteActive
-                                                      ? "bg-emerald-500/20 text-emerald-400"
-                                                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
-                                                  }`}
-                                                  style={{ animationDelay: `${siteIndex * 50}ms` }}
-                                                >
-                                                  <div className="flex items-start space-x-3 w-full min-w-0">
-                                                    {/* Status Indicator */}
-                                                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 transition-all duration-200 ${
-                                                      site.status === 'online' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
-                                                      site.status === 'maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
-                                                      'bg-red-400 shadow-red-400/50 shadow-sm'
-                                                    }`} />
-                                                    
-                                                    {/* Site Information */}
-                                                    <div className="flex-1 min-w-0 space-y-1">
-                                                      <div>
-                                                        <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
-                                                          {site.name}
-                                                        </h4>
-                                                        <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
-                                                          {site.location}
-                                                        </p>
-                                                      </div>
-                                                      
-                                                      {/* Capacity and Output */}
-                                                      <div className="flex items-center justify-between text-xs gap-2">
-                                                        <span className="text-slate-300 font-medium">
-                                                          {site.currentOutput}MW / {site.totalCapacity}MW
-                                                        </span>
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
-                                                          site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                          site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
-                                                          'bg-red-500/20 text-red-400'
-                                                        }`}>
-                                                          {efficiencyPercentage}%
-                                                        </span>
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                </NavLink>
-                                              );
-                                            })}
-                                          </div>
-                                        </CollapsibleContent>
-                                      </Collapsible>
-                                    </div>
-                                  );
-                                })}
-                                
-                                {/* Direct Sites (for backward compatibility) */}
-                                {region.sites.map((site, index) => {
-                                  // Skip sites that are already in sub-regions
-                                  if (site.subRegion) return null;
-                                  
-                                  const isSiteActive = currentPath.includes(`/site/${site.id}`);
-                                  const efficiencyPercentage = Math.round((site.currentOutput / site.totalCapacity) * 100);
-                                  
-                                  return (
-                                    <NavLink
-                                      key={site.id}
-                                      to={`/site/${site.id}`}
-                                      className={`flex items-start px-3 py-2.5 rounded-lg transition-all duration-200 w-full block animate-fade-in ${
-                                        isSiteActive
-                                          ? "bg-emerald-500/20 text-emerald-400"
-                                          : "text-slate-300 hover:text-white hover:bg-slate-800/50"
-                                      }`}
-                                      style={{ animationDelay: `${index * 50}ms` }}
-                                    >
-                                      <div className="flex items-start space-x-3 w-full min-w-0">
-                                        {/* Status Indicator */}
-                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 transition-all duration-200 ${
-                                          site.status === 'online' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
-                                          site.status === 'maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
-                                          'bg-red-400 shadow-red-400/50 shadow-sm'
-                                        }`} />
-                                        
-                                        {/* Site Information */}
-                                        <div className="flex-1 min-w-0 space-y-1">
-                                          <div>
-                                            <h4 className="text-sm font-semibold text-white leading-tight truncate" title={site.name}>
-                                              {site.name}
-                                            </h4>
-                                            <p className="text-xs text-slate-400 truncate leading-tight" title={site.location}>
-                                              {site.location}
-                                            </p>
-                                          </div>
-                                          
-                                          {/* Capacity and Output */}
-                                          <div className="flex items-center justify-between text-xs gap-2">
-                                            <span className="text-slate-300 font-medium">
-                                              {site.currentOutput}MW / {site.totalCapacity}MW
-                                            </span>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
-                                              site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
-                                              site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
-                                              'bg-red-500/20 text-red-400'
-                                            }`}>
-                                              {efficiencyPercentage}%
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </NavLink>
-                                  );
-                                })}
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </div>
