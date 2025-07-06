@@ -27,13 +27,12 @@ const siteSubNav = [
   { title: "Finances", path: "/finances" },
 ];
 
-// Secondary navigation items (moved below sites)
+// Secondary navigation items (moved below sites) - REMOVED "All Assets"
 const secondaryNavItems = [
   { title: "Overview", url: "/", icon: Home },
   { title: "Global Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Advanced Analytics", url: "/advanced-analytics", icon: TrendingUp },
   { title: "Real-time Monitoring", url: "/monitoring", icon: Monitor },
-  { title: "All Assets", url: "/assets", icon: Package },
   { title: "System Settings", url: "/settings", icon: Settings },
 ];
 
@@ -177,8 +176,8 @@ export function AppSidebar() {
       <div className="bg-slate-900 flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
           
-          {/* Sites Section - PRIMARY NAVIGATION */}
-          <div className="flex-1 overflow-hidden flex flex-col p-3">
+          {/* Sites Section - PRIMARY NAVIGATION - Now takes ~60% of available space */}
+          <div className="overflow-hidden flex flex-col p-3" style={{ minHeight: '60%', flex: '3 1 60%' }}>
             <div className="text-slate-400 font-semibold mb-3 text-xs uppercase tracking-wider flex items-center px-3">
               <Building2 className="w-3 h-3 mr-2" />
               MY SITES
@@ -303,8 +302,8 @@ export function AppSidebar() {
             </div>
           </div>
 
-          {/* Secondary Navigation Section - BELOW SITES */}
-          <div className="shrink-0 p-3 pt-0 border-t border-slate-700/50">
+          {/* Secondary Navigation Section - BELOW SITES - Takes remaining space */}
+          <div className="shrink-0 p-3 pt-0 border-t border-slate-700/50 flex-1 min-h-0">
             <div className="text-slate-400 font-medium mb-3 text-xs uppercase tracking-wider px-3 flex items-center">
               <BarChart3 className="w-3 h-3 mr-2" />
               SYSTEM
@@ -335,23 +334,6 @@ export function AppSidebar() {
                 );
               })}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Fixed Footer */}
-      <div className="p-4 border-t border-slate-700 bg-slate-900 shrink-0">
-        <div className="flex items-center space-x-3 p-3 bg-slate-800/60 rounded-lg border border-slate-600/50 hover:bg-slate-700/60 transition-all duration-200 cursor-pointer">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shrink-0">
-            <Users className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">Admin User</p>
-            <p className="text-xs text-slate-400 truncate">System Administrator</p>
-          </div>
-          <div className="relative shrink-0">
-            <Bell className="w-5 h-5 text-slate-400 hover:text-white transition-colors" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-400 rounded-full animate-pulse" />
           </div>
         </div>
       </div>
