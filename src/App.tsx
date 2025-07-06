@@ -21,7 +21,6 @@ import Overview from './pages/Overview';
 import Analytics from './pages/Analytics';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import Monitoring from './pages/Monitoring';
-import Assets from './pages/Assets';
 import Settings from './pages/Settings';
 import RegionOverview from './pages/RegionOverview';
 import NotFound from './pages/NotFound';
@@ -107,7 +106,6 @@ function AppContent() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
             <Route path="/monitoring" element={<ProtectedRoute><Monitoring /></ProtectedRoute>} />
-            <Route path="/assets" element={<Assets />} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             
             {/* Demo Route for Testing Error Handling */}
