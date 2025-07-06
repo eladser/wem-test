@@ -40,12 +40,12 @@ public class SiteService : ISiteService
             var siteDtos = _mapper.Map<IEnumerable<SiteDto>>(sites);
             
             _logger.LogInformation("Retrieved {Count} sites from database", sites.Count);
-            return ApiResponse<IEnumerable<SiteDto>>.Success(siteDtos);
+            return ApiResponse<IEnumerable<SiteDto>>.SuccessResponse(siteDtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while getting all sites");
-            return ApiResponse<IEnumerable<SiteDto>>.Failure("Failed to retrieve sites");
+            return ApiResponse<IEnumerable<SiteDto>>.ErrorResponse("Failed to retrieve sites");
         }
     }
 
@@ -64,18 +64,18 @@ public class SiteService : ISiteService
             if (site == null)
             {
                 _logger.LogWarning("Site not found with ID: {SiteId}", siteId);
-                return ApiResponse<SiteDto>.Failure($"Site with ID '{siteId}' not found");
+                return ApiResponse<SiteDto>.ErrorResponse($"Site with ID '{siteId}' not found");
             }
 
             var siteDto = _mapper.Map<SiteDto>(site);
             
             _logger.LogInformation("Retrieved site: {SiteName}", site.Name);
-            return ApiResponse<SiteDto>.Success(siteDto);
+            return ApiResponse<SiteDto>.SuccessResponse(siteDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while getting site by ID: {SiteId}", siteId);
-            return ApiResponse<SiteDto>.Failure("Failed to retrieve site");
+            return ApiResponse<SiteDto>.ErrorResponse("Failed to retrieve site");
         }
     }
 
@@ -95,12 +95,12 @@ public class SiteService : ISiteService
             var siteDtos = _mapper.Map<IEnumerable<SiteDto>>(sites);
             
             _logger.LogInformation("Retrieved {Count} sites from region: {Region}", sites.Count, region);
-            return ApiResponse<IEnumerable<SiteDto>>.Success(siteDtos);
+            return ApiResponse<IEnumerable<SiteDto>>.SuccessResponse(siteDtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while getting sites by region: {Region}", region);
-            return ApiResponse<IEnumerable<SiteDto>>.Failure("Failed to retrieve sites by region");
+            return ApiResponse<IEnumerable<SiteDto>>.ErrorResponse("Failed to retrieve sites by region");
         }
     }
 
@@ -116,7 +116,7 @@ public class SiteService : ISiteService
             
             if (existingSite != null)
             {
-                return ApiResponse<SiteDto>.Failure("A site with this name already exists");
+                return ApiResponse<SiteDto>.ErrorResponse("A site with this name already exists");
             }
 
             var site = _mapper.Map<Site>(createSiteDto);
@@ -131,12 +131,12 @@ public class SiteService : ISiteService
             var siteDto = _mapper.Map<SiteDto>(site);
             
             _logger.LogInformation("Created new site with ID: {SiteId}", site.Id);
-            return ApiResponse<SiteDto>.Success(siteDto);
+            return ApiResponse<SiteDto>.SuccessResponse(siteDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while creating site: {SiteName}", createSiteDto.Name);
-            return ApiResponse<SiteDto>.Failure("Failed to create site");
+            return ApiResponse<SiteDto>.ErrorResponse("Failed to create site");
         }
     }
 
@@ -151,7 +151,7 @@ public class SiteService : ISiteService
             if (site == null)
             {
                 _logger.LogWarning("Site not found with ID: {SiteId}", siteId);
-                return ApiResponse<SiteDto>.Failure($"Site with ID '{siteId}' not found");
+                return ApiResponse<SiteDto>.ErrorResponse($"Site with ID '{siteId}' not found");
             }
 
             // Check if name is being changed and if it conflicts with another site
@@ -163,7 +163,7 @@ public class SiteService : ISiteService
                 
                 if (existingSite != null)
                 {
-                    return ApiResponse<SiteDto>.Failure("A site with this name already exists");
+                    return ApiResponse<SiteDto>.ErrorResponse("A site with this name already exists");
                 }
             }
 
@@ -175,12 +175,12 @@ public class SiteService : ISiteService
             var siteDto = _mapper.Map<SiteDto>(site);
             
             _logger.LogInformation("Updated site: {SiteId}", siteId);
-            return ApiResponse<SiteDto>.Success(siteDto);
+            return ApiResponse<SiteDto>.SuccessResponse(siteDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while updating site: {SiteId}", siteId);
-            return ApiResponse<SiteDto>.Failure("Failed to update site");
+            return ApiResponse<SiteDto>.ErrorResponse("Failed to update site");
         }
     }
 
@@ -195,7 +195,7 @@ public class SiteService : ISiteService
             if (site == null)
             {
                 _logger.LogWarning("Site not found with ID: {SiteId}", siteId);
-                return ApiResponse<bool>.Failure($"Site with ID '{siteId}' not found");
+                return ApiResponse<bool>.ErrorResponse($"Site with ID '{siteId}' not found");
             }
 
             site.Status = statusDto.Status;
@@ -205,12 +205,12 @@ public class SiteService : ISiteService
             await _context.SaveChangesAsync();
             
             _logger.LogInformation("Updated site status: {SiteId} to {Status}", siteId, statusDto.Status);
-            return ApiResponse<bool>.Success(true);
+            return ApiResponse<bool>.SuccessResponse(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while updating site status: {SiteId}", siteId);
-            return ApiResponse<bool>.Failure("Failed to update site status");
+            return ApiResponse<bool>.ErrorResponse("Failed to update site status");
         }
     }
 
@@ -229,25 +229,25 @@ public class SiteService : ISiteService
             if (site == null)
             {
                 _logger.LogWarning("Site not found with ID: {SiteId}", siteId);
-                return ApiResponse<bool>.Failure($"Site with ID '{siteId}' not found");
+                return ApiResponse<bool>.ErrorResponse($"Site with ID '{siteId}' not found");
             }
 
             // Check if site has any related data that should prevent deletion
             if (site.Assets.Any() || site.PowerData.Any() || site.Alerts.Any())
             {
-                return ApiResponse<bool>.Failure("Cannot delete site with existing assets, power data, or alerts. Please remove related data first.");
+                return ApiResponse<bool>.ErrorResponse("Cannot delete site with existing assets, power data, or alerts. Please remove related data first.");
             }
 
             _context.Sites.Remove(site);
             await _context.SaveChangesAsync();
             
             _logger.LogInformation("Deleted site: {SiteId}", siteId);
-            return ApiResponse<bool>.Success(true);
+            return ApiResponse<bool>.SuccessResponse(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while deleting site: {SiteId}", siteId);
-            return ApiResponse<bool>.Failure("Failed to delete site");
+            return ApiResponse<bool>.ErrorResponse("Failed to delete site");
         }
     }
 }
