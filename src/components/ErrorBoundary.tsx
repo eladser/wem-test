@@ -3,7 +3,6 @@ import { logger } from '../utils/logger';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { AlertTriangle, RefreshCw, Bug, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Props {
   children: ReactNode;
@@ -66,7 +65,7 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default error UI - WITHOUT router hooks
       return <ErrorFallback 
         error={this.state.error} 
         errorInfo={this.state.errorInfo}
@@ -89,12 +88,11 @@ interface ErrorFallbackProps {
 }
 
 function ErrorFallback({ error, errorInfo, errorId, onReload, onReset }: ErrorFallbackProps) {
-  const navigate = useNavigate();
   const isProduction = import.meta.env.PROD;
 
   const handleGoHome = () => {
-    navigate('/');
-    onReset();
+    // Use window.location instead of navigate to avoid router dependency
+    window.location.href = '/';
   };
 
   const handleReportError = () => {
@@ -109,9 +107,15 @@ function ErrorFallback({ error, errorInfo, errorId, onReload, onReset }: ErrorFa
     };
 
     // Copy to clipboard
-    navigator.clipboard.writeText(JSON.stringify(bugReport, null, 2));
+    navigator.clipboard.writeText(JSON.stringify(bugReport, null, 2))
+      .then(() => {
+        console.log('Error report copied to clipboard');
+      })
+      .catch(() => {
+        console.log('Failed to copy error report');
+      });
     
-    // Create GitHub issue URL - fix the template string escaping
+    // Create GitHub issue URL
     const errorMessage = error?.message || 'Unknown error';
     const stackTrace = error?.stack || 'No stack trace available';
     
