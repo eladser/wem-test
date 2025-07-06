@@ -1,3 +1,5 @@
+using WemDashboard.Domain.Enums;
+
 namespace WemDashboard.Domain.Entities;
 
 public class User
@@ -13,12 +15,4 @@ public class User
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<RefreshToken> RefreshTokens { get; set; } = new();
-}
-
-public enum UserRole
-{
-    Admin,
-    Manager,
-    Operator,
-    Viewer
 }
