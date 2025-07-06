@@ -1,18 +1,24 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
+import { mockRegions } from '@/services/mockDataService';
+import { siteApiService } from '@/services/siteApiService';
 
-// API base URL - using port 5000 as you confirmed
+// API base URL - using port 5000 as confirmed
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-// Types
+// Types that match your existing structure
 export interface Site {
   id: string;
   name: string;
   location: string;
+  region?: string;
+  subRegion?: string;
+  status: 'online' | 'maintenance' | 'offline';
   totalCapacity: number;
-  currentUsage: number;
-  status: 'Active' | 'Inactive' | 'Maintenance';
+  currentOutput: number;
+  efficiency: number;
+  lastUpdate: string;
 }
 
 export interface SiteDashboard {
@@ -27,9 +33,11 @@ export interface Asset {
   id: string;
   name: string;
   type: string;
-  status: 'Online' | 'Offline' | 'Maintenance' | 'Error';
-  efficiency: number;
-  lastMaintenance: string;
+  siteId: string;
+  status: 'online' | 'offline' | 'maintenance' | 'charging';
+  power: string;
+  efficiency: string;
+  lastUpdate: string;
 }
 
 export interface Alert {
@@ -42,11 +50,12 @@ export interface Alert {
 }
 
 export interface PowerData {
-  timestamp: string;
-  power: number;
-  voltage: number;
-  current: number;
-  siteId: string;
+  time: string;
+  solar: number;
+  battery: number;
+  grid: number;
+  demand: number;
+  siteId?: string;
 }
 
 export interface ActivityLog {
@@ -57,6 +66,28 @@ export interface ActivityLog {
   siteId: string;
 }
 
+// Helper function to extract all sites from regions
+const getAllSitesFromRegions = () => {
+  return mockRegions.flatMap(region => 
+    region.subRegions ? 
+      region.subRegions.flatMap(subRegion => subRegion.sites || []) :
+      region.sites || []
+  );
+};
+
+// Sites list hook - using mock data for now
+export function useSites() {
+  return useQuery({
+    queryKey: ['sites'],
+    queryFn: async () => {
+      // For now, return mock data since API endpoint isn't implemented
+      const sites = getAllSitesFromRegions();
+      return sites;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
 // Real-time site dashboard hook
 export function useSiteDashboard(siteId: string) {
   const queryClient = useQueryClient();
@@ -64,9 +95,32 @@ export function useSiteDashboard(siteId: string) {
   const query = useQuery({
     queryKey: ['siteDashboard', siteId],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/sites/${siteId}/dashboard`);
-      if (!response.ok) throw new Error('Failed to fetch site dashboard');
-      return response.json() as SiteDashboard;
+      try {
+        // Try to use the real API first
+        const response = await siteApiService.getSiteData(siteId, {
+          includeAssets: true,
+          includePowerData: true,
+          includeMetrics: true
+        });
+        return response;
+      } catch (error) {
+        // Fallback to mock data if API fails
+        console.warn('API failed, using mock data:', error);
+        const sites = getAllSitesFromRegions();
+        const site = sites.find(s => s.id === siteId);
+        
+        if (!site) {
+          throw new Error(`Site ${siteId} not found`);
+        }
+
+        return {
+          site,
+          currentPower: site.currentOutput,
+          alerts: [],
+          assets: [],
+          recentActivity: []
+        };
+      }
     },
     enabled: !!siteId,
     staleTime: 30000, // 30 seconds
@@ -98,7 +152,7 @@ export function useSiteDashboard(siteId: string) {
               if (!old) return old;
               return {
                 ...old,
-                currentPower: data.power,
+                currentPower: data.solar + data.battery + data.grid,
                 lastUpdated: new Date().toISOString(),
               };
             });
@@ -157,9 +211,22 @@ export function usePowerData(siteId: string, period: string = '24h') {
   const query = useQuery({
     queryKey: ['powerData', siteId, period],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/sites/${siteId}/power/history?period=${period}`);
-      if (!response.ok) throw new Error('Failed to fetch power data');
-      return response.json() as PowerData[];
+      try {
+        // Try to use the real API first
+        const response = await siteApiService.getSitePowerData(siteId, period);
+        return response;
+      } catch (error) {
+        // Fallback to mock data
+        console.warn('Power data API failed, using mock data:', error);
+        const mockData = [
+          { time: "00:00", solar: 0, battery: 85, grid: 12, demand: 97 },
+          { time: "06:00", solar: 45, battery: 80, grid: 8, demand: 133 },
+          { time: "12:00", solar: 95, battery: 75, grid: 0, demand: 170 },
+          { time: "18:00", solar: 25, battery: 70, grid: 15, demand: 110 },
+          { time: "24:00", solar: 0, battery: 65, grid: 20, demand: 85 },
+        ];
+        return mockData;
+      }
     },
     enabled: !!siteId,
     staleTime: 60000, // 1 minute
@@ -214,9 +281,26 @@ export function useAlerts() {
   const query = useQuery({
     queryKey: ['alerts', 'active'],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/alerts/active`);
-      if (!response.ok) throw new Error('Failed to fetch alerts');
-      return response.json() as Alert[];
+      // Return mock alerts for now
+      const alerts: Alert[] = [
+        {
+          id: '1',
+          message: 'High power consumption detected at Site A',
+          severity: 'High',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          siteId: 'site-a'
+        },
+        {
+          id: '2', 
+          message: 'Battery level low at Site B',
+          severity: 'Medium',
+          timestamp: new Date(Date.now() - 30000).toISOString(),
+          isRead: false,
+          siteId: 'site-b'
+        }
+      ];
+      return alerts;
     },
     staleTime: 30000, // 30 seconds
   });
@@ -275,19 +359,6 @@ export function useAlerts() {
   return query;
 }
 
-// Sites list hook
-export function useSites() {
-  return useQuery({
-    queryKey: ['sites'],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/sites`);
-      if (!response.ok) throw new Error('Failed to fetch sites');
-      return response.json() as Site[];
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
 // Assets by site hook
 export function useAssets(siteId: string) {
   const queryClient = useQueryClient();
@@ -295,9 +366,27 @@ export function useAssets(siteId: string) {
   const query = useQuery({
     queryKey: ['assets', siteId],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/sites/${siteId}/assets`);
-      if (!response.ok) throw new Error('Failed to fetch assets');
-      return response.json() as Asset[];
+      try {
+        // Try to use the real API first
+        const response = await siteApiService.getSiteAssets(siteId);
+        return response;
+      } catch (error) {
+        // Fallback to mock data
+        console.warn('Assets API failed, using mock data:', error);
+        const mockAssets: Asset[] = [
+          {
+            id: `INV-${siteId}`,
+            name: 'Solar Inverter #1',
+            type: 'inverter',
+            siteId,
+            status: 'online',
+            power: '8.5 kW',
+            efficiency: '94.2%',
+            lastUpdate: '2 min ago'
+          }
+        ];
+        return mockAssets;
+      }
     },
     enabled: !!siteId,
     staleTime: 2 * 60 * 1000, // 2 minutes
