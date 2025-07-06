@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WemDashboard.Domain.Entities;
+using WemDashboard.Domain.Enums;
 using WemDashboard.Infrastructure.Data.Configurations;
 
 namespace WemDashboard.Infrastructure.Data;
