@@ -4,8 +4,17 @@ import { useState, useMemo, useCallback } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useSites } from "@/hooks/useRealTimeData";
 import { LoadingWrapper, SidebarSkeleton } from "@/components/ui/skeleton";
+import { mockRegions } from "@/services/mockDataService";
+
+// Extract all sites from regions
+const getAllSites = () => {
+  return mockRegions.flatMap(region => 
+    region.subRegions ? 
+      region.subRegions.flatMap(subRegion => subRegion.sites || []) :
+      region.sites || []
+  );
+};
 
 // Site sub-navigation items
 const siteSubNav = [
@@ -35,8 +44,10 @@ export function AppSidebar() {
   const [expandedSites, setExpandedSites] = useState<Set<string>>(new Set());
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   
-  // Fetch sites using the real-time hook
-  const { data: sites = [], isLoading, error } = useSites();
+  // Use your existing mock data structure
+  const sites = getAllSites();
+  const isLoading = false;
+  const error = null;
 
   // Enhanced filtering logic for sites
   const filteredSites = useMemo(() => {
@@ -46,13 +57,13 @@ export function AppSidebar() {
       const matchesSearch = site.name.toLowerCase().includes(searchLower) ||
                           site.id.toLowerCase().includes(searchLower) ||
                           site.location.toLowerCase().includes(searchLower);
-      const matchesStatus = !showOnlineOnly || site.status === 'Active';
+      const matchesStatus = !showOnlineOnly || site.status === 'online';
       return matchesSearch && matchesStatus;
     });
   }, [sites, searchTerm, showOnlineOnly]);
 
   const onlineSites = useMemo(() => 
-    filteredSites.filter(site => site.status === 'Active').length,
+    filteredSites.filter(site => site.status === 'online').length,
     [filteredSites]
   );
 
@@ -135,7 +146,7 @@ export function AppSidebar() {
               }`}
             >
               <Filter className="w-3 h-3 mr-1" />
-              Active Only
+              Online Only
             </Button>
             
             {(searchTerm || showOnlineOnly) && (
@@ -156,7 +167,7 @@ export function AppSidebar() {
               {filteredSites.length} sites total
             </span>
             <span className="text-emerald-400">
-              {onlineSites} active
+              {onlineSites} online
             </span>
           </div>
         </div>
@@ -198,7 +209,7 @@ export function AppSidebar() {
                     {filteredSites.map((site, index) => {
                       const isSiteActive = currentPath.includes(`/site/${site.id}`);
                       const isExpanded = expandedSites.has(site.id) || currentSiteId === site.id;
-                      const efficiencyPercentage = Math.round((site.currentUsage / site.totalCapacity) * 100);
+                      const efficiencyPercentage = Math.round(site.efficiency || 0);
                       
                       return (
                         <div key={site.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
@@ -216,8 +227,8 @@ export function AppSidebar() {
                                 >
                                   {/* Status Indicator */}
                                   <div className={`w-3 h-3 rounded-full shrink-0 transition-all duration-200 ${
-                                    site.status === 'Active' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
-                                    site.status === 'Maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
+                                    site.status === 'online' ? 'bg-emerald-400 shadow-emerald-400/50 shadow-sm' :
+                                    site.status === 'maintenance' ? 'bg-yellow-400 shadow-yellow-400/50 shadow-sm' : 
                                     'bg-red-400 shadow-red-400/50 shadow-sm'
                                   }`} />
                                   
@@ -232,11 +243,11 @@ export function AppSidebar() {
                                     </div>
                                     <div className="text-right shrink-0 ml-2">
                                       <p className="text-xs font-medium text-slate-300">
-                                        {site.currentUsage}MW
+                                        {site.currentOutput}kW
                                       </p>
                                       <p className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                                        site.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' :
-                                        site.status === 'Maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                        site.status === 'online' ? 'bg-emerald-500/20 text-emerald-400' :
+                                        site.status === 'maintenance' ? 'bg-yellow-500/20 text-yellow-400' : 
                                         'bg-red-500/20 text-red-400'
                                       }`}>
                                         {efficiencyPercentage}%
