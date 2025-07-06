@@ -14,6 +14,6 @@ public class SiteDto
     public double Efficiency { get; set; }
     public DateTime LastUpdate { get; set; }
     public DateTime CreatedAt { get; set; }
-    public int AssetCount { get; set; }
-    public int UnreadAlertCount { get; set; }
+    public int AssetsCount { get; set; }
+    public int AlertsCount { get; set; }
 }
