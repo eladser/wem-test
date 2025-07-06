@@ -3,7 +3,7 @@
   "private": true,
   "version": "3.1.2",
   "type": "module",
-  "description": "A comprehensive energy management dashboard - Added SignalR Support",
+  "description": "A comprehensive energy management dashboard with database integration",
   "keywords": [
     "energy",
     "dashboard",
@@ -15,7 +15,8 @@
     "sqlite",
     "real-time",
     "websocket",
-    "signalr"
+    "signalr",
+    "entity-framework"
   ],
   "scripts": {
     "dev": "vite --port 5173",
@@ -24,9 +25,19 @@
     "lint": "eslint . --fix",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "clean": "rm -rf dist .vite node_modules/.vite || rmdir /s /q dist .vite node_modules\\.vite 2>nul",
-    "start": "echo Use start-wem-dashboard.bat for full startup",
-    "install-deps": "npm install"
+    "clean": "rm -rf dist .vite node_modules/.vite || rmdir /s /q dist .vite node_modules\\\\.vite 2>nul",
+    "install-deps": "npm install",
+    "start-frontend": "npm run dev",
+    "start-backend": "cd backend/src/WemDashboard.API && dotnet run",
+    "start-backend-watch": "cd backend/src/WemDashboard.API && dotnet watch run",
+    "build-backend": "cd backend && dotnet build",
+    "test-backend": "cd backend && dotnet test",
+    "setup-db": "cd backend/src/WemDashboard.API && dotnet ef database update",
+    "reset-db": "cd backend/src/WemDashboard.API && dotnet ef database drop --force && dotnet ef database update",
+    "add-migration": "cd backend/src/WemDashboard.API && dotnet ef migrations add",
+    "check-health": "curl -s http://localhost:5000/health || echo Backend not running",
+    "quick-start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "full-setup": "npm install && npm run build-backend && npm run setup-db"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -96,6 +107,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
@@ -110,6 +122,6 @@
     "vite": "^5.4.1"
   },
   "version-info": {
-    "v3.1.2": "Added @microsoft/signalr dependency for real-time features"
+    "v3.1.2": "Integrated database support for Sites API and cleaned up repository structure"
   }
 }
