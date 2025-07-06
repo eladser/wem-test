@@ -131,7 +131,10 @@ builder.Services.AddApplication();
 // Register our logging service - use the actual DbContext type
 builder.Services.AddScoped<ILogService, LogService>();
 
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+// AutoMapper registration - use the correct profile
+builder.Services.AddAutoMapper(typeof(SiteProfile));
+
+// FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSiteValidator>();
 
 // JWT Authentication
