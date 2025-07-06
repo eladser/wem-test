@@ -1,9 +1,9 @@
 {
   "name": "wem-energy-dashboard",
   "private": true,
-  "version": "3.1.1",
+  "version": "3.1.2",
   "type": "module",
-  "description": "A comprehensive energy management dashboard - Fixed Backend Issues",
+  "description": "A comprehensive energy management dashboard - Added SignalR Support",
   "keywords": [
     "energy",
     "dashboard",
@@ -14,7 +14,8 @@
     "dotnet",
     "sqlite",
     "real-time",
-    "websocket"
+    "websocket",
+    "signalr"
   ],
   "scripts": {
     "dev": "vite --port 5173",
@@ -24,10 +25,12 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "clean": "rm -rf dist .vite node_modules/.vite || rmdir /s /q dist .vite node_modules\\.vite 2>nul",
-    "start": "echo Use start-wem-dashboard.bat for full startup"
+    "start": "echo Use start-wem-dashboard.bat for full startup",
+    "install-deps": "npm install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@microsoft/signalr": "^8.0.7",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -107,6 +110,6 @@
     "vite": "^5.4.1"
   },
   "version-info": {
-    "v3.1.1": "Fixed LogEntry EF model and added missing axios dependency"
+    "v3.1.2": "Added @microsoft/signalr dependency for real-time features"
   }
 }
