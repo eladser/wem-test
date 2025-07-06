@@ -1,3 +1,5 @@
+using WemDashboard.Domain.Enums;
+
 namespace WemDashboard.Domain.Entities;
 
 public class Site
@@ -18,11 +20,4 @@ public class Site
     public List<Asset> Assets { get; set; } = new();
     public List<PowerData> PowerData { get; set; } = new();
     public List<Alert> Alerts { get; set; } = new();
-}
-
-public enum SiteStatus
-{
-    Online,
-    Maintenance,
-    Offline
 }
