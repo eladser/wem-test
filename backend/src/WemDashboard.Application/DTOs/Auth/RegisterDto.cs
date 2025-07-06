@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using WemDashboard.Domain.Entities;
+using WemDashboard.Domain.Enums;
 
 namespace WemDashboard.Application.DTOs.Auth;
 
