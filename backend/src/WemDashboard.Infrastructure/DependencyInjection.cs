@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WemDashboard.Application.Services;
 using WemDashboard.Domain.Interfaces;
 using WemDashboard.Infrastructure.Data;
 using WemDashboard.Infrastructure.Repositories;
@@ -75,7 +76,10 @@ public static class DependencyInjection
         services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
         services.AddScoped<IViewStateRepository, ViewStateRepository>();
 
-        // Services
+        // Application Services
+        services.AddScoped<ISiteService, SiteService>();
+
+        // Infrastructure Services
         services.AddScoped<DataSeeder>();
 
         // Redis Cache (optional)

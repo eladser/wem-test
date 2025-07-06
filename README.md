@@ -1,205 +1,119 @@
-# WEM Dashboard
+# WEM Energy Dashboard
 
-A comprehensive Web Energy Management (WEM) dashboard for monitoring and managing energy assets.
+A comprehensive energy management dashboard built with React, TypeScript, .NET Core, and Entity Framework with real-time data visualization capabilities.
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- .NET 8.0 SDK
-- Node.js 18+ (or Bun)
-- Git
+- **Node.js** (v18+)
+- **.NET 8 SDK**
+- **Git**
 
-### Installation
+### Quick Setup
+```bash
+# Clone the repository
+git clone https://github.com/eladser/wem-test.git
+cd wem-test
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/eladser/wem-test.git
-   cd wem-test
-   ```
+# Full setup (installs dependencies, builds backend, sets up database)
+npm run full-setup
 
-2. **Install frontend dependencies**
-   ```bash
-   npm install
-   # or
-   bun install
-   ```
+# Start both frontend and backend
+npm run quick-start
+```
 
-3. **Start backend**
-   ```bash
-   # Windows
-   start-backend.bat
-   
-   # Or manually:
-   cd backend/src/WemDashboard.API
-   dotnet run
-   ```
-
-4. **Start frontend (in a new terminal)**
-   ```bash
-   # Windows
-   start-frontend.bat
-   
-   # Or manually:
-   npm run dev
-   # or
-   bun run dev
-   ```
-
-### Access the Application
-
+The application will be available at:
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:7087
-- **Backend API (HTTP)**: http://localhost:5087
+- **Backend API**: http://localhost:5000
+- **API Documentation**: http://localhost:5000/swagger
 
-## Project Structure
+## 🛠️ Development Scripts
+
+### Frontend
+```bash
+npm run dev                 # Start frontend development server
+npm run build              # Build for production
+npm run preview            # Preview production build
+npm run lint               # Run ESLint
+npm run type-check         # TypeScript type checking
+npm run test               # Run Jest tests
+```
+
+### Backend
+```bash
+npm run start-backend        # Start backend server
+npm run start-backend-watch  # Start backend with auto-reload
+npm run build-backend       # Build backend
+npm run test-backend        # Run backend tests
+```
+
+### Database
+```bash
+npm run setup-db            # Apply database migrations
+npm run reset-db            # Drop and recreate database
+npm run add-migration NAME  # Add new migration
+```
+
+### Utilities
+```bash
+npm run check-health        # Check backend health
+npm run clean              # Clean build artifacts
+npm run install-deps       # Install dependencies
+```
+
+## 📁 Project Structure
 
 ```
 wem-test/
-├── backend/                 # .NET 8 Web API
+├── backend/                    # .NET Core Backend
 │   ├── src/
-│   │   ├── WemDashboard.API/          # API Controllers & Startup
-│   │   ├── WemDashboard.Application/  # Business Logic & Services
-│   │   ├── WemDashboard.Domain/       # Domain Models & Entities
-│   │   └── WemDashboard.Infrastructure/ # Data Access & External Services
-│   └── WemDashboard.sln     # Solution file
-├── src/                     # React/TypeScript Frontend
-│   ├── components/          # Reusable UI components
-│   ├── pages/              # Page components
-│   ├── services/           # API services
-│   ├── hooks/              # Custom React hooks
-│   └── utils/              # Utility functions
-├── public/                  # Static assets
-└── package.json            # Frontend dependencies
+│   │   ├── WemDashboard.API/          # Web API controllers
+│   │   ├── WemDashboard.Application/   # Business logic & services
+│   │   ├── WemDashboard.Domain/       # Domain entities & interfaces
+│   │   ├── WemDashboard.Infrastructure/ # Data access & repositories
+│   │   └── WemDashboard.Shared/       # Shared models & constants
+│   └── WemDashboard.sln              # Solution file
+├── src/                        # React Frontend
+│   ├── components/            # Reusable UI components
+│   ├── pages/                # Page components
+│   ├── hooks/                # Custom React hooks
+│   ├── services/             # API services
+│   ├── types/                # TypeScript definitions
+│   └── utils/                # Utility functions
+├── public/                    # Static assets
+└── docs/                     # Documentation
 ```
 
-## Key Features
+## 🔧 Configuration
 
-### 🏭 **Asset Management**
-- Real-time asset monitoring
-- Asset hierarchy and relationships
-- Performance metrics and KPIs
-- Maintenance scheduling
+### Environment Variables
 
-### ⚡ **Energy Monitoring**
-- Real-time power consumption data
-- Energy flow visualization
-- Historical data analysis
-- Demand forecasting
+Create a `.env` file in the root directory:
 
-### 🚨 **Alert System**
-- Real-time alert notifications
-- Configurable alert rules
-- Alert prioritization and escalation
-- WebSocket-based live updates
+```env
+# API Configuration
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_WS_URL=ws://localhost:5173/ws/energy-data
 
-### 📊 **Dashboard & Analytics**
-- Customizable dashboards
-- Interactive charts and graphs
-- Data export capabilities
-- Report generation
+# Development
+VITE_DEBUG=true
+VITE_ENABLE_REAL_TIME=true
+NODE_ENV=development
 
-### 🔐 **User Management**
-- Role-based access control
-- User preferences and settings
-- Multi-site support
-- Audit logging
-
-## Technology Stack
-
-### Backend
-- **.NET 8** - Web API framework
-- **Entity Framework Core** - ORM with SQLite
-- **SignalR** - Real-time WebSocket communication
-- **AutoMapper** - Object mapping
-- **FluentValidation** - Input validation
-
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **Shadcn/UI** - Component library
-- **Recharts** - Data visualization
-- **React Query** - Data fetching and caching
-
-### Database
-- **SQLite** - Development database
-- **SQL Server/PostgreSQL** - Production options
-
-## Development
-
-### Backend Development
-
-```bash
-# Navigate to API project
-cd backend/src/WemDashboard.API
-
-# Run with hot reload
-dotnet watch run
-
-# Run tests
-cd ../../
-dotnet test
+# Database (for backend)
+ASPNETCORE_ENVIRONMENT=Development
+DatabaseProvider=sqlite
+ConnectionStrings__DefaultConnection=Data Source=wemdashboard.db;
 ```
-
-### Frontend Development
-
-```bash
-# Start dev server with hot reload
-npm run dev
-
-# Build for production
-npm run build
-
-# Run tests
-npm run test
-
-# Lint code
-npm run lint
-```
-
-### Database
-
-The application uses SQLite by default for development. The database is automatically created when you first run the backend.
-
-**Database location**: `backend/src/WemDashboard.API/wemdashboard-dev.db`
-
-## API Documentation
-
-Once the backend is running, you can access:
-
-- **Swagger UI**: http://localhost:7087/swagger
-- **API Endpoints**: http://localhost:7087/api/
-
-### Key API Endpoints
-
-- `GET /api/sites` - List all sites
-- `GET /api/assets` - List all assets
-- `GET /api/power-data` - Get power consumption data
-- `GET /api/alerts` - List alerts
-- `GET /api/users` - User management
-
-## WebSocket Features
-
-The application uses SignalR for real-time updates:
-
-- **Real-time alerts** - Instant notification of new alerts
-- **Live data updates** - Power consumption and asset status
-- **User presence** - Show active users
-- **System notifications** - Maintenance windows, updates
-
-**WebSocket Hub**: `http://localhost:7087/hubs/dashboard`
-
-## Configuration
 
 ### Backend Configuration
 
-Edit `backend/src/WemDashboard.API/appsettings.json`:
+The backend uses `appsettings.json` for configuration:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=wemdashboard-dev.db;"
+    "DefaultConnection": "Data Source=wemdashboard.db;"
   },
   "DatabaseProvider": "sqlite",
   "Logging": {
@@ -210,56 +124,156 @@ Edit `backend/src/WemDashboard.API/appsettings.json`:
 }
 ```
 
-### Frontend Configuration
+## 📊 Database
 
-Edit `.env` file:
+The application uses **Entity Framework Core** with support for multiple database providers:
 
-```env
-VITE_API_BASE_URL=http://localhost:7087
-VITE_WS_BASE_URL=http://localhost:7087
+- **SQLite** (default for development)
+- **SQL Server**
+- **PostgreSQL** 
+- **MySQL**
+
+### Database Schema
+
+Key entities:
+- **Sites**: Energy generation sites
+- **Assets**: Equipment and infrastructure
+- **PowerData**: Real-time energy data
+- **Alerts**: System notifications
+- **Users**: Authentication and authorization
+- **UserPreferences**: User settings and configurations
+
+### Sample Data
+
+The application includes seed data with:
+- 4 sample sites across different regions
+- Admin user account (admin@wemdashboard.com / Admin123!)
+- Sample configurations and preferences
+
+## 🔌 API Endpoints
+
+### Sites API
+- `GET /api/sites` - Get all sites (supports region filtering)
+- `GET /api/sites/{id}` - Get site by ID
+- `POST /api/sites` - Create new site
+- `PUT /api/sites/{id}` - Update site
+- `PATCH /api/sites/{id}/status` - Update site status
+- `DELETE /api/sites/{id}` - Delete site
+
+### Other APIs
+- `/api/assets` - Asset management
+- `/api/power-data` - Energy data
+- `/api/alerts` - Alert management
+- `/api/auth` - Authentication
+- `/api/dashboard-layout` - Dashboard configuration
+
+## 🔄 Real-time Features
+
+The application supports real-time updates via:
+- **SignalR** for WebSocket connections
+- **React Query** for efficient data caching
+- **Automatic reconnection** handling
+
+## 🎨 UI Components
+
+Built with modern UI components:
+- **Radix UI** for accessible primitives
+- **Tailwind CSS** for styling
+- **Lucide React** for icons
+- **Recharts** for data visualization
+- **React Hook Form** for form handling
+
+## 🧪 Testing
+
+### Frontend Testing
+```bash
+npm run test                # Run Jest tests
+npm run test:watch          # Run tests in watch mode
+npm run test:coverage       # Generate coverage report
 ```
 
-## Deployment
+### Backend Testing
+```bash
+npm run test-backend        # Run .NET tests
+```
+
+## 🚀 Deployment
 
 ### Production Build
-
 ```bash
 # Build frontend
 npm run build
 
 # Build backend
-cd backend
-dotnet publish -c Release -o publish
+npm run build-backend
+
+# The built files will be in:
+# - Frontend: ./dist/
+# - Backend: ./backend/src/WemDashboard.API/bin/Release/
 ```
 
-### Environment Variables
+### Docker Support
+```bash
+# Build and run with Docker Compose
+cd backend
+docker-compose up --build
+```
 
-For production deployment, set:
+## 🛡️ Security
 
-- `ASPNETCORE_ENVIRONMENT=Production`
-- `ConnectionStrings__DefaultConnection=<your-db-connection>`
-- `DatabaseProvider=sqlserver` (or postgresql)
+- **JWT Authentication** with refresh tokens
+- **Role-based authorization** (Admin, Manager, Operator, Viewer)
+- **CORS configuration** for cross-origin requests
+- **Input validation** and sanitization
+- **SQL injection protection** via Entity Framework
 
-## Contributing
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **Backend not starting**
+   ```bash
+   npm run check-health
+   # Check if port 5000 is available
+   ```
+
+2. **Database issues**
+   ```bash
+   npm run reset-db
+   # This will recreate the database with fresh data
+   ```
+
+3. **Frontend build failures**
+   ```bash
+   npm run clean
+   npm install
+   npm run build
+   ```
+
+4. **WebSocket connection issues**
+   - Check that backend is running on port 5000
+   - Verify VITE_WS_URL in .env file
+   - Check browser console for connection errors
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit your changes: `git commit -am 'Add new feature'`
-4. Push to the branch: `git push origin feature/new-feature`
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License.
 
-## Support
+## 📞 Support
 
-For issues and questions:
-
-1. Check the [Issues](https://github.com/eladser/wem-test/issues) page
-2. Create a new issue with detailed information
-3. Include error logs and reproduction steps
+For support and questions:
+- Create an issue in the GitHub repository
+- Check the API documentation at `/swagger` when running locally
+- Review the troubleshooting section above
 
 ---
 
-**Happy coding! 🚀**
+**Note**: This repository has been cleaned up to remove redundant batch files and scripts. All functionality is now available through npm scripts for better cross-platform compatibility.
