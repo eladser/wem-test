@@ -1,4 +1,5 @@
 using WemDashboard.Domain.Entities;
+using WemDashboard.Domain.Enums;
 
 namespace WemDashboard.Domain.Interfaces;
 
