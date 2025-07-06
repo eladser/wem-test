@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './components/theme/ThemeProvider';
@@ -35,6 +37,27 @@ import SiteSettings from './components/SiteSettings';
 
 // Demo component
 import ErrorHandlingDemo from './components/ErrorHandlingDemo';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: (failureCount, error) => {
+        // Don't retry on 404s
+        if ((error as any)?.response?.status === 404) return false;
+        // Retry up to 3 times for other errors
+        return failureCount < 3;
+      },
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Loading component
 const LoadingSpinner = () => (
@@ -122,33 +145,37 @@ function App() {
         }, error);
       }}
     >
-      <AuthProvider>
-        <ThemeProvider>
-          <NotificationProvider>
-            <Router 
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-              <AppContent />
-              {/* Keep existing Sonner toaster for backwards compatibility */}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  style: {
-                    background: 'rgb(30 41 59)',
-                    border: '1px solid rgb(71 85 105)',
-                    color: 'rgb(226 232 240)',
-                  },
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider>
+            <NotificationProvider>
+              <Router 
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
                 }}
-              />
-              {/* Add our new toast system */}
-              <UIToaster />
-            </Router>
-          </NotificationProvider>
-        </ThemeProvider>
-      </AuthProvider>
+              >
+                <AppContent />
+                {/* Keep existing Sonner toaster for backwards compatibility */}
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    style: {
+                      background: 'rgb(30 41 59)',
+                      border: '1px solid rgb(71 85 105)',
+                      color: 'rgb(226 232 240)',
+                    },
+                  }}
+                />
+                {/* Add our new toast system */}
+                <UIToaster />
+              </Router>
+            </NotificationProvider>
+          </ThemeProvider>
+        </AuthProvider>
+        {/* React Query DevTools (only in development) */}
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }
