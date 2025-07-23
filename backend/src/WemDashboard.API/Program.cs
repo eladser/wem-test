@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WemDashboard.Infrastructure.Data;
 using WemDashboard.Infrastructure;
 using WemDashboard.Application.Mappings;
+using WemDashboard.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,20 +11,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database configuration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<WemDashboardContext>(options =>
-    options.UseNpgsql(connectionString, o => 
-    {
-        o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-        o.CommandTimeout(30);
-    }));
+// Add Infrastructure services (this includes DbContext configuration)
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(SiteProfile));
-
-// Add Infrastructure services
-builder.Services.AddInfrastructure();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -36,9 +28,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add health checks
-builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString);
+// Add basic health checks (remove PostgreSQL-specific check for now)
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -55,11 +46,15 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// Ensure database is created
+// Ensure database is created and seeded
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<WemDashboardContext>();
-    context.Database.EnsureCreated();
+    var context = scope.ServiceProvider.GetRequiredService<WemDashboardDbContext>();
+    await context.Database.EnsureCreatedAsync();
+    
+    // Run data seeder
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAsync();
 }
 
 app.Run();

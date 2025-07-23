@@ -224,101 +224,101 @@ public class WemDashboardDbContext : DbContext
     }
 
     private static void SeedData(ModelBuilder modelBuilder)
+{
+    // Seed default admin user
+    var adminUser = new User
     {
-        // Seed default admin user
-        var adminUser = new User
+        Id = "admin-user-id",
+        Email = "admin@wemdashboard.com",
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+        FirstName = "System",
+        LastName = "Administrator",
+        Role = UserRole.Admin,
+        IsActive = true,
+        CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        LastLogin = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+    };
+
+    modelBuilder.Entity<User>().HasData(adminUser);
+
+    // Seed sample sites - use double for TotalCapacity
+    var sites = new[]
+    {
+        new Site
         {
-            Id = "admin-user-id",
-            Email = "admin@wemdashboard.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-            FirstName = "System",
-            LastName = "Administrator",
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            LastLogin = DateTime.UtcNow
-        };
-
-        modelBuilder.Entity<User>().HasData(adminUser);
-
-        // Seed sample sites
-        var sites = new[]
+            Id = "site-a",
+            Name = "Main Campus",
+            Location = "California, USA",
+            Region = "north-america",
+            Status = SiteStatus.Online,
+            TotalCapacity = 25.5,  // Changed from 25.5m to 25.5 (double)
+            CurrentOutput = 18.2,
+            Efficiency = 94.2,
+            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            LastUpdate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        },
+        new Site
         {
-            new Site
-            {
-                Id = "site-a",
-                Name = "Main Campus",
-                Location = "California, USA",
-                Region = "north-america",
-                Status = SiteStatus.Online,
-                TotalCapacity = 25.5,
-                CurrentOutput = 18.2,
-                Efficiency = 94.2,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                LastUpdate = DateTime.UtcNow
-            },
-            new Site
-            {
-                Id = "site-b",
-                Name = "Warehouse Complex",
-                Location = "Texas, USA",
-                Region = "north-america",
-                Status = SiteStatus.Online,
-                TotalCapacity = 15.8,
-                CurrentOutput = 12.1,
-                Efficiency = 91.5,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                LastUpdate = DateTime.UtcNow
-            },
-            new Site
-            {
-                Id = "site-c",
-                Name = "Office Complex",
-                Location = "Berlin, Germany",
-                Region = "europe",
-                Status = SiteStatus.Maintenance,
-                TotalCapacity = 12.3,
-                CurrentOutput = 0,
-                Efficiency = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                LastUpdate = DateTime.UtcNow.AddHours(-2)
-            },
-            new Site
-            {
-                Id = "site-d",
-                Name = "Manufacturing Plant",
-                Location = "Tokyo, Japan",
-                Region = "asia-pacific",
-                Status = SiteStatus.Online,
-                TotalCapacity = 32.1,
-                CurrentOutput = 28.7,
-                Efficiency = 96.8,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                LastUpdate = DateTime.UtcNow
-            }
-        };
-
-        modelBuilder.Entity<Site>().HasData(sites);
-
-        // Seed default user preferences for admin
-        var adminPreferences = new UserPreferences
+            Id = "site-b",
+            Name = "Warehouse Complex",
+            Location = "Texas, USA",
+            Region = "north-america",
+            Status = SiteStatus.Online,
+            TotalCapacity = 15.8,  // Changed from 15.8m to 15.8 (double)
+            CurrentOutput = 12.1,
+            Efficiency = 91.5,
+            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            LastUpdate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        },
+        new Site
         {
-            Id = 1,
-            UserId = "admin-user-id",
-            Theme = "dark",
-            Language = "en",
-            TimeZone = "UTC",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            Id = "site-c",
+            Name = "Office Complex",
+            Location = "Berlin, Germany",
+            Region = "europe",
+            Status = SiteStatus.Maintenance,
+            TotalCapacity = 12.3,  // Changed from 12.3m to 12.3 (double)
+            CurrentOutput = 0,
+            Efficiency = 0,
+            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            LastUpdate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddHours(-2)
+        },
+        new Site
+        {
+            Id = "site-d",
+            Name = "Manufacturing Plant",
+            Location = "Tokyo, Japan",
+            Region = "asia-pacific",
+            Status = SiteStatus.Online,
+            TotalCapacity = 32.1,  // Changed from 32.1m to 32.1 (double)
+            CurrentOutput = 28.7,
+            Efficiency = 96.8,
+            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            LastUpdate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+        }
+    };
 
-        modelBuilder.Entity<UserPreferences>().HasData(adminPreferences);
-    }
+    modelBuilder.Entity<Site>().HasData(sites);
+
+    // Seed default user preferences for admin
+    var adminPreferences = new UserPreferences
+    {
+        Id = 1,
+        UserId = "admin-user-id",
+        Theme = "dark",
+        Language = "en",
+        TimeZone = "UTC",
+        CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+    };
+
+    modelBuilder.Entity<UserPreferences>().HasData(adminPreferences);
+}
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

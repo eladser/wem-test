@@ -6,6 +6,7 @@ using WemDashboard.Domain.Interfaces;
 using WemDashboard.Infrastructure.Data;
 using WemDashboard.Infrastructure.Repositories;
 using WemDashboard.Infrastructure.Services;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 namespace WemDashboard.Infrastructure;
 
@@ -13,52 +14,19 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database configuration - Force SQLite for development, allow override for production
-        var databaseProvider = configuration["DatabaseProvider"]?.ToLower() ?? "sqlite";
+        // PostgreSQL configuration
         var connectionString = configuration.GetConnectionString("DefaultConnection") ?? 
-            "Data Source=wemdashboard.db;";
+            "Host=localhost;Database=wemdashboard;Username=postgres;Password=postgres;Port=5432";
 
-        // Log the configuration being used
-        Console.WriteLine($"🔧 Database Provider: {databaseProvider}");
+        Console.WriteLine($"🔧 Using PostgreSQL");
         Console.WriteLine($"🔧 Connection String: {connectionString}");
 
-        // Force SQLite for development environment
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-        {
-            databaseProvider = "sqlite";
-            Console.WriteLine("🔧 Development mode detected - forcing SQLite");
-        }
+        // Configure PostgreSQL
+        services.AddDbContext<WemDashboardDbContext>(options =>
+            options.UseNpgsql(connectionString,
+                b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
 
-        switch (databaseProvider.ToLower())
-        {
-            case "sqlserver":
-                services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseSqlServer(connectionString, 
-                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
-                Console.WriteLine("✅ Configured SQL Server");
-                break;
-            case "postgresql":
-                services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseNpgsql(connectionString,
-                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
-                Console.WriteLine("✅ Configured PostgreSQL");
-                break;
-            case "mysql":
-                services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
-                Console.WriteLine("✅ Configured MySQL");
-                break;
-            case "sqlite":
-            default:
-                services.AddDbContext<WemDashboardDbContext>(options =>
-                    options.UseSqlite(connectionString,
-                        b => b.MigrationsAssembly("WemDashboard.Infrastructure")));
-                Console.WriteLine("✅ Configured SQLite");
-                break;
-        }
-
-        // Original repository registration
+        // Repository registration
         services.AddScoped<ISiteRepository, SiteRepository>();
         services.AddScoped<IAssetRepository, AssetRepository>();
         services.AddScoped<IPowerDataRepository, PowerDataRepository>();
@@ -66,7 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // New settings and configuration repository registration
+        // Settings and configuration repository registration
         services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
         services.AddScoped<IDashboardLayoutRepository, DashboardLayoutRepository>();
         services.AddScoped<IWidgetConfigurationRepository, WidgetConfigurationRepository>();
