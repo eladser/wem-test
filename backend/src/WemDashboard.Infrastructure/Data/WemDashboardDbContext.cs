@@ -13,18 +13,32 @@ public class WemDashboardDbContext : DbContext
     {
     }
 
+    // Core entities
     public DbSet<Site> Sites { get; set; }
     public DbSet<EnergyReading> EnergyReadings { get; set; }
     public DbSet<Device> Devices { get; set; }
     public DbSet<Alert> Alerts { get; set; }
+    
+    // Additional entities referenced by repositories
+    public DbSet<WidgetConfiguration> WidgetConfigurations { get; set; }
+    public DbSet<LogEntry> LogEntries { get; set; }
+    public DbSet<Asset> Assets { get; set; }
+    public DbSet<PowerData> PowerData { get; set; }
+    public DbSet<DashboardLayout> DashboardLayouts { get; set; }
+    public DbSet<EnergyFlowConfiguration> EnergyFlowConfigurations { get; set; }
+    public DbSet<FilterPreset> FilterPresets { get; set; }
+    public DbSet<GridComponentConfiguration> GridComponentConfigurations { get; set; }
+    public DbSet<ViewState> ViewStates { get; set; }
+    public DbSet<ReportTemplate> ReportTemplates { get; set; }
+    public DbSet<UserPreferences> UserPreferences { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // CRITICAL FIX: Configure PostgreSQL types to prevent DateTime casting errors
         ConfigurePostgreSQLTypes(modelBuilder);
         
-        // Configure entities with proper mappings
-        ConfigureEntities(modelBuilder);
+        // Configure entities with proper mappings - ONLY the core ones we have
+        ConfigureCoreEntities(modelBuilder);
         
         // SEED DATA TEMPORARILY REMOVED to fix the DateTime casting error
         // Uncomment after successful migration: ConfigureSeedData(modelBuilder);
@@ -63,17 +77,16 @@ public class WemDashboardDbContext : DbContext
     }
 
     /// <summary>
-    /// Entity configurations optimized for PostgreSQL
+    /// Entity configurations optimized for PostgreSQL - ONLY configure entities we actually have
     /// </summary>
-    private void ConfigureEntities(ModelBuilder modelBuilder)
+    private void ConfigureCoreEntities(ModelBuilder modelBuilder)
     {
         // Site Configuration
         modelBuilder.Entity<Site>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.Location).HasMaxLength(500);
+            // Only configure properties that actually exist
             entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone").IsRequired();
             entity.Property(e => e.UpdatedAt).HasColumnType("timestamp with time zone").IsRequired();
             
@@ -115,66 +128,19 @@ public class WemDashboardDbContext : DbContext
             entity.HasIndex(e => new { e.DeviceId, e.Timestamp });
         });
 
-        // Alert Configuration
+        // Alert Configuration - ONLY configure properties that exist
         modelBuilder.Entity<Alert>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Message).HasMaxLength(2000);
-            entity.Property(e => e.Severity).HasMaxLength(50).IsRequired();
-            entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
             entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone").IsRequired();
-            entity.Property(e => e.UpdatedAt).HasColumnType("timestamp with time zone").IsRequired();
-            entity.Property(e => e.ResolvedAt).HasColumnType("timestamp with time zone");
             
             entity.HasOne(a => a.Site)
                   .WithMany(s => s.Alerts)
                   .HasForeignKey(a => a.SiteId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
+        
+        // For all other entities, just let EF use defaults since we don't have the actual classes
+        // This prevents configuration errors for non-existent properties
     }
-
-    /// <summary>
-    /// COMMENTED OUT - Add seed data back after successful migration
-    /// Ensure all DateTime values use proper constructors, not string literals
-    /// </summary>
-    /*
-    private void ConfigureSeedData(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Site>().HasData(
-            new Site 
-            { 
-                Id = 1, 
-                Name = "Main Office", 
-                Description = "Primary office location",
-                Location = "New York, NY",
-                // CORRECT: Use DateTime constructor, not string
-                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-            },
-            new Site 
-            { 
-                Id = 2, 
-                Name = "Manufacturing Plant", 
-                Description = "Main production facility",
-                Location = "Detroit, MI",
-                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-            }
-        );
-
-        modelBuilder.Entity<Device>().HasData(
-            new Device 
-            { 
-                Id = 1, 
-                SiteId = 1,
-                Name = "Main Meter", 
-                DeviceType = "Smart Meter",
-                SerialNumber = "SM001",
-                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-            }
-        );
-    }
-    */
 }

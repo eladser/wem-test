@@ -1,23 +1,31 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace WemDashboard.Domain.Entities;
 
 public class Alert
 {
-    public string Id { get; set; } = string.Empty;
-    public AlertType Type { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public string SiteId { get; set; } = string.Empty;
-    public DateTime Timestamp { get; set; }
-    public bool IsRead { get; set; } = false;
-    public DateTime CreatedAt { get; set; }
+    public int Id { get; set; }
+    public int SiteId { get; set; }
+    
+    [Required]
+    [MaxLength(200)]
+    public string Title { get; set; } = string.Empty;
+    
+    [MaxLength(2000)]
+    public string? Message { get; set; }
+    
+    [Required]
+    [MaxLength(50)]
+    public string Severity { get; set; } = string.Empty;
+    
+    [Required]
+    [MaxLength(50)]
+    public string Status { get; set; } = string.Empty;
+    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? ResolvedAt { get; set; }
 
     // Navigation properties
-    public Site Site { get; set; } = null!;
-}
-
-public enum AlertType
-{
-    Warning,
-    Info,
-    Success,
-    Error
+    public virtual Site Site { get; set; } = null!;
 }

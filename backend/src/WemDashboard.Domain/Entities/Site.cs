@@ -1,23 +1,25 @@
-using WemDashboard.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace WemDashboard.Domain.Entities;
 
 public class Site
 {
-    public string Id { get; set; } = string.Empty;
+    public int Id { get; set; }
+    
+    [Required]
+    [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
-    public string Location { get; set; } = string.Empty;
-    public string Region { get; set; } = string.Empty;
-    public SiteStatus Status { get; set; }
-    public double TotalCapacity { get; set; }
-    public double CurrentOutput { get; set; }
-    public double Efficiency { get; set; }
-    public DateTime LastUpdate { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    
+    [MaxLength(1000)]
+    public string? Description { get; set; }
+    
+    [MaxLength(500)]
+    public string? Location { get; set; }
+    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public List<Asset> Assets { get; set; } = new();
-    public List<PowerData> PowerData { get; set; } = new();
-    public List<Alert> Alerts { get; set; } = new();
+    public virtual ICollection<Device> Devices { get; set; } = new List<Device>();
+    public virtual ICollection<Alert> Alerts { get; set; } = new List<Alert>();
 }
