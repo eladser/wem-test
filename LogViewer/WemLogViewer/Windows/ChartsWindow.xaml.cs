@@ -7,6 +7,7 @@ using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Wpf;
 using WemLogViewer.Models;
+using WemLogViewer.Services;
 
 namespace WemLogViewer.Windows;
 
