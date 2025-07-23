@@ -18,8 +18,11 @@ public class Site
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastUpdate { get; set; }
 
     // Navigation properties
     public virtual ICollection<Device> Devices { get; set; } = new List<Device>();
     public virtual ICollection<Alert> Alerts { get; set; } = new List<Alert>();
+    public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
+    public virtual ICollection<PowerData> PowerData { get; set; } = new List<PowerData>();
 }
