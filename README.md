@@ -7,18 +7,59 @@ A comprehensive energy management dashboard built with React, TypeScript, .NET C
 ### Prerequisites
 - **Node.js** (v18+)
 - **.NET 8 SDK**
+- **PostgreSQL** (v12+)
 - **Git**
 
+### PostgreSQL Setup
+Before running the application, ensure PostgreSQL is installed and create the database user:
+
+```sql
+-- Connect as postgres superuser
+sudo -u postgres psql
+
+-- Create user for the application
+CREATE USER wem_admin WITH PASSWORD 'WemEnergy2024';
+ALTER USER wem_admin CREATEDB;
+
+-- Exit
+\q
+```
+
 ### Quick Setup
+
+**Option 1: Automated Setup (Recommended)**
 ```bash
 # Clone the repository
 git clone https://github.com/eladser/wem-test.git
 cd wem-test
 
-# Full setup (installs dependencies, builds backend, sets up database)
-npm run full-setup
+# Run the PostgreSQL migration fix script
+# Windows:
+./fix-postgresql-migration.bat
+
+# Linux/macOS:
+chmod +x fix-postgresql-migration.sh
+./fix-postgresql-migration.sh
+
+# Start the application
+npm run quick-start
+```
+
+**Option 2: Manual Setup**
+```bash
+# Clone the repository
+git clone https://github.com/eladser/wem-test.git
+cd wem-test
+
+# Install frontend dependencies
+npm install
+
+# Run PostgreSQL migrations
+cd backend/src/WemDashboard.Infrastructure
+dotnet ef database update --startup-project ../WemDashboard.API
 
 # Start both frontend and backend
+cd ../../..
 npm run quick-start
 ```
 
@@ -102,8 +143,8 @@ NODE_ENV=development
 
 # Database (for backend)
 ASPNETCORE_ENVIRONMENT=Development
-DatabaseProvider=sqlite
-ConnectionStrings__DefaultConnection=Data Source=wemdashboard.db;
+DatabaseProvider=postgresql
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=wemdashboard;Username=wem_admin;Password=WemEnergy2024
 ```
 
 ### Backend Configuration
@@ -113,9 +154,9 @@ The backend uses `appsettings.json` for configuration:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=wemdashboard.db;"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=wemdashboard;Username=wem_admin;Password=WemEnergy2024"
   },
-  "DatabaseProvider": "sqlite",
+  "DatabaseProvider": "postgresql",
   "Logging": {
     "LogLevel": {
       "Default": "Information"
@@ -126,12 +167,7 @@ The backend uses `appsettings.json` for configuration:
 
 ## 📊 Database
 
-The application uses **Entity Framework Core** with support for multiple database providers:
-
-- **SQLite** (default for development)
-- **SQL Server**
-- **PostgreSQL** 
-- **MySQL**
+The application uses **Entity Framework Core** with **PostgreSQL** as the primary database provider.
 
 ### Database Schema
 
@@ -149,6 +185,22 @@ The application includes seed data with:
 - 4 sample sites across different regions
 - Admin user account (admin@wemdashboard.com / Admin123!)
 - Sample configurations and preferences
+
+### Migration Commands
+
+```bash
+# Navigate to Infrastructure project
+cd backend/src/WemDashboard.Infrastructure
+
+# Create a new migration
+dotnet ef migrations add MigrationName --startup-project ../WemDashboard.API
+
+# Apply migrations
+dotnet ef database update --startup-project ../WemDashboard.API
+
+# Drop database (careful!)
+dotnet ef database drop --force --startup-project ../WemDashboard.API
+```
 
 ## 🔌 API Endpoints
 
@@ -231,16 +283,20 @@ docker-compose up --build
 
 ### Common Issues
 
-1. **Backend not starting**
+1. **PostgreSQL Connection Issues**
    ```bash
-   npm run check-health
-   # Check if port 5000 is available
+   # Check if PostgreSQL is running
+   sudo systemctl status postgresql
+   
+   # Verify user exists
+   sudo -u postgres psql -c "\du"
    ```
 
-2. **Database issues**
+2. **Migration Issues**
    ```bash
-   npm run reset-db
-   # This will recreate the database with fresh data
+   # Run the migration fix script
+   ./fix-postgresql-migration.sh  # Linux/macOS
+   ./fix-postgresql-migration.bat # Windows
    ```
 
 3. **Frontend build failures**
@@ -250,10 +306,17 @@ docker-compose up --build
    npm run build
    ```
 
-4. **WebSocket connection issues**
-   - Check that backend is running on port 5000
-   - Verify VITE_WS_URL in .env file
-   - Check browser console for connection errors
+4. **Backend startup issues**
+   ```bash
+   npm run check-health
+   # Check if port 5000 is available
+   ```
+
+### Additional Help
+
+- 📋 See [POSTGRESQL-MIGRATION-TROUBLESHOOTING.md](./POSTGRESQL-MIGRATION-TROUBLESHOOTING.md) for detailed migration help
+- 🔧 Check the logs in the console for specific error messages
+- 🗄️ Use pgAdmin to visually inspect your PostgreSQL database
 
 ## 🤝 Contributing
 
@@ -273,7 +336,8 @@ For support and questions:
 - Create an issue in the GitHub repository
 - Check the API documentation at `/swagger` when running locally
 - Review the troubleshooting section above
+- Consult the [PostgreSQL Migration Troubleshooting Guide](./POSTGRESQL-MIGRATION-TROUBLESHOOTING.md)
 
 ---
 
-**Note**: This repository has been cleaned up to remove redundant batch files and scripts. All functionality is now available through npm scripts for better cross-platform compatibility.
+**Note**: This application now fully supports PostgreSQL with proper migrations and no more SQLite dependencies. All DateTime handling has been optimized for PostgreSQL's timestamp types.
