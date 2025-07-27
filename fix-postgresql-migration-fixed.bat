@@ -12,9 +12,12 @@ REM Set paths
 set "BACKEND_PATH=%PROJECT_ROOT%backend"
 set "INFRASTRUCTURE_PATH=%BACKEND_PATH%\src\WemDashboard.Infrastructure"  
 set "API_PATH=%BACKEND_PATH%\src\WemDashboard.API"
+set "SOLUTION_FILE=%BACKEND_PATH%\WemDashboard.sln"
 
+echo 🔹 Backend path: %BACKEND_PATH%
 echo 🔹 Infrastructure project: %INFRASTRUCTURE_PATH%
 echo 🔹 API project: %API_PATH%
+echo 🔹 Solution file: %SOLUTION_FILE%
 
 REM Change to backend directory for operations
 cd /d "%BACKEND_PATH%"
@@ -44,21 +47,17 @@ dotnet nuget locals all --clear
 
 echo.
 echo 🔧 Restoring NuGet packages...
-cd /d "%PROJECT_ROOT%"
-dotnet restore
+dotnet restore "%SOLUTION_FILE%"
 
 echo.
 echo 🔧 Building the solution...
-dotnet build --no-restore
+dotnet build "%SOLUTION_FILE%" --no-restore
 
 if errorlevel 1 (
     echo ❌ Build failed! Please fix compilation errors before running migrations.
     pause
     exit /b 1
 )
-
-REM Change back to backend directory for EF operations
-cd /d "%BACKEND_PATH%"
 
 echo.
 echo 🔄 Creating new initial migration...
