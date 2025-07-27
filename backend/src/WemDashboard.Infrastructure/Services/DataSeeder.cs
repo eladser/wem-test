@@ -91,8 +91,10 @@ public class DataSeeder
         var powerDataList = new List<PowerData>();
         var random = new Random(42);
 
-        foreach (var siteId in existingSiteIds)
+        for (int siteIndex = 0; siteIndex < existingSiteIds.Count; siteIndex++)
         {
+            var siteId = existingSiteIds[siteIndex];
+            
             // Generate 3 days of data (more manageable)
             for (int day = 0; day < 3; day++)
             {
@@ -108,7 +110,7 @@ public class DataSeeder
                         Battery = Math.Round(random.NextDouble() * 20, 1),
                         Grid = Math.Round(random.NextDouble() * 30, 1),
                         Demand = Math.Round(random.NextDouble() * 40 + 20, 1),
-                        Wind = i == 3 ? Math.Round(random.NextDouble() * 35, 1) : null, // Wind for last site
+                        Wind = siteIndex == 3 ? Math.Round(random.NextDouble() * 35, 1) : null, // Wind for last site
                         CreatedAt = timestamp.AddMinutes(random.Next(0, 60))
                     });
                 }
