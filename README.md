@@ -2,6 +2,8 @@
 
 A comprehensive energy management dashboard built with React, TypeScript, .NET Core, and Entity Framework with real-time data visualization capabilities.
 
+> **✅ Test Update**: This line was added by Claude to test repository edit permissions on July 27, 2025.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
