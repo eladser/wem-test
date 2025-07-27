@@ -3,7 +3,7 @@ namespace WemDashboard.Domain.Entities;
 public class PowerData
 {
     public int Id { get; set; }
-    public string SiteId { get; set; } = string.Empty;
+    public int SiteId { get; set; }
     public DateTime Time { get; set; }
     public double Solar { get; set; }
     public double Battery { get; set; }

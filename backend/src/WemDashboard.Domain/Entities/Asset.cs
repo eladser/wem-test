@@ -5,7 +5,7 @@ public class Asset
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public AssetType Type { get; set; }
-    public string SiteId { get; set; } = string.Empty;
+    public int SiteId { get; set; }
     public AssetStatus Status { get; set; }
     public string Power { get; set; } = string.Empty;
     public string Efficiency { get; set; } = string.Empty;

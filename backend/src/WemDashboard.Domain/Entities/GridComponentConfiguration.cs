@@ -48,8 +48,8 @@ public class GridComponentConfiguration
     public bool IsVisible { get; set; } = true;
     public bool IsInteractive { get; set; } = true;
     
-    // Site association - Using string to match Site.Id
-    public string? SiteId { get; set; }
+    // Site association - FIXED: Changed to int to match Site.Id
+    public int? SiteId { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
