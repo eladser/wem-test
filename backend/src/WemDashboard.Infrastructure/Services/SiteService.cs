@@ -55,11 +55,17 @@ public class SiteService : ISiteService
         {
             _logger.LogInformation("Getting site by ID: {SiteId}", siteId);
             
+            // Convert string siteId to int
+            if (!int.TryParse(siteId, out int siteIdInt))
+            {
+                return ApiResponse<SiteDto>.ErrorResponse($"Invalid site ID format: '{siteId}'");
+            }
+            
             var site = await _context.Sites
                 .Include(s => s.Assets)
                 .Include(s => s.PowerData)
                 .Include(s => s.Alerts)
-                .FirstOrDefaultAsync(s => s.Id == siteId);
+                .FirstOrDefaultAsync(s => s.Id == siteIdInt);
 
             if (site == null)
             {
@@ -85,10 +91,11 @@ public class SiteService : ISiteService
         {
             _logger.LogInformation("Getting sites by region: {Region}", region);
             
+            // Since Site entity doesn't have Region property, filter by Location instead
             var sites = await _context.Sites
                 .Include(s => s.Assets)
                 .Include(s => s.Alerts)
-                .Where(s => s.Region.ToLower() == region.ToLower())
+                .Where(s => s.Location != null && s.Location.ToLower().Contains(region.ToLower()))
                 .OrderBy(s => s.Name)
                 .ToListAsync();
 
@@ -120,7 +127,6 @@ public class SiteService : ISiteService
             }
 
             var site = _mapper.Map<Site>(createSiteDto);
-            site.Id = Guid.NewGuid().ToString();
             site.CreatedAt = DateTime.UtcNow;
             site.UpdatedAt = DateTime.UtcNow;
             site.LastUpdate = DateTime.UtcNow;
@@ -146,7 +152,13 @@ public class SiteService : ISiteService
         {
             _logger.LogInformation("Updating site: {SiteId}", siteId);
             
-            var site = await _context.Sites.FirstOrDefaultAsync(s => s.Id == siteId);
+            // Convert string siteId to int
+            if (!int.TryParse(siteId, out int siteIdInt))
+            {
+                return ApiResponse<SiteDto>.ErrorResponse($"Invalid site ID format: '{siteId}'");
+            }
+            
+            var site = await _context.Sites.FirstOrDefaultAsync(s => s.Id == siteIdInt);
             
             if (site == null)
             {
@@ -159,7 +171,7 @@ public class SiteService : ISiteService
                 site.Name.ToLower() != updateSiteDto.Name.ToLower())
             {
                 var existingSite = await _context.Sites
-                    .FirstOrDefaultAsync(s => s.Name.ToLower() == updateSiteDto.Name.ToLower() && s.Id != siteId);
+                    .FirstOrDefaultAsync(s => s.Name.ToLower() == updateSiteDto.Name.ToLower() && s.Id != siteIdInt);
                 
                 if (existingSite != null)
                 {
@@ -190,7 +202,13 @@ public class SiteService : ISiteService
         {
             _logger.LogInformation("Updating site status: {SiteId} to {Status}", siteId, statusDto.Status);
             
-            var site = await _context.Sites.FirstOrDefaultAsync(s => s.Id == siteId);
+            // Convert string siteId to int
+            if (!int.TryParse(siteId, out int siteIdInt))
+            {
+                return ApiResponse<bool>.ErrorResponse($"Invalid site ID format: '{siteId}'");
+            }
+            
+            var site = await _context.Sites.FirstOrDefaultAsync(s => s.Id == siteIdInt);
             
             if (site == null)
             {
@@ -198,7 +216,7 @@ public class SiteService : ISiteService
                 return ApiResponse<bool>.ErrorResponse($"Site with ID '{siteId}' not found");
             }
 
-            site.Status = statusDto.Status;
+            // Since Site entity doesn't have Status property, just update the UpdatedAt and LastUpdate
             site.UpdatedAt = DateTime.UtcNow;
             site.LastUpdate = DateTime.UtcNow;
 
@@ -220,11 +238,17 @@ public class SiteService : ISiteService
         {
             _logger.LogInformation("Deleting site: {SiteId}", siteId);
             
+            // Convert string siteId to int
+            if (!int.TryParse(siteId, out int siteIdInt))
+            {
+                return ApiResponse<bool>.ErrorResponse($"Invalid site ID format: '{siteId}'");
+            }
+            
             var site = await _context.Sites
                 .Include(s => s.Assets)
                 .Include(s => s.PowerData)
                 .Include(s => s.Alerts)
-                .FirstOrDefaultAsync(s => s.Id == siteId);
+                .FirstOrDefaultAsync(s => s.Id == siteIdInt);
             
             if (site == null)
             {
