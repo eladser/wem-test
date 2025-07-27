@@ -8,39 +8,46 @@ public class AlertConfiguration : IEntityTypeConfiguration<Alert>
 {
     public void Configure(EntityTypeBuilder<Alert> builder)
     {
-        builder.HasKey(a => a.Id);
-        
-        builder.Property(a => a.Id)
-            .HasMaxLength(50)
+        builder.ToTable("Alerts");
+
+        builder.HasKey(e => e.Id);
+
+        builder.Property(e => e.Title)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(e => e.Message)
+            .HasMaxLength(2000);
+
+        builder.Property(e => e.Severity)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(e => e.Status)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(e => e.CreatedAt)
+            .HasColumnType("timestamp with time zone")
             .IsRequired();
-        
-        builder.Property(a => a.Type)
-            .HasConversion<string>()
+
+        builder.Property(e => e.UpdatedAt)
+            .HasColumnType("timestamp with time zone")
             .IsRequired();
-        
-        builder.Property(a => a.Message)
-            .HasMaxLength(500)
-            .IsRequired();
-        
-        builder.Property(a => a.SiteId)
-            .HasMaxLength(50)
-            .IsRequired();
-        
-        builder.Property(a => a.Timestamp)
-            .IsRequired();
-        
-        builder.Property(a => a.IsRead)
-            .HasDefaultValue(false)
-            .IsRequired();
-        
-        builder.Property(a => a.CreatedAt)
-            .IsRequired();
-        
+
+        builder.Property(e => e.ResolvedAt)
+            .HasColumnType("timestamp with time zone");
+
+        // Relationships
+        builder.HasOne(e => e.Site)
+            .WithMany(s => s.Alerts)
+            .HasForeignKey(e => e.SiteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Indexes
-        builder.HasIndex(a => a.SiteId);
-        builder.HasIndex(a => a.Type);
-        builder.HasIndex(a => a.IsRead);
-        builder.HasIndex(a => a.Timestamp);
-        builder.HasIndex(a => a.CreatedAt);
+        builder.HasIndex(e => e.SiteId);
+        builder.HasIndex(e => e.Severity);
+        builder.HasIndex(e => e.Status);
+        builder.HasIndex(e => e.CreatedAt);
     }
 }
