@@ -28,7 +28,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add basic health checks (remove PostgreSQL-specific check for now)
+// Add basic health checks
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
@@ -46,15 +46,26 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// Ensure database is created and seeded
+// Apply database migrations and seed data
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<WemDashboardDbContext>();
-    await context.Database.EnsureCreatedAsync();
     
-    // Run data seeder
-    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-    await seeder.SeedAsync();
+    try
+    {
+        // Apply any pending migrations
+        await context.Database.MigrateAsync();
+        
+        // Run data seeder only if migration was successful
+        var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        throw;
+    }
 }
 
 app.Run();
