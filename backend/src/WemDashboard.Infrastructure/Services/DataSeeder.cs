@@ -63,7 +63,7 @@ public class DataSeeder
             assets.Add(new()
             {
                 Name = $"Solar Inverter Unit 1 - Site {siteId}",
-                SiteId = siteId,
+                SiteId = siteId.ToString(), // Convert int to string
                 CreatedAt = DateTime.UtcNow.AddDays(-180 + i * 30),
                 UpdatedAt = DateTime.UtcNow.AddMinutes(-2)
             });
@@ -73,7 +73,7 @@ public class DataSeeder
                 assets.Add(new()
                 {
                     Name = $"Wind Turbine Generator 1 - Site {siteId}",
-                    SiteId = siteId,
+                    SiteId = siteId.ToString(), // Convert int to string
                     CreatedAt = DateTime.UtcNow.AddDays(-150 + i * 30),
                     UpdatedAt = DateTime.UtcNow.AddMinutes(-1)
                 });
@@ -104,7 +104,7 @@ public class DataSeeder
                     
                     powerDataList.Add(new PowerData
                     {
-                        SiteId = siteId,
+                        SiteId = siteId.ToString(), // Convert int to string
                         Time = timestamp,
                         Solar = Math.Round(random.NextDouble() * 50, 1),
                         Battery = Math.Round(random.NextDouble() * 20, 1),
@@ -139,7 +139,7 @@ public class DataSeeder
                 Message = "System operating at optimal efficiency",
                 Severity = "Info",
                 Status = "Active",
-                SiteId = existingSiteIds[0], // Use first existing site
+                SiteId = existingSiteIds[0].ToString(), // Convert int to string
                 CreatedAt = DateTime.UtcNow.AddMinutes(-5),
                 UpdatedAt = DateTime.UtcNow.AddMinutes(-5)
             },
@@ -149,7 +149,7 @@ public class DataSeeder
                 Message = "Battery storage level below 30%",
                 Severity = "Warning",
                 Status = "Active",
-                SiteId = existingSiteIds[0], // Use first existing site
+                SiteId = existingSiteIds[0].ToString(), // Convert int to string
                 CreatedAt = DateTime.UtcNow.AddMinutes(-15),
                 UpdatedAt = DateTime.UtcNow.AddMinutes(-15)
             }
@@ -164,7 +164,7 @@ public class DataSeeder
                 Message = "Maintenance completed successfully",
                 Severity = "Info",
                 Status = "Resolved",
-                SiteId = existingSiteIds[1], // Use second existing site
+                SiteId = existingSiteIds[1].ToString(), // Convert int to string
                 CreatedAt = DateTime.UtcNow.AddHours(-6),
                 UpdatedAt = DateTime.UtcNow.AddHours(-6),
                 ResolvedAt = DateTime.UtcNow.AddHours(-5)
@@ -179,7 +179,7 @@ public class DataSeeder
                 Message = "Inverter unit requires inspection",
                 Severity = "Error",
                 Status = "Active",
-                SiteId = existingSiteIds[2], // Use third existing site
+                SiteId = existingSiteIds[2].ToString(), // Convert int to string
                 CreatedAt = DateTime.UtcNow.AddHours(-1),
                 UpdatedAt = DateTime.UtcNow.AddHours(-1)
             });
