@@ -11,7 +11,6 @@ public class PowerDataConfiguration : IEntityTypeConfiguration<PowerData>
         builder.HasKey(p => p.Id);
         
         builder.Property(p => p.SiteId)
-            .HasMaxLength(50)
             .IsRequired();
         
         builder.Property(p => p.Time)
@@ -38,6 +37,12 @@ public class PowerDataConfiguration : IEntityTypeConfiguration<PowerData>
         
         builder.Property(p => p.CreatedAt)
             .IsRequired();
+
+        // Configure foreign key relationship
+        builder.HasOne(p => p.Site)
+            .WithMany(s => s.PowerData)
+            .HasForeignKey(p => p.SiteId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         // Indexes
         builder.HasIndex(p => p.SiteId);

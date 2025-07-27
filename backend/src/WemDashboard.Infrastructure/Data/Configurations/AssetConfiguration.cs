@@ -23,7 +23,6 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
             .IsRequired();
         
         builder.Property(a => a.SiteId)
-            .HasMaxLength(50)
             .IsRequired();
         
         builder.Property(a => a.Status)
@@ -46,6 +45,12 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         
         builder.Property(a => a.LastUpdate)
             .IsRequired();
+
+        // Configure foreign key relationship
+        builder.HasOne(a => a.Site)
+            .WithMany(s => s.Assets)
+            .HasForeignKey(a => a.SiteId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         // Indexes
         builder.HasIndex(a => a.SiteId);
