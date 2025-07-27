@@ -13,8 +13,12 @@ public class AssetRepository : Repository<Asset>, IAssetRepository
 
     public async Task<IEnumerable<Asset>> GetAssetsBySiteIdAsync(string siteId)
     {
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return new List<Asset>();
+
         return await _dbSet
-            .Where(a => a.SiteId == siteId)
+            .Where(a => a.SiteId == siteIdInt)
             .Include(a => a.Site)
             .OrderBy(a => a.Name)
             .ToListAsync();
@@ -40,8 +44,12 @@ public class AssetRepository : Repository<Asset>, IAssetRepository
 
     public async Task<IEnumerable<Asset>> GetAssetsBySiteAndTypeAsync(string siteId, AssetType type)
     {
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return new List<Asset>();
+
         return await _dbSet
-            .Where(a => a.SiteId == siteId && a.Type == type)
+            .Where(a => a.SiteId == siteIdInt && a.Type == type)
             .Include(a => a.Site)
             .OrderBy(a => a.Name)
             .ToListAsync();

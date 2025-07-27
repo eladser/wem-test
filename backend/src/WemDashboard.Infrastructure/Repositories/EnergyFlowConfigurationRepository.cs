@@ -25,8 +25,21 @@ public class EnergyFlowConfigurationRepository : IEnergyFlowConfigurationReposit
 
     public async Task<IEnumerable<EnergyFlowConfiguration>> GetBySiteIdAsync(string userId, string? siteId)
     {
+        // Convert string siteId to int for comparison
+        if (string.IsNullOrEmpty(siteId))
+        {
+            return await _context.EnergyFlowConfigurations
+                .Where(f => f.UserId == userId && f.SiteId == null)
+                .OrderBy(f => f.FromComponentId)
+                .ThenBy(f => f.ToComponentId)
+                .ToListAsync();
+        }
+
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return new List<EnergyFlowConfiguration>();
+
         return await _context.EnergyFlowConfigurations
-            .Where(f => f.UserId == userId && f.SiteId == siteId)
+            .Where(f => f.UserId == userId && f.SiteId == siteIdInt)
             .OrderBy(f => f.FromComponentId)
             .ThenBy(f => f.ToComponentId)
             .ToListAsync();

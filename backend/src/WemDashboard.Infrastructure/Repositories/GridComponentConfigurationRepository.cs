@@ -25,8 +25,21 @@ public class GridComponentConfigurationRepository : IGridComponentConfigurationR
 
     public async Task<IEnumerable<GridComponentConfiguration>> GetBySiteIdAsync(string userId, string? siteId)
     {
+        // Convert string siteId to int for comparison
+        if (string.IsNullOrEmpty(siteId))
+        {
+            return await _context.GridComponentConfigurations
+                .Where(c => c.UserId == userId && c.SiteId == null)
+                .OrderBy(c => c.ComponentType)
+                .ThenBy(c => c.Name)
+                .ToListAsync();
+        }
+
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return new List<GridComponentConfiguration>();
+
         return await _context.GridComponentConfigurations
-            .Where(c => c.UserId == userId && c.SiteId == siteId)
+            .Where(c => c.UserId == userId && c.SiteId == siteIdInt)
             .OrderBy(c => c.ComponentType)
             .ThenBy(c => c.Name)
             .ToListAsync();

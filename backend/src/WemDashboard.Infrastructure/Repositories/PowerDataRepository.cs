@@ -13,7 +13,11 @@ public class PowerDataRepository : Repository<PowerData>, IPowerDataRepository
 
     public async Task<IEnumerable<PowerData>> GetPowerDataBySiteIdAsync(string siteId, DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var query = _dbSet.Where(p => p.SiteId == siteId);
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return new List<PowerData>();
+
+        var query = _dbSet.Where(p => p.SiteId == siteIdInt);
 
         if (fromDate.HasValue)
             query = query.Where(p => p.Time >= fromDate.Value);
@@ -29,8 +33,12 @@ public class PowerDataRepository : Repository<PowerData>, IPowerDataRepository
 
     public async Task<IEnumerable<PowerData>> GetLatestPowerDataBySiteIdAsync(string siteId, int count = 24)
     {
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return new List<PowerData>();
+
         return await _dbSet
-            .Where(p => p.SiteId == siteId)
+            .Where(p => p.SiteId == siteIdInt)
             .Include(p => p.Site)
             .OrderByDescending(p => p.Time)
             .Take(count)
@@ -39,8 +47,12 @@ public class PowerDataRepository : Repository<PowerData>, IPowerDataRepository
 
     public async Task<PowerData?> GetLatestPowerDataForSiteAsync(string siteId)
     {
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return null;
+
         return await _dbSet
-            .Where(p => p.SiteId == siteId)
+            .Where(p => p.SiteId == siteIdInt)
             .Include(p => p.Site)
             .OrderByDescending(p => p.Time)
             .FirstOrDefaultAsync();
@@ -48,8 +60,12 @@ public class PowerDataRepository : Repository<PowerData>, IPowerDataRepository
 
     public async Task<double> GetTotalEnergyForSiteAsync(string siteId, DateTime fromDate, DateTime toDate)
     {
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return 0;
+
         var powerData = await _dbSet
-            .Where(p => p.SiteId == siteId && p.Time >= fromDate && p.Time <= toDate)
+            .Where(p => p.SiteId == siteIdInt && p.Time >= fromDate && p.Time <= toDate)
             .ToListAsync();
 
         return powerData.Sum(p => p.Solar + p.Battery + (p.Wind ?? 0));
@@ -57,8 +73,12 @@ public class PowerDataRepository : Repository<PowerData>, IPowerDataRepository
 
     public async Task<double> GetAverageEfficiencyForSiteAsync(string siteId, DateTime fromDate, DateTime toDate)
     {
+        // Convert string siteId to int for comparison
+        if (!int.TryParse(siteId, out int siteIdInt))
+            return 0;
+
         var powerData = await _dbSet
-            .Where(p => p.SiteId == siteId && p.Time >= fromDate && p.Time <= toDate)
+            .Where(p => p.SiteId == siteIdInt && p.Time >= fromDate && p.Time <= toDate)
             .ToListAsync();
 
         if (!powerData.Any())
