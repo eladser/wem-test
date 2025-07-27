@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WemDashboard.Domain.Entities;
+using WemDashboard.Domain.Enums;
 using WemDashboard.Domain.Interfaces;
 using WemDashboard.Infrastructure.Data;
 
@@ -61,10 +62,11 @@ public class SiteRepository : Repository<Site>, ISiteRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Site>> GetSitesByStatusAsync(string status)
+    public async Task<IEnumerable<Site>> GetSitesByStatusAsync(SiteStatus status)
     {
         // Since Site entity doesn't have Status property, return all sites for now
-        // You might want to add a Status property to the Site entity or filter differently
+        // This is a placeholder implementation - you might want to add a Status property to the Site entity
+        // or implement a different filtering mechanism
         return await _dbSet
             .Include(s => s.Assets)
             .OrderBy(s => s.Name)
