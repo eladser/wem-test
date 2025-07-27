@@ -49,7 +49,7 @@ public class DataSeeder
         }
     }
 
-    private async Task SeedAssetsAsync(List<string> existingSiteIds)
+    private async Task SeedAssetsAsync(List<int> existingSiteIds)
     {
         if (await _context.Assets.AnyAsync())
             return;
@@ -62,32 +62,20 @@ public class DataSeeder
             var siteId = existingSiteIds[i];
             assets.Add(new()
             {
-                Id = $"INV-{siteId}-001",
-                Name = $"Solar Inverter Unit 1 - {siteId}",
-                Type = AssetType.Inverter,
+                Name = $"Solar Inverter Unit 1 - Site {siteId}",
                 SiteId = siteId,
-                Status = AssetStatus.Online,
-                Power = "15.2 kW",
-                Efficiency = "96.5%",
                 CreatedAt = DateTime.UtcNow.AddDays(-180 + i * 30),
-                UpdatedAt = DateTime.UtcNow.AddMinutes(-2),
-                LastUpdate = DateTime.UtcNow.AddMinutes(-2)
+                UpdatedAt = DateTime.UtcNow.AddMinutes(-2)
             });
 
             if (i < 2) // Add wind turbines for first two sites
             {
                 assets.Add(new()
                 {
-                    Id = $"WIND-{siteId}-001",
-                    Name = $"Wind Turbine Generator 1 - {siteId}",
-                    Type = AssetType.WindTurbine,
+                    Name = $"Wind Turbine Generator 1 - Site {siteId}",
                     SiteId = siteId,
-                    Status = AssetStatus.Online,
-                    Power = "25.8 kW",
-                    Efficiency = "94.2%",
                     CreatedAt = DateTime.UtcNow.AddDays(-150 + i * 30),
-                    UpdatedAt = DateTime.UtcNow.AddMinutes(-1),
-                    LastUpdate = DateTime.UtcNow.AddMinutes(-1)
+                    UpdatedAt = DateTime.UtcNow.AddMinutes(-1)
                 });
             }
         }
@@ -95,7 +83,7 @@ public class DataSeeder
         await _context.Assets.AddRangeAsync(assets);
     }
 
-    private async Task SeedPowerDataAsync(List<string> existingSiteIds)
+    private async Task SeedPowerDataAsync(List<int> existingSiteIds)
     {
         if (await _context.PowerData.AnyAsync())
             return;
@@ -120,7 +108,7 @@ public class DataSeeder
                         Battery = Math.Round(random.NextDouble() * 20, 1),
                         Grid = Math.Round(random.NextDouble() * 30, 1),
                         Demand = Math.Round(random.NextDouble() * 40 + 20, 1),
-                        Wind = siteId == "site-d" ? Math.Round(random.NextDouble() * 35, 1) : null, // Wind for Manufacturing Plant
+                        Wind = i == 3 ? Math.Round(random.NextDouble() * 35, 1) : null, // Wind for last site
                         CreatedAt = timestamp.AddMinutes(random.Next(0, 60))
                     });
                 }
@@ -130,7 +118,7 @@ public class DataSeeder
         await _context.PowerData.AddRangeAsync(powerDataList);
     }
 
-    private async Task SeedAlertsAsync(List<string> existingSiteIds)
+    private async Task SeedAlertsAsync(List<int> existingSiteIds)
     {
         if (await _context.Alerts.AnyAsync())
             return;
@@ -145,23 +133,23 @@ public class DataSeeder
         {
             new()
             {
-                Id = Guid.NewGuid().ToString(),
-                Type = AlertType.Success,
+                Title = "System Operating Optimally",
                 Message = "System operating at optimal efficiency",
+                Severity = "Info",
+                Status = "Active",
                 SiteId = existingSiteIds[0], // Use first existing site
-                Timestamp = DateTime.UtcNow.AddMinutes(-5),
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5),
+                UpdatedAt = DateTime.UtcNow.AddMinutes(-5)
             },
             new()
             {
-                Id = Guid.NewGuid().ToString(),
-                Type = AlertType.Warning,
+                Title = "Battery Level Warning",
                 Message = "Battery storage level below 30%",
+                Severity = "Warning",
+                Status = "Active",
                 SiteId = existingSiteIds[0], // Use first existing site
-                Timestamp = DateTime.UtcNow.AddMinutes(-15),
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow.AddMinutes(-15)
+                CreatedAt = DateTime.UtcNow.AddMinutes(-15),
+                UpdatedAt = DateTime.UtcNow.AddMinutes(-15)
             }
         };
 
@@ -170,13 +158,14 @@ public class DataSeeder
         {
             alerts.Add(new()
             {
-                Id = Guid.NewGuid().ToString(),
-                Type = AlertType.Info,
+                Title = "Maintenance Completed",
                 Message = "Maintenance completed successfully",
+                Severity = "Info",
+                Status = "Resolved",
                 SiteId = existingSiteIds[1], // Use second existing site
-                Timestamp = DateTime.UtcNow.AddHours(-6),
-                IsRead = true,
-                CreatedAt = DateTime.UtcNow.AddHours(-6)
+                CreatedAt = DateTime.UtcNow.AddHours(-6),
+                UpdatedAt = DateTime.UtcNow.AddHours(-6),
+                ResolvedAt = DateTime.UtcNow.AddHours(-5)
             });
         }
 
@@ -184,13 +173,13 @@ public class DataSeeder
         {
             alerts.Add(new()
             {
-                Id = Guid.NewGuid().ToString(),
-                Type = AlertType.Error,
+                Title = "Inverter Inspection Required",
                 Message = "Inverter unit requires inspection",
+                Severity = "Error",
+                Status = "Active",
                 SiteId = existingSiteIds[2], // Use third existing site
-                Timestamp = DateTime.UtcNow.AddHours(-1),
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow.AddHours(-1)
+                CreatedAt = DateTime.UtcNow.AddHours(-1),
+                UpdatedAt = DateTime.UtcNow.AddHours(-1)
             });
         }
 
